@@ -1,0 +1,4 @@
+coverage
+pandas_datareader
+numpy
+pandas
