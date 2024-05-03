@@ -20,8 +20,8 @@ jobs:
         run: |
           docker images
           docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
-            ls -la /stock_price_prediction && \
-            pip3 install -r /stock_price_prediction/requirements.txt && \
-            python3 -m unittest discover /stock_price_prediction && \
-            coverage run -m unittest discover /stock_price_prediction && \
+            cd /stock_price_prediction && \
+            pip3 install -r requirements.txt && \
+            python3 -m unittest discover && \
+            coverage run -m unittest discover && \
             coverage report"
