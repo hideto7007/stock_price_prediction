@@ -326,17 +326,19 @@ class TestBrandCode(unittest.TestCase):
         """
         正常系: 正しくファイルの書き込みが出来ること
         """
-        data = {
-            "test": 1
-        }
-        path = "tests/output/test.json"
-        BrandCode.get_text(data, path)
-
-        with open(path, 'r', encoding='utf-8') as file:
-            result = json.load(file)
-        self.assertEqual(result, data)
-        
-        os.remove(path)
+        # Setup mock
+        dict_data = {'Link': '1234'}
+        expected_json = json.dumps(dict_data, ensure_ascii=False, indent=4)
+        mock_path = 'tests/output/test.json'
+        with patch('builtins.open', unittest.mock.mock_open()) as mocked_file:
+            BrandCode.get_text(dict_data, mock_path)
+            mocked_file.assert_called_once_with(mock_path, 'w', encoding='utf-8')
+            handle = mocked_file()
+            handle.write.assert_called()
+            written_data = ""
+            for i in handle.write.call_args_list:
+                written_data += i[0][0]
+            self.assertEqual(written_data, expected_json)
 
     @patch(GET_HTML_INFO)
     @patch(TRAGET_INFO)
