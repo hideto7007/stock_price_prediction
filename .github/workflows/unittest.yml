@@ -6,13 +6,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: python_unittest
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install python3
-          python3 --version
-          pip3 install -r requirements.txt
-          cd /home/runner/work/stock_price_prediction/stock_price_prediction
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          python -m unittest discover
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+      - name: Generate coverage report
+        run: |
           coverage run -m unittest discover
           coverage report
