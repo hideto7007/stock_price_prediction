@@ -1,0 +1,15 @@
+[run]
+source = .
+omit =
+    /usr/local/lib/python3.8/*
+    */site-packages/*
+    */dist-packages/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
