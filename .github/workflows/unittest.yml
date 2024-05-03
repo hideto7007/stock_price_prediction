@@ -18,7 +18,7 @@ jobs:
 
       - name: Run tests inside Docker container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace myworkspace /bin/bash -c "\
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace myworkspace "\
             python -m unittest discover && \
             coverage run -m unittest discover && \
             coverage report"
