@@ -1,5 +1,5 @@
 [run]
-source = stock_price_prediction
+source = .
 omit = 
     */python3.8/*
     */site-packages/*
