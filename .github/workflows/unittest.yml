@@ -18,6 +18,7 @@ jobs:
 
       - name: Run tests inside Docker container and Unittest
         run: |
+          docker start stock_price_prediction
           docker container run -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest
           docker exec unittest ls -la /stock_price_prediction
           docker exec unittest pip3 install -r /stock_price_prediction/requirements.txt
