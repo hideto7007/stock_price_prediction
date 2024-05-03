@@ -2,3 +2,5 @@ coverage
 pandas_datareader
 numpy
 pandas
+beautifulsoup4
+requests
