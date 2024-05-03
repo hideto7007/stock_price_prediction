@@ -1,5 +1,5 @@
 import unittest
-from stock_price_prediction.common.common import StockPriceData
+from common.common import StockPriceData
 
 
 class TestStockPriceData(unittest.TestCase):

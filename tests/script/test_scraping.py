@@ -5,15 +5,15 @@ import requests
 import json
 from bs4 import BeautifulSoup
 from unittest.mock import patch, Mock
-from stock_price_prediction.script.scraping import BrandCode, main
+from script.scraping import BrandCode, main
 
 from const.const import HttpStatusCode, ErrorMessage, ScrapingConst
 
 
-REQUESTS = 'stock_price_prediction.script.scraping.requests.get'
-GET_HTML_INFO = 'stock_price_prediction.script.scraping.BrandCode.get_html_info'
-TRAGET_INFO = 'stock_price_prediction.script.scraping.BrandCode.target_info'
-GET_TEXT = 'stock_price_prediction.script.scraping.BrandCode.get_text'
+REQUESTS = 'script.scraping.requests.get'
+GET_HTML_INFO = 'script.scraping.BrandCode.get_html_info'
+TRAGET_INFO = 'script.scraping.BrandCode.target_info'
+GET_TEXT = 'script.scraping.BrandCode.get_text'
 
 class TestBrandCode(unittest.TestCase):
     

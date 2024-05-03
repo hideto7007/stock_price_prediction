@@ -14,14 +14,15 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t myworkspace .
+          docker build -t unittest .
 
       - name: Run tests inside Docker container and Unittest
         run: |
-          docker container run -it -v ${{ github.workspace }}:/workspace
+          docker container run -it -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest
           ls -la
-          cd ./workspace
+          cd ./stock_price_prediction
           ls -la
-          python -m unittest discover
+          pip3 install -r requirements.txt
+          python3 -m unittest discover
           coverage run -m unittest discover
           coverage report"
