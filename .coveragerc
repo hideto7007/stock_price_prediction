@@ -1,7 +1,7 @@
 [run]
-source = .
-omit =
-    /usr/local/lib/python3.8/*
+source = stock_price_prediction
+omit = 
+    */python3.8/*
     */site-packages/*
     */dist-packages/*
 
@@ -12,4 +12,5 @@ exclude_lines =
     if self.debug:
     raise AssertionError
     raise NotImplementedError
+    if 0:
     if __name__ == .__main__.:
