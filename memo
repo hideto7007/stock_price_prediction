@@ -1,7 +1,0 @@
-coverage run --source=script -m unittest discover
-これで特定のテストケースを実行できる
-
-
-coverage run -m unittest discover -s tests
-以下だと問題なくサブディレクトリまで実行できる
-coverage run --source=. -m unittest discover

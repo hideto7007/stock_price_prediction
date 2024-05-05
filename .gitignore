@@ -1,2 +1,4 @@
 /.coverage
 /htmlcov
+./exe
+./test_exe
