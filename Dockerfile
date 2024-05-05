@@ -7,6 +7,8 @@ ENV PYTHONPATH=/stock_price_prediction
 
 # パッケージの更新と必要なパッケージのインストール
 RUN apt-get update && apt-get install -y \
+    curl \
+    git \
     python3-pip \
     python3 \
     && apt-get clean
