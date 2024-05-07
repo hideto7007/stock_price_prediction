@@ -1,4 +1,5 @@
 import unittest
+import datetime as dt
 from common.common import StockPriceData
 
 
@@ -237,8 +238,8 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: データ数が一致すること        
         """
-        result = StockPriceData.get_data("7203")
-        ex = 6143
+        result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        ex = 10
         self.assertEqual(len(result), ex)
     
     def test_get_data_success_02(self):
