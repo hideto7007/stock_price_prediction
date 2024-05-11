@@ -18,3 +18,7 @@ class HttpStatusCode(Enum):
 class ErrorMessage(Enum):
     NOT_FOUND_MSG = "not found"
     TIMEOUT_MSG = "time out"
+    
+    
+class DFConst(Enum):
+    COLUMN = ["Open", "High", "Low", "Close"]
