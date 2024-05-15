@@ -1,5 +1,9 @@
 import unittest
+import datetime as dt
+import pandas as pd
 from common.common import StockPriceData
+
+from const.const import DFConst
 
 
 class TestStockPriceData(unittest.TestCase):
@@ -232,16 +236,63 @@ class TestStockPriceData(unittest.TestCase):
             "ファーストリテイリング": "9983",
             "ソフトバンクグループ": "9984"
         }
-            
+        
+    def _ex_data_frame(self):
+
+        data = {
+            'Date': ['2024-04-19', '2024-04-18', '2024-04-17', '2024-04-16', '2024-04-15', '2024-04-12', '2024-04-11', '2024-04-10', '2024-04-09', '2024-04-08'],
+            'Open': [3550, 3567, 3686, 3742, 3721, 3813, 3722, 3750, 3740, 3665],
+            'High': [3569, 3634, 3691, 3753, 3767, 3815, 3795, 3760, 3776, 3700],
+            'Low': [3453, 3559, 3570, 3630, 3685, 3755, 3721, 3722, 3716, 3642],
+            'Close': [3522, 3602, 3597, 3649, 3767, 3767, 3781, 3740, 3776, 3698],
+        }
+        df = pd.DataFrame(data)
+        df['Date'] = pd.to_datetime(df['Date'])
+        df.set_index('Date', inplace=True)
+
+        return df
+        
+    def _add_avg_ex_data_frame(self):
+
+        data = {
+            'Date': ['2024-04-19', '2024-04-18', '2024-04-17', '2024-04-16', '2024-04-15', '2024-04-12', '2024-04-11', '2024-04-10', '2024-04-09', '2024-04-08'],
+            'Open': [3550, 3567, 3686, 3742, 3721, 3813, 3722, 3750, 3740, 3665],
+            'High': [3569, 3634, 3691, 3753, 3767, 3815, 3795, 3760, 3776, 3700],
+            'Low': [3453, 3559, 3570, 3630, 3685, 3755, 3721, 3722, 3716, 3642],
+            'Close': [3522, 3602, 3597, 3649, 3767, 3767, 3781, 3740, 3776, 3698],
+            'average': [3523.50, 3590.50, 3636.00, 3693.50, 3735.00, 3787.50, 3754.75, 3743.00, 3752.00, 3676.25],
+        }
+        df = pd.DataFrame(data)
+        df['Date'] = pd.to_datetime(df['Date'])
+        df.set_index('Date', inplace=True)
+
+        return df
+
     def test_get_data_success_01(self):
         """
         正常系: データ数が一致すること        
         """
-        result = StockPriceData.get_data("7203")
-        ex = 6143
+        result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        ex = 10
         self.assertEqual(len(result), ex)
-    
+            
     def test_get_data_success_02(self):
+        """
+        正常系: カラム数が一致すること        
+        """
+        result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        ex = 5
+        self.assertEqual(len(result.columns), ex)
+            
+    def test_get_data_success_03(self):
+        """
+        正常系: データが一致すること        
+        """
+        result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        ex = self._ex_data_frame()
+        self.assertTrue(result[DFConst.COLUMN.value].equals(ex), "The data frames should be equal")
+    
+    def test_get_data_success_04(self):
         """
         正常系: データ数が空であること 存在しない銘柄コードの為
         """
@@ -256,3 +307,42 @@ class TestStockPriceData(unittest.TestCase):
         result = StockPriceData.get_text_data()
         ex = self._ex_json_data()
         self.assertEqual(result, ex)
+            
+    def test_stock_price_average_success_01(self):
+        """
+        正常系: 平均値のデータを追加してデータが一致していること      
+        """
+        df = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        result = df.copy()[DFConst.COLUMN.value]
+        result["average"] = StockPriceData.stock_price_average(df.copy()[DFConst.COLUMN.value])
+        ex = self._add_avg_ex_data_frame()
+        self.assertTrue(result.equals(ex), "The data frames should be equal")
+
+    def test_moving_average_success_01(self):
+        """
+        正常系: 移動平均値が一致していること データ数が奇数の場合      
+        """
+        data = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        result = StockPriceData.moving_average(data)
+        ex = [3.0, 4.0, 5.0, 6.0, 7.0]
+        self.assertEqual(result, ex)
+          
+    def test_moving_average_success_02(self):
+        """
+        正常系: 移動平均値が一致していること データ数が偶数の場合  
+        """
+        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        result = StockPriceData.moving_average(data)
+        ex = [4.0, 5.0, 6.0, 7.0]
+        self.assertEqual(result, ex)
+          
+    def test_moving_average_boundary_value_01(self):
+        """
+        正常系: 境界値チェック
+        """
+        data = [[], [1, 2, 3], [1, 2, 3, 4], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6, 7, 8]]
+        result = StockPriceData.moving_average(data)
+        ex_list = [[], [], [], [], [3.0], [4.0, 5.0]]
+        for x, ex in zip(data, ex_list):
+            result = StockPriceData.moving_average(x)
+            self.assertEqual(result, ex)

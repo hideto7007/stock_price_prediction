@@ -1,6 +1,13 @@
+--find-links https://download.pytorch.org/whl/cpu
+torch==2.3.0
+torchvision==0.18.0
+torchaudio==2.3.0
 coverage
 pandas_datareader
 numpy
 pandas
 beautifulsoup4
 requests
+matplotlib
+scikit-learn
+fastapi
