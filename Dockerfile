@@ -1,5 +1,5 @@
 # ベースイメージを指定
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # 環境変数を設定
 ENV DEBIAN_FRONTEND=noninteractive
