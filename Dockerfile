@@ -15,3 +15,6 @@ RUN apt-get update && apt-get install -y \
 
 # Pythonのパッケージをアップグレード
 RUN pip3 install --upgrade pip
+
+# open port 8081
+EXPOSE 8081
