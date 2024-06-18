@@ -31,3 +31,4 @@ class TrainConst(Enum):
     # ハイパーパラメータ
     BATCH_SIZE = 64
     SEQ_LENGTH = 8  # 10日分のデータを一つのシーケンスとして扱う
+    BEST_MODEL = "best_model_weight"

@@ -1,4 +1,4 @@
-from const.const import DFConst, TrainConst
+import os
 import numpy as np # type: ignore
 from sklearn.preprocessing import MinMaxScaler # type: ignore
 import torch # type: ignore
@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt # type: ignore
 
 from common.common import LSTM, StockPriceData
 from dataset.dataset import TimeSeriesDataset
+from const.const import DFConst, TrainConst
 
 
 class PredictionTrain:
@@ -60,8 +61,9 @@ class PredictionTrain:
 
         # 訓練ループ
         epochs = 150
+        best_epoch = 0
         best_val_loss = float("inf")
-        best_model = None
+        # best_model = None
 
         for epoch in range(epochs):
             model.train()
@@ -90,12 +92,22 @@ class PredictionTrain:
 
             # 最良のモデルを保存
             if val_loss < best_val_loss:
+                # print("best!!!!!")
                 best_val_loss = val_loss
-                best_model = model.state_dict()
+                best_epoch = epoch + 1
+                # best_model = model.state_dict()
 
-            print(f'Epoch: {epoch}')
+            print(f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%) loss: {val_loss}')
 
-        print(f'Epoch: {epoch} Best validation loss: {best_val_loss} Best model {best_model}')
+        print(f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}')
+
+        self.model_save(model, best_epoch)
+
+    def model_save(self, model, best_epoch):
+        save_path = '../save'
+        os.makedirs(save_path, exist_ok=True)
+        print("model save")
+        torch.save(model.state_dict(), f'{save_path}/{TrainConst.BEST_MODEL.value}_{best_epoch}.pth')
 
 
 def main():
@@ -104,11 +116,13 @@ def main():
     prediction_train = PredictionTrain(brand_code)
     data = prediction_train.min_max_scaler()
     train_data, val_data, test_data = prediction_train.data_split(data)
+    print("create data deep learning model!!")
 
     # DataLoader の作成
     train_loader = TimeSeriesDataset.dataloader(train_data, TrainConst.BATCH_SIZE.value, TrainConst.SEQ_LENGTH.value)
     val_loader = TimeSeriesDataset.dataloader(val_data, TrainConst.BATCH_SIZE.value, TrainConst.SEQ_LENGTH.value)
     prediction_train.train(train_loader, val_loader)
+    print("train finish!!")
 
 
 if __name__ == "__main__":
