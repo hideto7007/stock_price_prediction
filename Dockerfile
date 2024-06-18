@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     git \
     python3-pip \
     python3 \
+    iproute2 \
     && apt-get clean
 
 # Pythonのパッケージをアップグレード

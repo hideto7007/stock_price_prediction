@@ -22,3 +22,12 @@ class ErrorMessage(Enum):
     
 class DFConst(Enum):
     COLUMN = ["Open", "High", "Low", "Close"]
+    AVERAGE = "average"
+
+
+class TrainConst(Enum):
+    CUDA = "cuda"
+    CPU = "cpu"
+    # ハイパーパラメータ
+    BATCH_SIZE = 64
+    SEQ_LENGTH = 8  # 10日分のデータを一つのシーケンスとして扱う
