@@ -3,7 +3,7 @@ import numpy as np # type: ignore
 from sklearn.preprocessing import MinMaxScaler # type: ignore
 import torch # type: ignore
 import torch.nn as nn # type: ignore
-import matplotlib.pyplot as plt # type: ignore
+from matplotlib import pyplot as plt # type: ignore
 
 from common.common import LSTM, StockPriceData
 from dataset.dataset import TimeSeriesDataset
@@ -35,13 +35,18 @@ class PredictionTrain:
 
         return data_scaled
 
-    def plot_check(self, data):
+    def plot_check(self, epoch, train_loss_list, test_loss_list):
+        plt.figure()
+        plt.title('Train and Test Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.plot(range(1, epoch+1), train_loss_list, color='blue',
+                linestyle='-', label='Train_Loss')
+        plt.plot(range(1, epoch+1), test_loss_list, color='red',
+                linestyle='--', label='Test_Loss')
+        plt.legend()  # 凡例
+        plt.show()  # 表示
 
-        plt.plot(data, color="red")
-        plt.ion()
-        print("グラフ表示")
-        plt.show()
-        plt.plot(data)
 
     def data_split(self, data_scaled):
         train_size = int(len(data_scaled) * 0.7)
@@ -56,16 +61,22 @@ class PredictionTrain:
 
     def train(self, train_data, val_data):
         model = LSTM(self.device)
-        loss_function = nn.MSELoss()
+        criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
         # 訓練ループ
-        epochs = 150
+        epochs = TrainConst.EPOCHS.value
         best_epoch = 0
         best_val_loss = float("inf")
+        train_loss_list = []  # 学習損失
+        test_loss_list = []  # 評価損失
         # best_model = None
 
         for epoch in range(epochs):
+            # 損失の初期化
+            train_loss = 0  # 学習損失
+            test_loss = 0  # 評価損失
+
             model.train()
             for seq, labels in train_data:
                 model.reset_hidden_state()  # Reset hidden state at the start of each batch
@@ -73,10 +84,14 @@ class PredictionTrain:
                 labels = labels.to(self.device).float()  # Ensure correct data type
                 optimizer.zero_grad()
                 y_pred = model(seq)
-                # print(f"y_pred size: {y_pred.size()}, labels size: {labels.size()}")  # サイズの確認
-                loss = loss_function(y_pred, labels)
+                loss = criterion(y_pred, labels)
                 loss.backward()
                 optimizer.step()
+                # ミニバッチごとの損失を蓄積
+                train_loss += loss.item()
+
+            # ミニバッチの平均の損失を計算
+            batch_train_loss = train_loss / len(train_data)
 
             # 検証損失の計算
             model.eval()
@@ -87,21 +102,32 @@ class PredictionTrain:
                     seq = seq.to(self.device).float()  # Ensure correct data type
                     labels = labels.to(self.device).float()  # Ensure correct data type
                     y_pred = model(seq)
-                    val_loss += loss_function(y_pred, labels).item()
+                    val_loss += criterion(y_pred, labels).item()
+                    # ミニバッチごとの損失を蓄積
+                    test_loss += loss.item()
+
+            # ミニバッチの平均の損失を計算
+            batch_test_loss = test_loss / len(val_data)
+
+            # 損失をリスト化して保存
+            train_loss_list.append(batch_train_loss)
+            test_loss_list.append(batch_test_loss)
+
             val_loss /= len(val_data)
 
             # 最良のモデルを保存
             if val_loss < best_val_loss:
-                # print("best!!!!!")
                 best_val_loss = val_loss
                 best_epoch = epoch + 1
                 # best_model = model.state_dict()
 
-            print(f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%) loss: {val_loss}')
+            print(f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%) Train_Loss: {batch_train_loss:.2E} Test_Loss: {batch_test_loss:.2E}')
 
         print(f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}')
 
         self.model_save(model, best_epoch)
+
+        return train_loss_list, test_loss_list
 
     def model_save(self, model, best_epoch):
         save_path = '../save'
@@ -123,6 +149,9 @@ def main():
     val_loader = TimeSeriesDataset.dataloader(val_data, TrainConst.BATCH_SIZE.value, TrainConst.SEQ_LENGTH.value)
     prediction_train.train(train_loader, val_loader)
     print("train finish!!")
+    print("plot display")
+    # train_loss_list, test_loss_list = prediction_train.train(train_loader, val_loader)
+    # prediction_train.plot_check(TrainConst.EPOCHS.value, train_loss_list, test_loss_list)
 
 
 if __name__ == "__main__":
