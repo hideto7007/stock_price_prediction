@@ -5,7 +5,8 @@ import torch # type: ignore
 import torch.nn as nn # type: ignore
 from matplotlib import pyplot as plt # type: ignore
 
-from common.common import LSTM, StockPriceData
+from common.common import StockPriceData
+from model.model import LSTM
 from dataset.dataset import TimeSeriesDataset
 from const.const import DFConst, TrainConst
 
