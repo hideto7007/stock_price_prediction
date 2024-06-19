@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt # type: ignore
 from common.common import StockPriceData
 from model.model import LSTM
 from dataset.dataset import TimeSeriesDataset
-from const.const import DFConst, TrainConst
+from const.const import DFConst, ScrapingConst, TrainConst
 
 
 class PredictionTrain:
@@ -133,13 +133,15 @@ class PredictionTrain:
         save_path = '../save'
         os.makedirs(save_path, exist_ok=True)
         print("model save")
-        torch.save(model.state_dict(), f'{save_path}/{TrainConst.BEST_MODEL.value}_{best_epoch}.pth')
+        torch.save(model.state_dict(), f'{save_path}/{TrainConst.BEST_MODEL.value}_{best_epoch}_brand_code_{self.brand_code}.pth')
 
 
 def main():
-    brand_code = "7203"
+    params = "トヨタ自動車"
 
-    prediction_train = PredictionTrain(brand_code)
+    brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
+
+    prediction_train = PredictionTrain(brand_info[params])
     data = prediction_train.min_max_scaler()
     train_data, val_data, test_data = prediction_train.data_split(data)
     print("create data deep learning model!!")
