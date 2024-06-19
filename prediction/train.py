@@ -40,13 +40,12 @@ class PredictionTrain:
         plt.title('Train and Test Loss')
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
-        plt.plot(range(1, epoch+1), train_loss_list, color='blue',
-                linestyle='-', label='Train_Loss')
-        plt.plot(range(1, epoch+1), test_loss_list, color='red',
-                linestyle='--', label='Test_Loss')
+        plt.plot(range(1, epoch + 1), train_loss_list, color='blue',
+                 linestyle='-', label='Train_Loss')
+        plt.plot(range(1, epoch + 1), test_loss_list, color='red',
+                 linestyle='--', label='Test_Loss')
         plt.legend()  # 凡例
         plt.show()  # 表示
-
 
     def data_split(self, data_scaled):
         train_size = int(len(data_scaled) * 0.7)

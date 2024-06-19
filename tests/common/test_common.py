@@ -7,7 +7,7 @@ from const.const import DFConst
 
 
 class TestStockPriceData(unittest.TestCase):
-    
+
     def _ex_json_data(self):
         return {
             "日本水産": "1332",
@@ -236,7 +236,7 @@ class TestStockPriceData(unittest.TestCase):
             "ファーストリテイリング": "9983",
             "ソフトバンクグループ": "9984"
         }
-        
+
     def _ex_data_frame(self):
 
         data = {
@@ -251,7 +251,7 @@ class TestStockPriceData(unittest.TestCase):
         df.set_index('Date', inplace=True)
 
         return df
-        
+
     def _add_avg_ex_data_frame(self):
 
         data = {
@@ -270,28 +270,28 @@ class TestStockPriceData(unittest.TestCase):
 
     def test_get_data_success_01(self):
         """
-        正常系: データ数が一致すること        
+        正常系: データ数が一致すること
         """
         result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
         ex = 10
         self.assertEqual(len(result), ex)
-            
+
     def test_get_data_success_02(self):
         """
-        正常系: カラム数が一致すること        
+        正常系: カラム数が一致すること
         """
         result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
         ex = 5
         self.assertEqual(len(result.columns), ex)
-            
+
     def test_get_data_success_03(self):
         """
-        正常系: データが一致すること        
+        正常系: データが一致すること
         """
         result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
         ex = self._ex_data_frame()
         self.assertTrue(result[DFConst.COLUMN.value].equals(ex), "The data frames should be equal")
-    
+
     def test_get_data_success_04(self):
         """
         正常系: データ数が空であること 存在しない銘柄コードの為
@@ -299,7 +299,7 @@ class TestStockPriceData(unittest.TestCase):
         result = StockPriceData.get_data("720311")
         ex = 0
         self.assertEqual(len(result), ex)
-    
+
     def test_get_text_data_success_01(self):
         """
         正常系: テキストで読み込んだjsonデータが一致していること
@@ -307,10 +307,10 @@ class TestStockPriceData(unittest.TestCase):
         result = StockPriceData.get_text_data()
         ex = self._ex_json_data()
         self.assertEqual(result, ex)
-            
+
     def test_stock_price_average_success_01(self):
         """
-        正常系: 平均値のデータを追加してデータが一致していること      
+        正常系: 平均値のデータを追加してデータが一致していること
         """
         df = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
         result = df.copy()[DFConst.COLUMN.value]
@@ -320,22 +320,22 @@ class TestStockPriceData(unittest.TestCase):
 
     def test_moving_average_success_01(self):
         """
-        正常系: 移動平均値が一致していること データ数が奇数の場合      
+        正常系: 移動平均値が一致していること データ数が奇数の場合
         """
         data = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         result = StockPriceData.moving_average(data)
         ex = [3.0, 4.0, 5.0, 6.0, 7.0]
         self.assertEqual(result, ex)
-          
+
     def test_moving_average_success_02(self):
         """
-        正常系: 移動平均値が一致していること データ数が偶数の場合  
+        正常系: 移動平均値が一致していること データ数が偶数の場合
         """
         data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         result = StockPriceData.moving_average(data)
         ex = [4.0, 5.0, 6.0, 7.0]
         self.assertEqual(result, ex)
-          
+
     def test_moving_average_boundary_value_01(self):
         """
         正常系: 境界値チェック
