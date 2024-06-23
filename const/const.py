@@ -22,7 +22,10 @@ class ErrorMessage(Enum):
 
 class DFConst(Enum):
     COLUMN = ["Open", "High", "Low", "Close"]
+    DROP_COLUMN = ["Open", "Low", "High", "Volume"]
     AVERAGE = "average"
+    DATE = "Date"
+    CLOSE = "Close"
 
 
 class TrainConst(Enum):
@@ -30,6 +33,18 @@ class TrainConst(Enum):
     CPU = "cpu"
     # ハイパーパラメータ
     EPOCHS = 150
-    BATCH_SIZE = 64
-    SEQ_LENGTH = 10  # 10日分のデータを一つのシーケンスとして扱う
     BEST_MODEL = "best_model_weight"
+
+
+class DataSetConst(Enum):
+    BATCH_SIZE = 128
+    TEST_LEN = 504  # 2年分(504日分)
+    SEQ_LENGTH = 25
+    MA = str(SEQ_LENGTH) + "MA"
+    NUM_WORKERS = 2
+
+
+class LSTMConst(Enum):
+    INPUT_SIZE = 1
+    HIDDEN_LAYER_SIZE = 200
+    OUTPUT_SIZE = 1

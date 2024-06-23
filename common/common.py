@@ -1,8 +1,9 @@
 import json
 import datetime as dt
+import torch # type: ignore
 from pandas_datareader import data # type: ignore
 
-from const.const import ScrapingConst, DFConst
+from const.const import ScrapingConst, DFConst, DataSetConst
 
 
 class StockPriceData:
@@ -42,3 +43,29 @@ class StockPriceData:
             data = json.load(file)
 
         return data
+    
+    @classmethod
+    def data_split(cls, data, label):
+        test_len = int(DataSetConst.TEST_LEN.value)
+        train_len = int(data.shape[0] - test_len)
+
+        # 訓練データ
+        train_data = data[:train_len]
+        train_label = label[:train_len]
+
+        # テストデータ
+        test_data = data[train_len:]
+        test_label = label[train_len:]
+
+        # データの形状を確認
+        print("train_data size: {}".format(train_data.shape))
+        print("test_data size: {}".format(test_data.shape))
+        print("train_label size: {}".format(train_label.shape))
+        print("test_label size: {}".format(test_label.shape))
+
+        train_x = torch.Tensor(train_data)
+        test_x = torch.Tensor(test_data)
+        train_y = torch.Tensor(train_label)
+        test_y = torch.Tensor(test_label)
+        
+        return train_x, train_y, test_x, test_y
