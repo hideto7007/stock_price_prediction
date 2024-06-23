@@ -1,5 +1,6 @@
 # ベースイメージを指定
 FROM ubuntu:22.04
+ENV TZ=Asia/Tokyo
 
 # 環境変数を設定
 ENV DEBIAN_FRONTEND=noninteractive
