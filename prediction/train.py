@@ -9,6 +9,9 @@ from common.common import StockPriceData
 from model.model import LSTM
 from dataset.dataset import TimeSeriesDataset
 from const.const import DFConst, ScrapingConst, TrainConst, DataSetConst
+from common.logger import Logger
+
+logger = Logger()
 
 
 class PredictionTrain:
@@ -27,10 +30,10 @@ class PredictionTrain:
 
         ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
         scaler = StandardScaler()
-        print(ma.shape)
+        logger.info(ma.shape)
         ma_std = scaler.fit_transform(ma)
-        print("ma: {}".format(ma))
-        print("ma_std: {}".format(ma_std))
+        logger.info("ma: {}".format(ma))
+        logger.info("ma_std: {}".format(ma_std))
 
         return ma_std, scaler
 
@@ -56,12 +59,13 @@ class PredictionTrain:
         # ndarrayに変換
         data = np.array(data)
         label = np.array(label)
-        print("data size: {}".format(data.shape))
-        print("label size: {}".format(label.shape))
+        logger.info("data size: {}".format(data.shape))
+        logger.info("label size: {}".format(label.shape))
 
         return data, label
 
     def train(self, train_data, val_data):
+        logger.info("learning start")
         model = LSTM().to(self.device)
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -119,9 +123,9 @@ class PredictionTrain:
                 best_val_loss = val_loss
                 best_epoch = epoch + 1
 
-            print(f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%) Train_Loss: {batch_train_loss:.2E} Val_Loss: {batch_val_loss:.2E}')
+            logger.info(f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%) Train_Loss: {batch_train_loss:.2E} Val_Loss: {batch_val_loss:.2E}')
 
-        print(f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}')
+        logger.info(f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}')
 
         self.model_save(model, best_epoch)
 
@@ -130,7 +134,7 @@ class PredictionTrain:
     def model_save(self, model, best_epoch):
         save_path = '../save'
         os.makedirs(save_path, exist_ok=True)
-        print("model save")
+        logger.info("model save")
         torch.save(model.state_dict(), f'{save_path}/{TrainConst.BEST_MODEL.value}_{best_epoch}_brand_code_{self.brand_code}_seq_len_{DataSetConst.SEQ_LENGTH.value}.pth')
 
 
@@ -152,7 +156,7 @@ def main():
 
     # DataLoader の作成
     train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
-    print("train finish!!")
+    logger.info("train finish!!")
     # train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
     prediction_train.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
 

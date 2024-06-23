@@ -7,6 +7,9 @@ from dataset.dataset import TimeSeriesDataset
 from const.const import ScrapingConst
 from prediction.train import PredictionTrain
 from common.common import StockPriceData
+from common.logger import Logger
+
+logger = Logger()
 
 
 class PredictionTest(PredictionTrain):
@@ -20,7 +23,7 @@ class PredictionTest(PredictionTrain):
         return model
 
     def predict(self, model, test_data):
-        print("test learning start")
+        logger.info("test learning start")
         model.eval()
         with torch.no_grad():
             # 初期化
@@ -61,7 +64,7 @@ def main():
 
     # 予測の実行
     pred_ma, true_ma = prediction_test.predict(model, test_loader)
-    print("test learning end")
+    logger.info("test learning end")
     pred_ma = [[elem] for lst in pred_ma for elem in lst]
     true_ma = [[elem] for lst in true_ma for elem in lst]
 
@@ -72,7 +75,7 @@ def main():
     print(true_ma)
 
     mae = mean_absolute_error(true_ma, pred_ma)
-    print("MAE: {:.3f}".format(mae))
+    logger.info("MAE: {:.3f}".format(mae))
 
     # 予測結果のプロット
     # plt.figure()
