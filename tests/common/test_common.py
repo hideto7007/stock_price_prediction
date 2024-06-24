@@ -1,9 +1,12 @@
 import unittest
 import datetime as dt
 import pandas as pd
+import numpy as np # type: ignore
+import torch # type: ignore
+from sklearn.preprocessing import StandardScaler # type: ignore
 from common.common import StockPriceData
 
-from const.const import DFConst
+from const.const import DFConst, DataSetConst, ScrapingConst
 
 
 class TestStockPriceData(unittest.TestCase):
@@ -346,3 +349,44 @@ class TestStockPriceData(unittest.TestCase):
         for x, ex in zip(data, ex_list):
             result = StockPriceData.moving_average(x)
             self.assertEqual(result, ex)
+
+    def test_data_split_01(self):
+        """
+        正常系: 学習データが正しく生成されていること
+        """
+        params = "トヨタ自動車"
+
+        brand_info = StockPriceData.get_text_data("./" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
+
+        get_data = StockPriceData.get_data(brand_info[params], dt.date(2000,1,1), dt.date(2005,2,1))
+        get_data = get_data.reset_index()
+        get_data = get_data.drop(DFConst.DROP_COLUMN.value, axis=1)
+        get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
+        get_data[DataSetConst.MA.value] = get_data[DFConst.CLOSE.value].rolling(window=DataSetConst.SEQ_LENGTH.value, min_periods=0).mean()
+
+        # 標準化
+        ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
+        scaler = StandardScaler()
+        ma_std = scaler.fit_transform(ma)
+
+        data = []
+        label = []
+        # 何日分を学習させるか決める
+        for i in range(len(ma_std) - DataSetConst.SEQ_LENGTH.value):
+            data.append(ma_std[i:i + DataSetConst.SEQ_LENGTH.value])
+            label.append(ma_std[i + DataSetConst.SEQ_LENGTH.value])
+        # ndarrayに変換
+        data = np.array(data)
+        label = np.array(label)
+
+        train_x_ex = torch.Size([974, 25, 1])
+        train_y_ex = torch.Size([974, 1])
+        test_x_ex = torch.Size([252, 25, 1])
+        test_y_ex = torch.Size([252, 1])
+
+        train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label)
+
+        self.assertEqual(train_x.shape, train_x_ex)
+        self.assertEqual(train_y.shape, train_y_ex)
+        self.assertEqual(test_x.shape, test_x_ex)
+        self.assertEqual(test_y.shape, test_y_ex)
