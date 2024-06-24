@@ -58,9 +58,9 @@ class PredictionTrain:
         plt.xlabel('Date')
         plt.ylabel('Stock Price')
         plt.plot(df[DFConst.DATE.value], df[DFConst.CLOSE.value], color='black',
-                linestyle='-', label='close')
+                 linestyle='-', label='close')
         plt.plot(df[DFConst.DATE.value], df[DataSetConst.MA.value], color='red',
-                linestyle='--', label='25MA')
+                 linestyle='--', label='25MA')
         plt.legend()  # 凡例
         plt.savefig("./ping/Z_Holdings.png")
         plt.show()
@@ -140,7 +140,6 @@ class PredictionTrain:
             logger.info(f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%) Train_Loss: {batch_train_loss:.2E} Val_Loss: {batch_val_loss:.2E}')
 
         logger.info(f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}')
-
 
         return train_loss_list, val_loss_list
 

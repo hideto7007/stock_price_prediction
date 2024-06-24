@@ -1,10 +1,7 @@
 import os
 import torch
 from sklearn.metrics import mean_absolute_error
-# import matplotlib
-# matplotlib.use('gtk3agg')
 from matplotlib import pyplot as plt # type: ignore PySide2
-# plt.ion()
 
 from model.model import LSTM
 from dataset.dataset import TimeSeriesDataset
@@ -45,21 +42,20 @@ class PredictionTest(PredictionTrain):
         get_data = StockPriceData.get_data(self.brand_code)
         get_data = get_data.reset_index()
         get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
-        date = get_data[DFConst.DATE.value][-1*DataSetConst.TEST_LEN.value:]  # テストデータの日付
-        test_close = get_data[DFConst.CLOSE.value][-1*DataSetConst.TEST_LEN.value:].values.reshape(-1)  # テストデータの終値
+        date = get_data[DFConst.DATE.value][-1 * DataSetConst.TEST_LEN.value:] # テストデータの日付
+        test_close = get_data[DFConst.CLOSE.value][-1 * DataSetConst.TEST_LEN.value:].values.reshape(-1)  # テストデータの終値
         true_ma = [i[0] for i in true_ma]
         pred_ma = [i[0] for i in pred_ma]
-        print(len(date), len(true_ma), len(pred_ma))
         plt.figure()
         plt.title('Info Stock Price Prediction')
         plt.xlabel('Date')
         plt.ylabel('Stock Price')
         plt.plot(date, test_close, color='black',
-                linestyle='-', label='close')
+                 linestyle='-', label='close')
         plt.plot(date, true_ma, color='dodgerblue',
-                linestyle='--', label='true_25MA')
+                 linestyle='--', label='true_25MA')
         plt.plot(date, pred_ma, color='red',
-                linestyle=':', label='predicted_25MA')
+                 linestyle=':', label='predicted_25MA')
         plt.legend()  # 凡例
         plt.xticks(rotation=30)
         plt.savefig("./ping/predicted.png")
@@ -73,7 +69,7 @@ def main():
     brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
 
     for i in os.listdir(model_path):
-        if brand_info[params] in i:
+        if brand_info[params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
             model_path += i
             break
 
