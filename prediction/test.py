@@ -1,10 +1,14 @@
 import os
 import torch
 from sklearn.metrics import mean_absolute_error
+# import matplotlib
+# matplotlib.use('gtk3agg')
+from matplotlib import pyplot as plt # type: ignore PySide2
+# plt.ion()
 
 from model.model import LSTM
 from dataset.dataset import TimeSeriesDataset
-from const.const import ScrapingConst
+from const.const import DFConst, DataSetConst, ScrapingConst
 from prediction.train import PredictionTrain
 from common.common import StockPriceData
 from common.logger import Logger
@@ -37,6 +41,30 @@ class PredictionTest(PredictionTrain):
                 true_ma.append(label.view(-1).tolist())
         return pred_ma, true_ma
 
+    def plot(self, true_ma, pred_ma):
+        get_data = StockPriceData.get_data(self.brand_code)
+        get_data = get_data.reset_index()
+        get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
+        date = get_data[DFConst.DATE.value][-1*DataSetConst.TEST_LEN.value:]  # テストデータの日付
+        test_close = get_data[DFConst.CLOSE.value][-1*DataSetConst.TEST_LEN.value:].values.reshape(-1)  # テストデータの終値
+        true_ma = [i[0] for i in true_ma]
+        pred_ma = [i[0] for i in pred_ma]
+        print(len(date), len(true_ma), len(pred_ma))
+        plt.figure()
+        plt.title('Info Stock Price Prediction')
+        plt.xlabel('Date')
+        plt.ylabel('Stock Price')
+        plt.plot(date, test_close, color='black',
+                linestyle='-', label='close')
+        plt.plot(date, true_ma, color='dodgerblue',
+                linestyle='--', label='true_25MA')
+        plt.plot(date, pred_ma, color='red',
+                linestyle=':', label='predicted_25MA')
+        plt.legend()  # 凡例
+        plt.xticks(rotation=30)
+        plt.savefig("./ping/predicted.png")
+        plt.show()
+
 
 def main():
     model_path = '../save/'
@@ -53,6 +81,7 @@ def main():
     prediction_test = PredictionTest(brand_info[params])
 
     # モデルのロード
+    logger.info(model_path)
     model = prediction_test.load_model(model_path)
 
     # 学習データ作成
@@ -71,26 +100,11 @@ def main():
     pred_ma = scaler.inverse_transform(pred_ma)
     true_ma = scaler.inverse_transform(true_ma)
 
-    print(pred_ma)
-    print(true_ma)
-
     mae = mean_absolute_error(true_ma, pred_ma)
     logger.info("MAE: {:.3f}".format(mae))
 
     # 予測結果のプロット
-    # plt.figure()
-    # plt.title('YHOO Stock Price Prediction')
-    # plt.xlabel('Date')
-    # plt.ylabel('Stock Price')
-    # plt.plot(test_data, color='black',
-    #         linestyle='-', label='close')
-    # plt.plot(test_data, true_ma, color='dodgerblue',
-    #         linestyle='--', label='true_25MA')
-    # plt.plot(test_data, pred_ma, color='red',
-    #         linestyle=':', label='predicted_25MA')
-    # plt.legend()  # 凡例
-    # plt.xticks(rotation=30)
-    # plt.show()
+    prediction_test.plot(true_ma, pred_ma)
 
 
 if __name__ == "__main__":

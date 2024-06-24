@@ -38,7 +38,7 @@ class TrainConst(Enum):
 
 class DataSetConst(Enum):
     BATCH_SIZE = 128
-    TEST_LEN = 504  # 2年分(504日分)
+    TEST_LEN = 252  # 2年分(504日分)
     SEQ_LENGTH = 25
     MA = str(SEQ_LENGTH) + "MA"
     NUM_WORKERS = 2

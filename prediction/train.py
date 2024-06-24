@@ -28,6 +28,8 @@ class PredictionTrain:
         get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
         get_data[DataSetConst.MA.value] = get_data[DFConst.CLOSE.value].rolling(window=DataSetConst.SEQ_LENGTH.value, min_periods=0).mean()
 
+        self.get_data_check(get_data)
+
         ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
         scaler = StandardScaler()
         logger.info(ma.shape)
@@ -47,7 +49,21 @@ class PredictionTrain:
         plt.plot(range(1, epoch + 1), val_loss_list, color='red',
                  linestyle='--', label='Test_Loss')
         plt.legend()  # 凡例
+        plt.savefig("./ping/train_and_test_loss.png")
         plt.show()  # 表示
+
+    def get_data_check(self, df):
+        plt.figure()
+        plt.title('Z_Holdings')
+        plt.xlabel('Date')
+        plt.ylabel('Stock Price')
+        plt.plot(df[DFConst.DATE.value], df[DFConst.CLOSE.value], color='black',
+                linestyle='-', label='close')
+        plt.plot(df[DFConst.DATE.value], df[DataSetConst.MA.value], color='red',
+                linestyle='--', label='25MA')
+        plt.legend()  # 凡例
+        plt.savefig("./ping/Z_Holdings.png")
+        plt.show()
 
     def make_data(self, ma_std):
         data = []
@@ -68,7 +84,7 @@ class PredictionTrain:
         logger.info("learning start")
         model = LSTM().to(self.device)
         criterion = nn.MSELoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(model.parameters())
 
         # 訓練ループ
         epochs = TrainConst.EPOCHS.value
@@ -150,15 +166,19 @@ def main():
     data_std, _ = prediction_train.data_std()
     data, label = prediction_train.make_data(data_std)
     train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label)
-    # print("create data deep learning model!!")
     train_loader = TimeSeriesDataset.dataloader(train_x, train_y)
     val_loader = TimeSeriesDataset.dataloader(test_x, test_y)
 
-    # DataLoader の作成
-    train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
-    logger.info("train finish!!")
+    for data, label in train_loader:
+        print("batch data size: {}".format(data.size()))  # バッチの入力データサイズ
+        print("batch label size: {}".format(label.size()))  # バッチのラベルサイズ
+        break
+
+    # # DataLoader の作成
     # train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
-    prediction_train.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
+    # logger.info("train finish!!")
+    # # train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
+    # prediction_train.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
 
 
 if __name__ == "__main__":
