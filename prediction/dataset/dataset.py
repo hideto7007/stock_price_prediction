@@ -16,8 +16,12 @@ class TimeSeriesDataset(TensorDataset):
     def __len__(self):
         return self.tensors[0].size(0)
 
-    def dataloader(data_x, data_y, batch_size=DataSetConst.BATCH_SIZE.value, num_workers=DataSetConst.NUM_WORKERS.value):
+    def dataloader(data_x, data_y, shuffle=True):
         dataset = TimeSeriesDataset(data_x, data_y)
-        loader = DataLoader(dataset, batch_size=batch_size,
-                            shuffle=True, num_workers=num_workers)
+        if shuffle:
+            loader = DataLoader(dataset=dataset, batch_size=DataSetConst.BATCH_SIZE.value,
+                                shuffle=shuffle, num_workers=DataSetConst.NUM_WORKERS.value)
+        else:
+            loader = DataLoader(dataset=dataset, batch_size=DataSetConst.BATCH_SIZE.value,
+                                shuffle=shuffle, num_workers=DataSetConst.NUM_WORKERS.value)
         return loader

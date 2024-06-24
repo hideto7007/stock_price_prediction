@@ -68,7 +68,6 @@ class PredictionTest(PredictionTrain):
 
 def main():
     model_path = '../save/'
-    # test_data_path = 'path_to_test_data.npy'
     params = "トヨタ自動車"
 
     brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
@@ -89,7 +88,7 @@ def main():
     data, label = prediction_test.make_data(data_std)
     _, _, test_x, test_y = StockPriceData.data_split(data, label)
 
-    test_loader = TimeSeriesDataset.dataloader(test_x, test_y)
+    test_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
 
     # 予測の実行
     pred_ma, true_ma = prediction_test.predict(model, test_loader)

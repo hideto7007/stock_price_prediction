@@ -30,9 +30,9 @@ class PredictionTrain:
 
         self.get_data_check(get_data)
 
+        # 標準化
         ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
         scaler = StandardScaler()
-        logger.info(ma.shape)
         ma_std = scaler.fit_transform(ma)
         logger.info("ma: {}".format(ma))
         logger.info("ma_std: {}".format(ma_std))
@@ -115,13 +115,12 @@ class PredictionTrain:
 
             # 検証損失の計算
             model.eval()
-            val_loss = 0
             with torch.no_grad():
                 for data, labels in val_data:
                     data = data.to(self.device)
                     labels = labels.to(self.device)
                     y_pred = model(data)
-                    val_loss += criterion(y_pred, labels)
+                    loss = criterion(y_pred, labels)
                     # ミニバッチごとの損失を蓄積
                     val_loss += loss.item()
 
@@ -132,26 +131,24 @@ class PredictionTrain:
             train_loss_list.append(batch_train_loss)
             val_loss_list.append(batch_val_loss)
 
-            val_loss /= len(val_data)
-
             # 最良のモデルを保存
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 best_epoch = epoch + 1
+                self.model_save(model)
 
             logger.info(f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%) Train_Loss: {batch_train_loss:.2E} Val_Loss: {batch_val_loss:.2E}')
 
         logger.info(f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}')
 
-        self.model_save(model, best_epoch)
 
         return train_loss_list, val_loss_list
 
-    def model_save(self, model, best_epoch):
+    def model_save(self, model):
         save_path = '../save'
         os.makedirs(save_path, exist_ok=True)
         logger.info("model save")
-        torch.save(model.state_dict(), f'{save_path}/{TrainConst.BEST_MODEL.value}_{best_epoch}_brand_code_{self.brand_code}_seq_len_{DataSetConst.SEQ_LENGTH.value}.pth')
+        torch.save(model.state_dict(), f'{save_path}/{TrainConst.BEST_MODEL.value}_brand_code_{self.brand_code}_seq_len_{DataSetConst.SEQ_LENGTH.value}.pth')
 
 
 def main():
@@ -167,18 +164,12 @@ def main():
     data, label = prediction_train.make_data(data_std)
     train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label)
     train_loader = TimeSeriesDataset.dataloader(train_x, train_y)
-    val_loader = TimeSeriesDataset.dataloader(test_x, test_y)
+    val_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
 
-    for data, label in train_loader:
-        print("batch data size: {}".format(data.size()))  # バッチの入力データサイズ
-        print("batch label size: {}".format(label.size()))  # バッチのラベルサイズ
-        break
-
-    # # DataLoader の作成
-    # train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
-    # logger.info("train finish!!")
-    # # train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
-    # prediction_train.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
+    # DataLoader の作成
+    train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
+    logger.info("train finish!!")
+    prediction_train.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
 
 
 if __name__ == "__main__":
