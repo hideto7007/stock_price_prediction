@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt # type: ignore PySide2
 
 from model.model import LSTM
 from dataset.dataset import TimeSeriesDataset
-from const.const import DFConst, DataSetConst, ScrapingConst
+from const.const import DFConst, DataSetConst
 from prediction.train import PredictionTrain
 from common.common import StockPriceData
 from common.logger import Logger
@@ -14,8 +14,15 @@ logger = Logger()
 
 
 class PredictionTest(PredictionTrain):
-    def __init__(self, brand_code):
-        super().__init__(brand_code)
+    def __init__(self, params):
+        super().__init__(params)
+        self.model_path = '../save/'
+
+    def get_model_path(self):
+        for i in os.listdir(self.model_path):
+            if self.brand_info[params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+                self.model_path += i
+                break
 
     def load_model(self, model_path):
         model = LSTM()
@@ -36,6 +43,20 @@ class PredictionTest(PredictionTrain):
                 y_pred = model(data)
                 pred_ma.append(y_pred.view(-1).tolist())
                 true_ma.append(label.view(-1).tolist())
+
+        logger.info("test learning end")
+        return pred_ma, true_ma
+
+    def predict_result(self, pred_ma, true_ma, scaler):
+        pred_ma = [[elem] for lst in pred_ma for elem in lst]
+        true_ma = [[elem] for lst in true_ma for elem in lst]
+
+        pred_ma = scaler.inverse_transform(pred_ma)
+        true_ma = scaler.inverse_transform(true_ma)
+
+        mae = mean_absolute_error(true_ma, pred_ma)
+        logger.info("MAE: {:.3f}".format(mae))
+
         return pred_ma, true_ma
 
     def plot(self, true_ma, pred_ma):
@@ -61,50 +82,35 @@ class PredictionTest(PredictionTrain):
         plt.savefig("./ping/predicted.png")
         plt.show()
 
+    def main(self):
+        try:
+            # モデルのロード
+            self.get_model_path()
+            logger.info(f"Loading model from path: {self.model_path}")
+            model = self.load_model(self.model_path)
 
-def main():
-    try:
-        model_path = '../save/'
-        params = "トヨタ自動車"
+            # 学習データ作成
+            data_std, scaler = self.data_std()
+            data, label = self.make_data(data_std)
+            _, _, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
 
-        brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
+            # DataLoaderの作成
+            test_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
 
-        for i in os.listdir(model_path):
-            if brand_info[params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
-                model_path += i
-                break
+            # 予測の実行
+            pred_ma, true_ma = self.predict(model, test_loader)
+            pred_ma, true_ma = self.predict_result(pred_ma, true_ma, scaler)
 
-        prediction_test = PredictionTest(brand_info[params])
-
-        # モデルのロード
-        logger.info(f"Loading model from path: {model_path}")
-        model = prediction_test.load_model(model_path)
-
-        # 学習データ作成
-        data_std, scaler = prediction_test.data_std()
-        data, label = prediction_test.make_data(data_std)
-        _, _, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
-
-        test_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
-
-        # 予測の実行
-        pred_ma, true_ma = prediction_test.predict(model, test_loader)
-        logger.info("test learning end")
-        pred_ma = [[elem] for lst in pred_ma for elem in lst]
-        true_ma = [[elem] for lst in true_ma for elem in lst]
-
-        pred_ma = scaler.inverse_transform(pred_ma)
-        true_ma = scaler.inverse_transform(true_ma)
-
-        mae = mean_absolute_error(true_ma, pred_ma)
-        logger.info("MAE: {:.3f}".format(mae))
-
-        # 予測結果のプロット
-        prediction_test.plot(true_ma, pred_ma)
-    except Exception as e:
-        logger.error(e)
-        raise e
+            # 予測結果のプロット
+            logger.info("save plot")
+            self.plot(true_ma, pred_ma)
+        except Exception as e:
+            logger.error(e)
+            raise e
 
 
 if __name__ == "__main__":
-    main()
+    params = "トヨタ自動車"
+    # インスタンス
+    prediction_test = PredictionTest(params)
+    prediction_test.main()

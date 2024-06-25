@@ -15,8 +15,9 @@ logger = Logger()
 
 
 class PredictionTrain:
-    def __init__(self, brand_code):
-        self.brand_code = brand_code
+    def __init__(self, params):
+        self.brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
+        self.brand_code = self.brand_info[params]
         self.device = torch.device(TrainConst.CUDA.value
                                    if torch.cuda.is_available()
                                    else TrainConst.CPU.value)
@@ -149,31 +150,30 @@ class PredictionTrain:
         logger.info("model save")
         torch.save(model.state_dict(), f'{save_path}/{TrainConst.BEST_MODEL.value}_brand_code_{self.brand_code}_seq_len_{DataSetConst.SEQ_LENGTH.value}.pth')
 
+    def main(self):
+        try:
+            # 学習データ作成
+            data_std, _ = self.data_std()
+            data, label = self.make_data(data_std)
+            train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
 
-def main():
-    try:
-        params = "トヨタ自動車"
+            # DataLoaderの作成
+            train_loader = TimeSeriesDataset.dataloader(train_x, train_y)
+            val_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
 
-        brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
+            # 学習
+            train_loss_list, val_loss_list = self.train(train_loader, val_loader)
+            logger.info("train finish!!")
 
-        # インスタンス
-        prediction_train = PredictionTrain(brand_info[params])
-
-        # 学習データ作成
-        data_std, _ = prediction_train.data_std()
-        data, label = prediction_train.make_data(data_std)
-        train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
-        train_loader = TimeSeriesDataset.dataloader(train_x, train_y)
-        val_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
-
-        # DataLoader の作成
-        train_loss_list, val_loss_list = prediction_train.train(train_loader, val_loader)
-        logger.info("train finish!!")
-        prediction_train.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
-    except Exception as e:
-        logger.error(e)
-        raise e
+            # lossを確認
+            self.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
+        except Exception as e:
+            logger.error(e)
+            raise e
 
 
 if __name__ == "__main__":
-    main()
+    params = "トヨタ自動車"
+    # インスタンス
+    prediction_train = PredictionTrain(params)
+    prediction_train.main()
