@@ -45,8 +45,8 @@ class StockPriceData:
         return data
     
     @classmethod
-    def data_split(cls, data, label):
-        test_len = int(DataSetConst.TEST_LEN.value)
+    def data_split(cls, data, label, len):
+        test_len = int(len)
         train_len = int(data.shape[0] - test_len)
 
         # 訓練データ

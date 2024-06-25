@@ -53,9 +53,9 @@ class PredictionTest(PredictionTrain):
         plt.plot(date, test_close, color='black',
                  linestyle='-', label='close')
         plt.plot(date, true_ma, color='dodgerblue',
-                 linestyle='--', label='true_25MA')
+                 linestyle='--', label=f'true_{DataSetConst.MA.value}')
         plt.plot(date, pred_ma, color='red',
-                 linestyle=':', label='predicted_25MA')
+                 linestyle=':', label=f'predicted_{DataSetConst.MA.value}')
         plt.legend()  # 凡例
         plt.xticks(rotation=30)
         plt.savefig("./ping/predicted.png")
@@ -63,43 +63,47 @@ class PredictionTest(PredictionTrain):
 
 
 def main():
-    model_path = '../save/'
-    params = "トヨタ自動車"
+    try:
+        model_path = '../save/'
+        params = "トヨタ自動車"
 
-    brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
+        brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
 
-    for i in os.listdir(model_path):
-        if brand_info[params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
-            model_path += i
-            break
+        for i in os.listdir(model_path):
+            if brand_info[params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+                model_path += i
+                break
 
-    prediction_test = PredictionTest(brand_info[params])
+        prediction_test = PredictionTest(brand_info[params])
 
-    # モデルのロード
-    logger.info(model_path)
-    model = prediction_test.load_model(model_path)
+        # モデルのロード
+        logger.info(f"Loading model from path: {model_path}")
+        model = prediction_test.load_model(model_path)
 
-    # 学習データ作成
-    data_std, scaler = prediction_test.data_std()
-    data, label = prediction_test.make_data(data_std)
-    _, _, test_x, test_y = StockPriceData.data_split(data, label)
+        # 学習データ作成
+        data_std, scaler = prediction_test.data_std()
+        data, label = prediction_test.make_data(data_std)
+        _, _, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
 
-    test_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
+        test_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
 
-    # 予測の実行
-    pred_ma, true_ma = prediction_test.predict(model, test_loader)
-    logger.info("test learning end")
-    pred_ma = [[elem] for lst in pred_ma for elem in lst]
-    true_ma = [[elem] for lst in true_ma for elem in lst]
+        # 予測の実行
+        pred_ma, true_ma = prediction_test.predict(model, test_loader)
+        logger.info("test learning end")
+        pred_ma = [[elem] for lst in pred_ma for elem in lst]
+        true_ma = [[elem] for lst in true_ma for elem in lst]
 
-    pred_ma = scaler.inverse_transform(pred_ma)
-    true_ma = scaler.inverse_transform(true_ma)
+        pred_ma = scaler.inverse_transform(pred_ma)
+        true_ma = scaler.inverse_transform(true_ma)
 
-    mae = mean_absolute_error(true_ma, pred_ma)
-    logger.info("MAE: {:.3f}".format(mae))
+        mae = mean_absolute_error(true_ma, pred_ma)
+        logger.info("MAE: {:.3f}".format(mae))
 
-    # 予測結果のプロット
-    prediction_test.plot(true_ma, pred_ma)
+        # 予測結果のプロット
+        prediction_test.plot(true_ma, pred_ma)
+    except Exception as e:
+        logger.error(e)
+        raise e
 
 
 if __name__ == "__main__":

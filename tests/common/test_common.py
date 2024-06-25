@@ -355,6 +355,8 @@ class TestStockPriceData(unittest.TestCase):
         正常系: 学習データが正しく生成されていること
         """
         params = "トヨタ自動車"
+        test_seq = 25
+        test_len = 252
 
         brand_info = StockPriceData.get_text_data("./" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
 
@@ -362,7 +364,8 @@ class TestStockPriceData(unittest.TestCase):
         get_data = get_data.reset_index()
         get_data = get_data.drop(DFConst.DROP_COLUMN.value, axis=1)
         get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
-        get_data[DataSetConst.MA.value] = get_data[DFConst.CLOSE.value].rolling(window=DataSetConst.SEQ_LENGTH.value, min_periods=0).mean()
+
+        get_data[DataSetConst.MA.value] = get_data[DFConst.CLOSE.value].rolling(window=test_seq, min_periods=0).mean()
 
         # 標準化
         ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
@@ -372,9 +375,9 @@ class TestStockPriceData(unittest.TestCase):
         data = []
         label = []
         # 何日分を学習させるか決める
-        for i in range(len(ma_std) - DataSetConst.SEQ_LENGTH.value):
-            data.append(ma_std[i:i + DataSetConst.SEQ_LENGTH.value])
-            label.append(ma_std[i + DataSetConst.SEQ_LENGTH.value])
+        for i in range(len(ma_std) - test_seq):
+            data.append(ma_std[i:i + test_seq])
+            label.append(ma_std[i + test_seq])
         # ndarrayに変換
         data = np.array(data)
         label = np.array(label)
@@ -384,7 +387,7 @@ class TestStockPriceData(unittest.TestCase):
         test_x_ex = torch.Size([252, 25, 1])
         test_y_ex = torch.Size([252, 1])
 
-        train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label)
+        train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label, test_len)
 
         self.assertEqual(train_x.shape, train_x_ex)
         self.assertEqual(train_y.shape, train_y_ex)
