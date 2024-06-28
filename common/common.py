@@ -43,7 +43,7 @@ class StockPriceData:
             data = json.load(file)
 
         return data
-    
+
     @classmethod
     def data_split(cls, data, label, len):
         test_len = int(len)
@@ -67,5 +67,5 @@ class StockPriceData:
         test_x = torch.Tensor(test_data)
         train_y = torch.Tensor(train_label)
         test_y = torch.Tensor(test_label)
-        
+
         return train_x, train_y, test_x, test_y

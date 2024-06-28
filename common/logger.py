@@ -11,6 +11,7 @@ class ISOTimeFormatter(logging.Formatter):
 
         return s
 
+
 logger = logging.getLogger()
 fmt = ISOTimeFormatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S') # logging.Formatterの代わりに自作のクラスを使う
 

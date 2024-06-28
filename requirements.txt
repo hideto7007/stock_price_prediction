@@ -11,3 +11,4 @@ requests
 matplotlib
 scikit-learn
 fastapi
+jpholiday
