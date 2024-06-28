@@ -6,8 +6,8 @@ import torch.nn as nn # type: ignore
 from matplotlib import pyplot as plt # type: ignore
 
 from common.common import StockPriceData
-from model.model import LSTM
-from dataset.dataset import TimeSeriesDataset
+from prediction.model.model import LSTM
+from prediction.dataset.dataset import TimeSeriesDataset
 from const.const import DFConst, ScrapingConst, TrainConst, DataSetConst
 from common.logger import Logger
 
@@ -16,7 +16,8 @@ logger = Logger()
 
 class PredictionTrain:
     def __init__(self, params):
-        self.brand_info = StockPriceData.get_text_data("../" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
+        self.path = "/stock_price_prediction"
+        self.brand_info = StockPriceData.get_text_data(self.path + "/" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
         self.brand_code = self.brand_info[params]
         self.device = torch.device(TrainConst.CUDA.value
                                    if torch.cuda.is_available()
@@ -50,7 +51,7 @@ class PredictionTrain:
         plt.plot(range(1, epoch + 1), val_loss_list, color='red',
                  linestyle='--', label='Test_Loss')
         plt.legend()  # 凡例
-        plt.savefig("./ping/train_and_test_loss.png")
+        plt.savefig(f"{self.path}/ping/train_and_test_loss.png")
         plt.show()  # 表示
 
     def get_data_check(self, df):
@@ -63,7 +64,7 @@ class PredictionTrain:
         plt.plot(df[DFConst.DATE.value], df[DataSetConst.MA.value], color='red',
                  linestyle='--', label='25MA')
         plt.legend()  # 凡例
-        plt.savefig("./ping/Z_Holdings.png")
+        plt.savefig(f"{self.path}/ping/Z_Holdings.png")
         plt.show()
 
     def make_data(self, ma_std):
@@ -145,7 +146,7 @@ class PredictionTrain:
         return train_loss_list, val_loss_list
 
     def model_save(self, model):
-        save_path = '../save'
+        save_path = f'{self.path}/save'
         os.makedirs(save_path, exist_ok=True)
         logger.info("model save")
         torch.save(model.state_dict(), f'{save_path}/{TrainConst.BEST_MODEL.value}_brand_code_{self.brand_code}_seq_len_{DataSetConst.SEQ_LENGTH.value}.pth')

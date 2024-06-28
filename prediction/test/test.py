@@ -7,10 +7,10 @@ import jpholiday
 from sklearn.metrics import mean_absolute_error
 from matplotlib import pyplot as plt # type: ignore PySide2
 
-from model.model import LSTM
-from dataset.dataset import TimeSeriesDataset
+from prediction.model.model import LSTM
+from prediction.dataset.dataset import TimeSeriesDataset
 from const.const import DFConst, DataSetConst, LSTMConst
-from prediction.train import PredictionTrain
+from prediction.train.train import PredictionTrain
 from common.common import StockPriceData
 from common.logger import Logger
 
@@ -20,7 +20,7 @@ logger = Logger()
 class PredictionTest(PredictionTrain):
     def __init__(self, params):
         super().__init__(params)
-        self.model_path = '../save/'
+        self.model_path = f'{self.path}/save/'
 
     def get_model_path(self):
         for i in os.listdir(self.model_path):
@@ -121,7 +121,7 @@ class PredictionTest(PredictionTrain):
                  linestyle=':', label=f'predicted_{DataSetConst.MA.value}')
         plt.legend()  # 凡例
         plt.xticks(rotation=30)
-        plt.savefig("./ping/predicted.png")
+        plt.savefig(f"{self.path}/ping/predicted.png")
         plt.show()
 
     def feature_plot(self, feature_data, days):
@@ -153,7 +153,7 @@ class PredictionTest(PredictionTrain):
         plt.legend()  # 凡例
         plt.xticks(rotation=30)
         logger.info("save plot")
-        plt.savefig("./ping/feature_predicted.png")
+        plt.savefig(f"{self.path}/ping/feature_predicted.png")
         plt.show()
 
     def main(self):
