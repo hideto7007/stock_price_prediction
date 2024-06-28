@@ -48,3 +48,4 @@ class LSTMConst(Enum):
     INPUT_SIZE = 1
     HIDDEN_LAYER_SIZE = 200
     OUTPUT_SIZE = 1
+    DAYS = 7

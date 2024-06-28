@@ -1,11 +1,15 @@
 import os
 import torch
+import numpy as np # type: ignore
+import pandas as pd
+import datetime as dt
+import jpholiday
 from sklearn.metrics import mean_absolute_error
 from matplotlib import pyplot as plt # type: ignore PySide2
 
 from model.model import LSTM
 from dataset.dataset import TimeSeriesDataset
-from const.const import DFConst, DataSetConst
+from const.const import DFConst, DataSetConst, LSTMConst
 from prediction.train import PredictionTrain
 from common.common import StockPriceData
 from common.logger import Logger
@@ -47,6 +51,48 @@ class PredictionTest(PredictionTrain):
         logger.info("test learning end")
         return pred_ma, true_ma
 
+    def predict_future(self, model, initial_data, scaler, days):
+        logger.info("predict future start")
+        model.eval()
+        future_predictions = []
+
+        # initial_data を適切に設定
+        # ここでの initial_data は、最後のシーケンス（例: 最後の6日分のデータ）のみを使用する
+        current_data = initial_data.unsqueeze(0)  # 最新のデータポイントを初期値として設定
+
+        with torch.no_grad():
+            for _ in range(days):
+                # モデルによる予測を実行
+                prediction = model(current_data)
+
+                # predictionの次元数に応じて適切なアクセスを行う
+                if prediction.dim() == 3:
+                    # 3次元の場合: [バッチサイズ, シーケンス長, 特徴量数]
+                    future_predictions.append(prediction[:, -1, :].squeeze().tolist())
+                    next_input = prediction[:, -1, :].unsqueeze(1)
+                else:
+                    # 2次元の場合: [バッチサイズ, 特徴量数]
+                    future_predictions.append(prediction.squeeze().tolist())
+                    next_input = prediction.unsqueeze(1)
+
+                # 次の入力データを更新
+                current_data = torch.cat((current_data[:, 1:, :], next_input), dim=1)
+
+        # 予渲された標準化値を実際の株価に逆スケーリング
+        predicted_prices = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
+
+        logger.info("predict future end")
+        return predicted_prices
+
+    def get_plot_data(self, num):
+        get_data = StockPriceData.get_data(self.brand_code)
+        get_data = get_data.reset_index()
+        get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
+        date = get_data[DFConst.DATE.value][-1 * num:] # テストデータの日付
+        test_close = get_data[DFConst.CLOSE.value][-1 * num:].values.reshape(-1)  # テストデータの終値
+
+        return test_close, date
+
     def predict_result(self, pred_ma, true_ma, scaler):
         pred_ma = [[elem] for lst in pred_ma for elem in lst]
         true_ma = [[elem] for lst in true_ma for elem in lst]
@@ -60,15 +106,11 @@ class PredictionTest(PredictionTrain):
         return pred_ma, true_ma
 
     def plot(self, true_ma, pred_ma):
-        get_data = StockPriceData.get_data(self.brand_code)
-        get_data = get_data.reset_index()
-        get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
-        date = get_data[DFConst.DATE.value][-1 * DataSetConst.TEST_LEN.value:] # テストデータの日付
-        test_close = get_data[DFConst.CLOSE.value][-1 * DataSetConst.TEST_LEN.value:].values.reshape(-1)  # テストデータの終値
+        test_close, date = self.get_plot_data(DataSetConst.TEST_LEN.value)
         true_ma = [i[0] for i in true_ma]
         pred_ma = [i[0] for i in pred_ma]
         plt.figure()
-        plt.title('Info Stock Price Prediction')
+        plt.title('Stock Price Prediction')
         plt.xlabel('Date')
         plt.ylabel('Stock Price')
         plt.plot(date, test_close, color='black',
@@ -80,6 +122,38 @@ class PredictionTest(PredictionTrain):
         plt.legend()  # 凡例
         plt.xticks(rotation=30)
         plt.savefig("./ping/predicted.png")
+        plt.show()
+
+    def feature_plot(self, feature_data, days):
+        day_count = 1
+        days_list = [] # 未来の日付を格納
+        num = 30 # 例：1ヶ月のデータ
+        test_close, date = self.get_plot_data(num)
+        get_today = list(date)[-1]
+        while day_count <= days:
+            feature_date = get_today + dt.timedelta(days=day_count)
+            is_holiday_date = dt.date(feature_date.year, feature_date.month, feature_date.day)
+            if feature_date.weekday() >= 5 or jpholiday.is_holiday(is_holiday_date):
+                day_count += 1
+                days += 1
+                continue
+            else:
+                days_list.append(feature_date)
+                day_count += 1
+
+        df_date = pd.DataFrame(days_list)
+        plt.figure()
+        plt.title('Feature Stock Price Prediction')
+        plt.xlabel('Date')
+        plt.ylabel('Stock Price')
+        plt.plot(date, test_close, color='black',
+                 linestyle='-', label='close')
+        plt.plot(df_date, feature_data, color='blue',
+                 linestyle='--', label='feature_prediction')
+        plt.legend()  # 凡例
+        plt.xticks(rotation=30)
+        logger.info("save plot")
+        plt.savefig("./ping/feature_predicted.png")
         plt.show()
 
     def main(self):
@@ -101,9 +175,13 @@ class PredictionTest(PredictionTrain):
             pred_ma, true_ma = self.predict(model, test_loader)
             pred_ma, true_ma = self.predict_result(pred_ma, true_ma, scaler)
 
+            # 未来予測
+            future_predictions = self.predict_future(model, test_x[-1], scaler, LSTMConst.DAYS.value)
+            future_predictions = [i[0] for i in future_predictions]
+
             # 予測結果のプロット
-            logger.info("save plot")
             self.plot(true_ma, pred_ma)
+            self.feature_plot(future_predictions, LSTMConst.DAYS.value)
         except Exception as e:
             logger.error(e)
             raise e

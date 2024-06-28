@@ -3,7 +3,7 @@ import datetime as dt
 import torch # type: ignore
 from pandas_datareader import data # type: ignore
 
-from const.const import ScrapingConst, DFConst, DataSetConst
+from const.const import ScrapingConst, DFConst
 
 
 class StockPriceData:
