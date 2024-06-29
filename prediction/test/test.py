@@ -21,6 +21,7 @@ class PredictionTest(PredictionTrain):
     def __init__(self, params):
         super().__init__(params)
         self.model_path = f'{self.path}/save/'
+        self.days_list = [] # 未来の日付を格納
 
     def get_model_path(self):
         for i in os.listdir(self.model_path):
@@ -126,7 +127,6 @@ class PredictionTest(PredictionTrain):
 
     def feature_plot(self, feature_data, days):
         day_count = 1
-        days_list = [] # 未来の日付を格納
         num = 30 # 例：1ヶ月のデータ
         test_close, date = self.get_plot_data(num)
         get_today = list(date)[-1]
@@ -138,10 +138,10 @@ class PredictionTest(PredictionTrain):
                 days += 1
                 continue
             else:
-                days_list.append(feature_date)
+                self.days_list.append(feature_date)
                 day_count += 1
 
-        df_date = pd.DataFrame(days_list)
+        df_date = pd.DataFrame(self.days_list)
         plt.figure()
         plt.title('Feature Stock Price Prediction')
         plt.xlabel('Date')
@@ -182,6 +182,8 @@ class PredictionTest(PredictionTrain):
             # 予測結果のプロット
             self.plot(true_ma, pred_ma)
             self.feature_plot(future_predictions, LSTMConst.DAYS.value)
+            print(future_predictions)
+            print(self.days_list)
         except Exception as e:
             logger.error(e)
             raise e

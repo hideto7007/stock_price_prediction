@@ -13,6 +13,8 @@ class HttpStatusCode(Enum):
     SUCCESS = 200
     NOT_FOUND = 404
     TIMEOUT = 504
+    BADREQEST = 400
+    INTERSEVERERROR = 500
 
 
 class ErrorMessage(Enum):
