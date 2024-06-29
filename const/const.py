@@ -13,12 +13,41 @@ class HttpStatusCode(Enum):
     SUCCESS = 200
     NOT_FOUND = 404
     TIMEOUT = 504
+    BADREQEST = 400
+    INTERSEVERERROR = 500
 
 
 class ErrorMessage(Enum):
     NOT_FOUND_MSG = "not found"
     TIMEOUT_MSG = "time out"
-    
-    
+
+
 class DFConst(Enum):
     COLUMN = ["Open", "High", "Low", "Close"]
+    DROP_COLUMN = ["Open", "Low", "High", "Volume"]
+    AVERAGE = "average"
+    DATE = "Date"
+    CLOSE = "Close"
+
+
+class TrainConst(Enum):
+    CUDA = "cuda"
+    CPU = "cpu"
+    # ハイパーパラメータ
+    EPOCHS = 150
+    BEST_MODEL = "best_model_weight"
+
+
+class DataSetConst(Enum):
+    BATCH_SIZE = 128
+    TEST_LEN = 504  # 2年分(504日分)
+    SEQ_LENGTH = 6
+    MA = str(SEQ_LENGTH) + "MA"
+    NUM_WORKERS = 2
+
+
+class LSTMConst(Enum):
+    INPUT_SIZE = 1
+    HIDDEN_LAYER_SIZE = 200
+    OUTPUT_SIZE = 1
+    DAYS = 7

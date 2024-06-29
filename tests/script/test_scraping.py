@@ -1,7 +1,4 @@
-import os
-import shutil
 import unittest
-import requests
 import json
 from bs4 import BeautifulSoup
 from unittest.mock import patch, Mock
@@ -15,8 +12,9 @@ GET_HTML_INFO = 'script.scraping.BrandCode.get_html_info'
 TRAGET_INFO = 'script.scraping.BrandCode.target_info'
 GET_TEXT = 'script.scraping.BrandCode.get_text'
 
+
 class TestBrandCode(unittest.TestCase):
-    
+
     def _ex_json_data(self):
         return {
             "日本水産": "1332",
@@ -245,11 +243,11 @@ class TestBrandCode(unittest.TestCase):
             "ファーストリテイリング": "9983",
             "ソフトバンクグループ": "9984"
         }
-        
+
     @patch(REQUESTS)
     def test_get_html_info_success_01(self, _request):
         """
-        正常系: html情報を含んだオブジェクトが返されること      
+        正常系: html情報を含んだオブジェクトが返されること
         """
         # mock
         mock_response = Mock()
@@ -257,9 +255,9 @@ class TestBrandCode(unittest.TestCase):
         mock_response.status_code = HttpStatusCode.SUCCESS.value
         mock_response.encoding = 'utf-8'
         mock_response.text = html_content
-        
+
         _request.return_value = mock_response
-        
+
         url = 'http://example.com'
         result = BrandCode.get_html_info(url)
 
@@ -269,15 +267,15 @@ class TestBrandCode(unittest.TestCase):
     @patch(REQUESTS)
     def test_get_html_info_failed_01(self, _request):
         """
-        異常系: 404 not found エラーになること  
+        異常系: 404 not found エラーになること
         """
         # mock
         mock_response = Mock()
         mock_response.status_code = HttpStatusCode.NOT_FOUND.value
         mock_response.text = ErrorMessage.NOT_FOUND_MSG.value
-        
+
         _request.return_value = mock_response
-        
+
         url = 'http://example.com'
         with self.assertRaises(Exception) as context:
             bsObj = BrandCode.get_html_info(url)
@@ -288,22 +286,22 @@ class TestBrandCode(unittest.TestCase):
     @patch(REQUESTS)
     def test_get_html_info_failed_02(self, _request):
         """
-        異常系: 504 Timeout エラーになること      
+        異常系: 504 Timeout エラーになること
         """
         # mock
         mock_response = Mock()
         mock_response.status_code = HttpStatusCode.TIMEOUT.value
         mock_response.text = ErrorMessage.TIMEOUT_MSG.value
-        
+
         _request.return_value = mock_response
-        
+
         url = 'http://example.com'
         with self.assertRaises(Exception) as context:
             bsObj = BrandCode.get_html_info(url)
             self.assertEqual(bsObj.status_code, HttpStatusCode.TIMEOUT.value)
-            
+
         self.assertEqual(str(context.exception), ErrorMessage.TIMEOUT_MSG.value)
-    
+
     def test_target_info_success_01(self):
         """
         正常系: 対象データが存在すること
@@ -312,7 +310,7 @@ class TestBrandCode(unittest.TestCase):
         result = BrandCode.target_info(bsObj, ScrapingConst.TAG.value, ScrapingConst.SEARCH.value)
         ex = self._ex_json_data()
         self.assertEqual(result, ex)
-    
+
     def test_target_info_success_02(self):
         """
         正常系: 対象データが存在してなくオブジェクトの中が空であること
@@ -321,7 +319,7 @@ class TestBrandCode(unittest.TestCase):
         result = BrandCode.target_info(bsObj, ScrapingConst.TAG.value, ScrapingConst.SEARCH.value)
         ex = {}
         self.assertEqual(result, ex)
-    
+
     def test_get_text_success_01(self):
         """
         正常系: 正しくファイルの書き込みが出来ること
@@ -348,4 +346,3 @@ class TestBrandCode(unittest.TestCase):
         mock_get_html_info.assert_called_once()
         mock_target_info.assert_called_once()
         mock_get_text.assert_called_once()
-
