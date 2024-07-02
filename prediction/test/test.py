@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt # type: ignore PySide2
 
 from prediction.model.model import LSTM
 from prediction.dataset.dataset import TimeSeriesDataset
-from const.const import DFConst, DataSetConst, LSTMConst
+from const.const import DFConst, DataSetConst, LSTMConst, FormatConst
 from prediction.train.train import PredictionTrain
 from common.common import StockPriceData
 from common.logger import Logger
@@ -20,12 +20,10 @@ logger = Logger()
 class PredictionTest(PredictionTrain):
     def __init__(self, params):
         super().__init__(params)
-        self.model_path = f'{self.path}/save/'
-        self.days_list = [] # 未来の日付を格納
 
     def get_model_path(self):
         for i in os.listdir(self.model_path):
-            if self.brand_info[params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+            if self.brand_info[self.params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
                 self.model_path += i
                 break
 
@@ -125,11 +123,12 @@ class PredictionTest(PredictionTrain):
         plt.savefig(f"{self.path}/ping/predicted.png")
         plt.show()
 
-    def feature_plot(self, feature_data, days):
-        day_count = 1
+    def make_days(self, days):
+        days_list = [] # 未来の日付を格納
         num = 30 # 例：1ヶ月のデータ
         test_close, date = self.get_plot_data(num)
         get_today = list(date)[-1]
+        day_count = 1
         while day_count <= days:
             feature_date = get_today + dt.timedelta(days=day_count)
             is_holiday_date = dt.date(feature_date.year, feature_date.month, feature_date.day)
@@ -138,10 +137,15 @@ class PredictionTest(PredictionTrain):
                 days += 1
                 continue
             else:
-                self.days_list.append(feature_date)
+                days_list.append(feature_date)
                 day_count += 1
 
-        df_date = pd.DataFrame(self.days_list)
+        return test_close, days_list, date
+
+    def feature_plot(self, feature_data, days):
+        test_close, days_list, date = self.make_days(days)
+
+        df_date = pd.DataFrame(days_list)
         plt.figure()
         plt.title('Feature Stock Price Prediction')
         plt.xlabel('Date')
@@ -156,7 +160,7 @@ class PredictionTest(PredictionTrain):
         plt.savefig(f"{self.path}/ping/feature_predicted.png")
         plt.show()
 
-    def main(self):
+    def main(self, plot_flag=False):
         try:
             # モデルのロード
             self.get_model_path()
@@ -180,17 +184,22 @@ class PredictionTest(PredictionTrain):
             future_predictions = [i[0] for i in future_predictions]
 
             # 予測結果のプロット
-            self.plot(true_ma, pred_ma)
-            self.feature_plot(future_predictions, LSTMConst.DAYS.value)
-            print(future_predictions)
-            print(self.days_list)
+            if plot_flag:
+                self.plot(true_ma, pred_ma)
+                self.feature_plot(future_predictions, LSTMConst.DAYS.value)
+
+            # リファクタリングする
+            _, days_list, _ = self.make_days(LSTMConst.DAYS.value)
+            future_predictions = [float(i) for i in future_predictions]
+            days_list = [i.strftime(FormatConst.DATE.value) for i in days_list]
+            return future_predictions, days_list
         except Exception as e:
             logger.error(e)
             raise e
 
 
-if __name__ == "__main__":
-    params = "トヨタ自動車"
-    # インスタンス
-    prediction_test = PredictionTest(params)
-    prediction_test.main()
+# if __name__ == "__main__":
+#     params = "トヨタ自動車"
+#     # インスタンス
+#     prediction_test = PredictionTest(params)
+#     prediction_test.main(True)

@@ -16,12 +16,25 @@ logger = Logger()
 
 class PredictionTrain:
     def __init__(self, params):
+        self.params = params
         self.path = "/stock_price_prediction"
+        self.model_path = f'{self.path}/save/'
         self.brand_info = StockPriceData.get_text_data(self.path + "/" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
-        self.brand_code = self.brand_info[params]
+        self.brand_code = self.brand_info.get(self.params)
         self.device = torch.device(TrainConst.CUDA.value
                                    if torch.cuda.is_available()
                                    else TrainConst.CPU.value)
+
+    def check_brand_info(self):
+        if self.brand_info.get(self.params) is None:
+            raise KeyError("対象の銘柄は存在しません")
+
+        is_exist = False
+        for i in os.listdir(self.model_path):
+            if self.brand_info[self.params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+                is_exist = True
+
+        return is_exist
 
     def data_std(self):
         get_data = StockPriceData.get_data(self.brand_code)
@@ -173,8 +186,16 @@ class PredictionTrain:
             raise e
 
 
-if __name__ == "__main__":
-    params = "トヨタ自動車"
-    # インスタンス
-    prediction_train = PredictionTrain(params)
-    prediction_train.main()
+# if __name__ == "__main__":
+#     params = "トヨタ自動車"
+#     try:
+#         # インスタンス
+#         prediction_train = PredictionTrain(params)
+#         is_exist = prediction_train.check_brand_info()
+
+#         # 学習済みモデル存在チェック
+#         if is_exist == False:
+#             prediction_train.main()
+#     except Exception as e:
+#         logger.error(e)
+#         raise e

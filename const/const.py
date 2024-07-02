@@ -13,8 +13,12 @@ class HttpStatusCode(Enum):
     SUCCESS = 200
     NOT_FOUND = 404
     TIMEOUT = 504
-    BADREQEST = 400
-    INTERSEVERERROR = 500
+    BADREQUEST = 400
+    SERVER_ERROR = 500
+
+
+class ErrorCode(Enum):
+    CHECK_EXIST = 10
 
 
 class ErrorMessage(Enum):
@@ -51,3 +55,7 @@ class LSTMConst(Enum):
     HIDDEN_LAYER_SIZE = 200
     OUTPUT_SIZE = 1
     DAYS = 7
+
+
+class FormatConst(Enum):
+    DATE = '%Y-%m-%d'
