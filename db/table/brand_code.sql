@@ -1,0 +1,13 @@
+-- DROP TABLE brand_code;
+
+-- CREATE TABLE brand_code (
+--     brand_code_id INTEGER PRIMARY KEY AUTOINCREMENT,
+--     brand_name TEXT NOT NULL,
+--     model_name TEXT NOT NULL,
+--     user_id INTEGER NOT NULL,
+--     create_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+--     create_by TEXT NOT NULL,
+--     update_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+--     update_by TEXT NOT NULL,
+--     is_valid INTEGER DEFAULT 1 NOT NULL
+-- );
