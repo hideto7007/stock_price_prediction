@@ -19,6 +19,7 @@ class HttpStatusCode(Enum):
 
 class ErrorCode(Enum):
     CHECK_EXIST = 10
+    SERVER_ERROR = 50
 
 
 class ErrorMessage(Enum):

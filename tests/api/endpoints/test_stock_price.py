@@ -19,8 +19,8 @@ client = TestClient(app)
 
 class TestGetStockPrice(unittest.TestCase):
 
-    def get_path(self, params="トヨタ自動車"):
-        return f"/get_stock_price?params={params}"
+    def get_path(self, params="トヨタ自動車", user_id=1):
+        return f"/get_stock_price?params={params}&user_id={user_id}"
 
     @patch(CHECK_BRAND_INFO)
     @patch(TRAIN_MAIN)
@@ -65,13 +65,13 @@ class TestGetStockPrice(unittest.TestCase):
     def test_get_stock_price_key_error(self):
         """異常系: 400 エラーチェック 存在しない銘柄"""
 
-        response = client.get(self.get_path("ddd"))
+        response = client.get(self.get_path("ddd", 1))
 
         self.assertEqual(response.status_code, HttpStatusCode.BADREQUEST.value)
         self.assertEqual(response.json(), {
             "detail": [
                 {
-                    "code": ErrorCode.CHECK_EXIST.value,  # ErrorCode.CHECK_EXIST の値を適用
+                    "code": ErrorCode.CHECK_EXIST.value,
                     "message": "'対象の銘柄は存在しません'"
                 }
             ]
@@ -84,8 +84,12 @@ class TestGetStockPrice(unittest.TestCase):
 
         response = client.get(self.get_path())
 
+        self.assertEqual(response.status_code, HttpStatusCode.SERVER_ERROR.value)
         self.assertEqual(response.json(), {
-            'detail': 'Server error',
-            'headers': None,
-            'status_code': HttpStatusCode.SERVER_ERROR.value
+            "detail": [
+                {
+                    "code": ErrorCode.SERVER_ERROR.value,
+                    "message": "Server error"
+                }
+            ]
         })

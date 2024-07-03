@@ -1,6 +1,6 @@
 from fastapi import APIRouter # type: ignore
-from api.endpoints import endpoints
+from api.endpoints import stock_price
 
 
 api_router = APIRouter()
-api_router.include_router(endpoints.router)
+api_router.include_router(stock_price.router)

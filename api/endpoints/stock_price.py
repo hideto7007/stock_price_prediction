@@ -27,12 +27,12 @@ router = APIRouter()
 
 
 @router.get("/get_stock_price")
-def get_stock_price(params: str):
+def get_stock_price(params: str, user_id: int):
     """予測データ取得API"""
     try:
         # インスタンス
-        prediction_train = PredictionTrain(params)
-        prediction_test = PredictionTest(params)
+        prediction_train = PredictionTrain(params, user_id)
+        prediction_test = PredictionTest(params, user_id)
         is_exist = prediction_train.check_brand_info()
 
         # 学習済みモデル存在チェック
@@ -44,7 +44,7 @@ def get_stock_price(params: str):
     except KeyError as e:
         raise HTTPException(status_code=HttpStatusCode.BADREQUEST.value, detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message=str(e)).dict()])
     except Exception as e:
-        return HTTPException(status_code=HttpStatusCode.SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=HttpStatusCode.SERVER_ERROR.value, detail=[ErrorMsg(code=ErrorCode.SERVER_ERROR.value, message=str(e)).dict()])
 
 
 @router.post("/create_brand")

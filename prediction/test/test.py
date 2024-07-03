@@ -18,12 +18,13 @@ logger = Logger()
 
 
 class PredictionTest(PredictionTrain):
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, params, user_id):
+        super().__init__(params, user_id)
 
     def get_model_path(self):
         for i in os.listdir(self.model_path):
             if self.brand_info[self.params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+                print(self.model_path)
                 self.model_path += i
                 break
 
