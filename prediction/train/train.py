@@ -15,39 +15,41 @@ logger = Logger()
 
 
 class PredictionTrain:
-    def __init__(self, params, user_id):
-        self.params = params
+    def __init__(self, brand_name, user_id):
+        self.brand_name = brand_name
         self.user_id = user_id
         self.path = "/stock_price_prediction"
         self.model_path = f'{self.path}/save/{self.user_id}/'
         self.brand_info = StockPriceData.get_text_data(self.path + "/" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
-        self.brand_code = self.brand_info.get(self.params)
+        self.brand_code = self.brand_info.get(self.brand_name)
         self.device = torch.device(TrainConst.CUDA.value
                                    if torch.cuda.is_available()
                                    else TrainConst.CPU.value)
 
     def check_brand_info(self):
-        is_exist = False
-        if self.brand_info.get(self.params) is None:
+        # is_exist = False
+        if self.brand_info.get(self.brand_name) is None:
             raise KeyError("対象の銘柄は存在しません")
 
-        if os.path.isdir(self.model_path) is False:
-            return is_exist
+        # # 最初に学習済みモデルの存在チェック
+        # if os.path.isdir(self.model_path) is False:
+        #     return is_exist
 
-        for i in os.listdir(self.model_path):
-            if self.brand_info[self.params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
-                is_exist = True
+        # for i in os.listdir(self.model_path):
+        #     if self.brand_info[self.brand_name] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+        #         is_exist = True
 
-        return is_exist
+        # return is_exist
 
-    def data_std(self):
+    def data_std(self, plot_check_flag):
         get_data = StockPriceData.get_data(self.brand_code)
         get_data = get_data.reset_index()
         get_data = get_data.drop(DFConst.DROP_COLUMN.value, axis=1)
         get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
         get_data[DataSetConst.MA.value] = get_data[DFConst.CLOSE.value].rolling(window=DataSetConst.SEQ_LENGTH.value, min_periods=0).mean()
 
-        self.get_data_check(get_data)
+        if plot_check_flag:
+            self.get_data_check(get_data)
 
         # 標準化
         ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
@@ -164,13 +166,17 @@ class PredictionTrain:
 
     def model_save(self, model):
         os.makedirs(self.model_path, exist_ok=True)
+        self.save_path = f'{self.model_path}{TrainConst.BEST_MODEL.value}_brand_code_{self.brand_code}_seq_len_{DataSetConst.SEQ_LENGTH.value}.pth'
         logger.info("model save")
-        torch.save(model.state_dict(), f'{self.model_path}{TrainConst.BEST_MODEL.value}_brand_code_{self.brand_code}_seq_len_{DataSetConst.SEQ_LENGTH.value}.pth')
+        torch.save(model.state_dict(), self.save_path)
 
-    def main(self):
+    def main(self, plot_check_flag=False):
         try:
             # 学習データ作成
-            data_std, _ = self.data_std()
+            if plot_check_flag:
+                data_std, _ = self.data_std(plot_check_flag)
+            else:
+                data_std, _ = self.data_std(plot_check_flag)
             data, label = self.make_data(data_std)
             train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
 
@@ -183,17 +189,20 @@ class PredictionTrain:
             logger.info("train finish!!")
 
             # lossを確認
-            self.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
+            if plot_check_flag:
+                self.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
+
+            return self.save_path
         except Exception as e:
             logger.error(e)
             raise e
 
 
 # if __name__ == "__main__":
-#     params = "トヨタ自動車"
+#     brand_name = "トヨタ自動車"
 #     try:
 #         # インスタンス
-#         prediction_train = PredictionTrain(params)
+#         prediction_train = PredictionTrain(brand_name)
 #         is_exist = prediction_train.check_brand_info()
 
 #         # 学習済みモデル存在チェック

@@ -19,11 +19,10 @@ client = TestClient(app)
 
 class TestGetStockPrice(unittest.TestCase):
 
-    def get_path(self, params="トヨタ自動車", user_id=1):
-        return f"/get_stock_price?params={params}&user_id={user_id}"
+    def get_path(self, brand_code="トヨタ自動車", user_id=1, update=True):
+        return f"/get_stock_price?brand_code={brand_code}&user_id={user_id}&update={update}"
 
     @patch(CHECK_BRAND_INFO)
-    @patch(TRAIN_MAIN)
     @patch(TEST_MAIN)
     def test_get_stock_price_success_01(self, mock_main_test, mock_check_brand_info):
         """正常系: 取得データを返す trainは実行しない"""
@@ -44,7 +43,7 @@ class TestGetStockPrice(unittest.TestCase):
     @patch(CHECK_BRAND_INFO)
     @patch(TRAIN_MAIN)
     @patch(TEST_MAIN)
-    def test_get_stock_price_success_01(self, mock_main_test, mock_main_train, mock_check_brand_info):
+    def test_get_stock_price_success_02(self, mock_main_test, mock_main_train, mock_check_brand_info):
         """正常系: 取得データを返す trainは実行する"""
         mock_check_brand_info.return_value = False
         mock_main_train.return_value = None

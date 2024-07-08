@@ -60,3 +60,10 @@ class LSTMConst(Enum):
 
 class FormatConst(Enum):
     DATE = '%Y-%m-%d'
+
+
+class PredictionResultConst(Enum):
+    FUTURE_PREDICTIONS = "future_predictions"
+    DAYS_LIST = "days_list"
+    BRAND_CODE = "brand_code"
+    USER_ID = "user_id"

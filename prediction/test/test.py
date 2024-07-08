@@ -18,12 +18,12 @@ logger = Logger()
 
 
 class PredictionTest(PredictionTrain):
-    def __init__(self, params, user_id):
-        super().__init__(params, user_id)
+    def __init__(self, brand_name, user_id):
+        super().__init__(brand_name, user_id)
 
     def get_model_path(self):
         for i in os.listdir(self.model_path):
-            if self.brand_info[self.params] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+            if self.brand_info[self.brand_name] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
                 print(self.model_path)
                 self.model_path += i
                 break
@@ -161,7 +161,7 @@ class PredictionTest(PredictionTrain):
         plt.savefig(f"{self.path}/ping/feature_predicted.png")
         plt.show()
 
-    def main(self, plot_flag=False):
+    def main(self, plot_check_flag=False):
         try:
             # モデルのロード
             self.get_model_path()
@@ -169,7 +169,10 @@ class PredictionTest(PredictionTrain):
             model = self.load_model(self.model_path)
 
             # 学習データ作成
-            data_std, scaler = self.data_std()
+            if plot_check_flag:
+                data_std, scaler = self.data_std(plot_check_flag)
+            else:
+                data_std, scaler = self.data_std(plot_check_flag)
             data, label = self.make_data(data_std)
             _, _, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
 
@@ -185,7 +188,7 @@ class PredictionTest(PredictionTrain):
             future_predictions = [i[0] for i in future_predictions]
 
             # 予測結果のプロット
-            if plot_flag:
+            if plot_check_flag:
                 self.plot(true_ma, pred_ma)
                 self.feature_plot(future_predictions, LSTMConst.DAYS.value)
 
@@ -200,7 +203,7 @@ class PredictionTest(PredictionTrain):
 
 
 # if __name__ == "__main__":
-#     params = "トヨタ自動車"
+#     brand_name = "トヨタ自動車"
 #     # インスタンス
-#     prediction_test = PredictionTest(params)
+#     prediction_test = PredictionTest(brand_name)
 #     prediction_test.main(True)

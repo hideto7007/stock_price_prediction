@@ -13,3 +13,4 @@ scikit-learn
 fastapi
 jpholiday
 flake8
+"fastapi[all]" sqlalchemy
