@@ -35,8 +35,6 @@ class StockPriceBase:
             prediction_test = PredictionTest(brand_name, user_id)
             future_predictions, days_list = prediction_test.main()
 
-            print("debug", future_predictions, days_list)
-
             return str(future_predictions), str(days_list), save_path
         except KeyError as e:
             raise HTTPException(status_code=HttpStatusCode.BADREQUEST.value, detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message=str(e)).dict()])
@@ -85,8 +83,8 @@ class StockPriceService:
     def _prediction_result_validation(self, future_predictions, days_list, create_data):
         """予測結果のバリデーションチェック"""
         db_prediction_result = PredictionResultModel(
-            future_predictions=",".join(future_predictions),
-            days_list=",".join(days_list),
+            future_predictions=future_predictions,
+            days_list=days_list,
             brand_code=create_data.brand_code,
             user_id=create_data.user_id,
             create_by=create_data.create_by,
@@ -135,8 +133,8 @@ class StockPriceService:
         ).first()
         if brand_info is None:
             raise HTTPException(
-                status_code=HttpStatusCode.NOT_FOUND,
-                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST, message="銘柄情報が見つかりません。").dict()]
+                status_code=HttpStatusCode.NOT_FOUND.value,
+                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="銘柄情報が見つかりません。").dict()]
             )
         self._delete(brand_info)
 
@@ -148,8 +146,8 @@ class StockPriceService:
         ).first()
         if prediction_result is None:
             raise HTTPException(
-                status_code=HttpStatusCode.NOT_FOUND,
-                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST, message="予測結果データが見つかりません。").dict()]
+                status_code=HttpStatusCode.NOT_FOUND.value,
+                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="予測結果データが見つかりません。").dict()]
             )
         self._delete(prediction_result)
 
@@ -157,7 +155,7 @@ class StockPriceService:
         if self._exist_brand_info_check(create_data) is not None:
             raise HTTPException(
                 status_code=HttpStatusCode.NOT_FOUND.value,
-                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST, message="銘柄情報は既に登録済みです。").dict()]
+                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="銘柄情報は既に登録済みです。").dict()]
             )
 
         future_predictions, days_list, save_path = StockPriceBase.prediction(create_data.brand_name, create_data.user_id)
@@ -172,7 +170,7 @@ class StockPriceService:
         if self._exist_prediction_result_check(create_data) is not None:
             raise HTTPException(
                 status_code=HttpStatusCode.NOT_FOUND.value,
-                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST, message="予測結果データは既に登録済みです。").dict()]
+                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="予測結果データは既に登録済みです。").dict()]
             )
 
         # 予測結果登録
@@ -193,8 +191,6 @@ class StockPriceService:
         self._save(db_brand_info, False)
 
         future_predictions, days_list, _ = StockPriceBase.prediction(update_data.brand_name, update_data.user_id)
-
-        print("debug1", future_predictions, days_list)
 
         db_prediction_result = self._exist_prediction_result_check(update_data)
 
@@ -230,7 +226,7 @@ def get_stock_price(brand_code: int, user_id: int, db: Session = Depends(get_db)
     if res is None:
         raise HTTPException(
             status_code=HttpStatusCode.NOT_FOUND.value,
-            detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST, message="登録されてない予測データです").dict()]
+            detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="登録されてない予測データです").dict()]
         )
 
     # レスポンス形式に変換
@@ -240,7 +236,6 @@ def get_stock_price(brand_code: int, user_id: int, db: Session = Depends(get_db)
         PredictionResultConst.BRAND_CODE.value: res.brand_code,
         PredictionResultConst.USER_ID.value: res.user_id
     }
-
     return res_dict
 
 
