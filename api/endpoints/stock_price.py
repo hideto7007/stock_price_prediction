@@ -184,15 +184,16 @@ class StockPriceService:
         if db_brand_info is None:
             raise HTTPException(status_code=HttpStatusCode.NOT_FOUND.value, detail="更新対象の銘柄データが存在しません。")
 
+        future_predictions, days_list, save_path = StockPriceBase.prediction(update_data.brand_name, update_data.user_id)
+
+        db_prediction_result = self._exist_prediction_result_check(update_data)
+
         db_brand_info.update_by = update_data.update_by
+        db_brand_info.learned_model_name = save_path
         db_brand_info.update_at = StockPriceBase.get_jst_now()
 
         # 銘柄情報更新
         self._save(db_brand_info, False)
-
-        future_predictions, days_list, _ = StockPriceBase.prediction(update_data.brand_name, update_data.user_id)
-
-        db_prediction_result = self._exist_prediction_result_check(update_data)
 
         if db_prediction_result is None:
             raise HTTPException(status_code=HttpStatusCode.NOT_FOUND.value, detail="更新対象の予測結果データが存在しません。")
