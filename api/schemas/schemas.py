@@ -96,8 +96,9 @@ class DeletePredictionResult(PredictionResultBase):
 
 
 class BrandInfoList(BaseModel):
-    brand_code_id: int
+    brand_info_id: int
     brand_name: str
+    brand_code: int
     learned_model_name: str
     user_id: int
 

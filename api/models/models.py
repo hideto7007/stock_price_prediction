@@ -20,7 +20,7 @@ class BrandModel(Base):
 class BrandInfoModel(Base):
     __tablename__ = 'brand_info'
 
-    brand_code_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    brand_info_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     brand_name = Column(String, nullable=False)
     brand_code = Column(Integer, nullable=False)
     learned_model_name = Column(String, nullable=False)

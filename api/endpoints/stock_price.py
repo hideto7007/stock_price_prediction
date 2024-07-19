@@ -113,6 +113,7 @@ class StockPriceService:
     def _exist_brand_info_check(self, data):
         exist_check = self.db.query(BrandInfoModel).filter(
             BrandInfoModel.brand_code == data.brand_code,
+            BrandInfoModel.user_id == data.user_id,
             BrandInfoModel.is_valid
         ).first()
         return exist_check
@@ -146,15 +147,15 @@ class StockPriceService:
         ).first()
         if prediction_result is None:
             raise HTTPException(
-                status_code=HttpStatusCode.NOT_FOUND.value,
-                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="予測結果データが見つかりません。").dict()]
+                status_code=HttpStatusCode.BADREQUEST.value,
+                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value, message="予測結果データが見つかりません。").dict()]
             )
         self._delete(prediction_result)
 
     def _create(self, create_data: CreateBrandInfo):
         if self._exist_brand_info_check(create_data) is not None:
             raise HTTPException(
-                status_code=HttpStatusCode.NOT_FOUND.value,
+                status_code=HttpStatusCode.CONFLICT.value,
                 detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="銘柄情報は既に登録済みです。").dict()]
             )
 
@@ -164,12 +165,11 @@ class StockPriceService:
 
         # 銘柄情報登録
         self._save(db_brand_info, True)
-
         db_prediction_result = self._prediction_result_validation(future_predictions, days_list, create_data)
 
         if self._exist_prediction_result_check(create_data) is not None:
             raise HTTPException(
-                status_code=HttpStatusCode.NOT_FOUND.value,
+                status_code=HttpStatusCode.CONFLICT.value,
                 detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="予測結果データは既に登録済みです。").dict()]
             )
 
@@ -182,8 +182,11 @@ class StockPriceService:
         db_brand_info = self._exist_brand_info_check(update_data)
 
         if db_brand_info is None:
-            raise HTTPException(status_code=HttpStatusCode.NOT_FOUND.value, detail="更新対象の銘柄データが存在しません。")
-
+            raise HTTPException(
+                status_code=HttpStatusCode.NOT_FOUND.value,
+                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value, message="更新対象の銘柄データが存在しません。").dict()]
+            )
+        
         future_predictions, days_list, save_path = StockPriceBase.prediction(update_data.brand_name, update_data.user_id)
 
         db_prediction_result = self._exist_prediction_result_check(update_data)
@@ -196,7 +199,10 @@ class StockPriceService:
         self._save(db_brand_info, False)
 
         if db_prediction_result is None:
-            raise HTTPException(status_code=HttpStatusCode.NOT_FOUND.value, detail="更新対象の予測結果データが存在しません。")
+            raise HTTPException(
+                status_code=HttpStatusCode.NOT_FOUND.value,
+                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value, message="更新対象の予測結果データが存在しません。").dict()]
+            )
 
         db_prediction_result.future_predictions = future_predictions
         db_prediction_result.days_list = days_list
@@ -240,9 +246,9 @@ def get_stock_price(brand_code: int, user_id: int, db: Session = Depends(get_db)
     return res_dict
 
 
-@router.get("/brand_list", response_model=list[BrandInfoList])
+@router.get("/brand_info_list", response_model=list[BrandInfoList])
 async def brand_list(user_id: int, db: Session = Depends(get_db)):
-    """ユーザーが現在学習ずみの銘柄情報取得API"""
+    """対象ユーザーの学習ずみ銘柄情報取得API"""
     res = db.query(BrandInfoModel).filter(
         BrandInfoModel.user_id == user_id,
         BrandInfoModel.is_valid
@@ -255,9 +261,7 @@ async def brand_list(user_id: int, db: Session = Depends(get_db)):
 async def brand(db: Session = Depends(get_db)):
     """全ての銘柄取得API"""
     res = db.query(BrandModel).all()
-
     return res
-
 
 @router.post("/create_stock_price")
 async def create_stock_price(create_data: CreateBrandInfo, db: Session = Depends(get_db)):

@@ -12,13 +12,17 @@ class ScrapingConst(Enum):
 class HttpStatusCode(Enum):
     SUCCESS = 200
     NOT_FOUND = 404
+    VALIDATION = 422
     TIMEOUT = 504
     BADREQUEST = 400
+    CONFLICT = 409
     SERVER_ERROR = 500
 
 
 class ErrorCode(Enum):
     CHECK_EXIST = 10
+    INT_VAILD = 11
+    NOT_DATA = 12
     SERVER_ERROR = 50
 
 

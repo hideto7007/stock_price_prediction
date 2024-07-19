@@ -1,7 +1,7 @@
 -- DROP TABLE brand_info;
 
 -- CREATE TABLE brand_info (
---     brand_code_id INTEGER PRIMARY KEY AUTOINCREMENT,
+--     brand_info_id INTEGER PRIMARY KEY AUTOINCREMENT,
 --     brand_name TEXT NOT NULL,
 --     brand_code INTEGER NOT NULL,
 --     learned_model_name TEXT NOT NULL,
@@ -23,42 +23,45 @@
 --     update_at,
 --     update_by,
 --     is_valid
--- ) VALUES (
---     'トヨタ自動車', 7203, 'best_model_weight_brand_code_7203_seq_len_6.pth', 1, datetime('now', 'localtime', '+9 hours'), 'TEST', datetime('now', 'localtime', '+9 hours'), 'TEST', 1
+-- ) VALUES 
+-- ('トヨタ自動車', 7203, '/stock_price_prediction/save/1/best_model_weight_brand_code_7203_seq_len_6.pth', 1, datetime('now', 'localtime', '+9 hours'), 'TEST', datetime('now', 'localtime', '+9 hours'), 'TEST', 1),
+-- ('大和ハウス工業', 1925, '/stock_price_prediction/save/1/best_model_weight_brand_code_1925_seq_len_6.pth', 1, datetime('now', 'localtime', '+9 hours'), 'TEST', datetime('now', 'localtime', '+9 hours'), 'TEST', 1),
+-- ('日本水産', 1332, '/stock_price_prediction/save/1/best_model_weight_brand_code_1332_seq_len_6.pth', 1, datetime('now', 'localtime', '+9 hours'), 'TEST', datetime('now', 'localtime', '+9 hours'), 'TEST', 1),
+-- ('キッコーマン', 2801, '/stock_price_prediction/save/1/best_model_weight_brand_code_2801_seq_len_6.pth', 1, datetime('now', 'localtime', '+9 hours'), 'TEST', datetime('now', 'localtime', '+9 hours'), 'TEST', 1),
+-- ('J．フロント　リテイリング', 3086, '/stock_price_prediction/save/1/best_model_weight_brand_code_3086_seq_len_6.pth', 1, datetime('now', 'localtime', '+9 hours'), 'TEST', datetime('now', 'localtime', '+9 hours'), 'TEST', 1);
+
+-- DROP TABLE prediction_result;
+
+
+-- CREATE TABLE prediction_result (
+--     prediction_result_id INTEGER PRIMARY KEY AUTOINCREMENT,
+--     future_predictions TEXT DEFAULT '[]',
+--     days_list TEXT DEFAULT '[]',
+--     brand_code INTEGER NOT NULL,
+--     user_id INTEGER NOT NULL,
+--     create_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+--     create_by TEXT NOT NULL,
+--     update_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+--     update_by TEXT NOT NULL,
+--     is_valid INTEGER DEFAULT 1 NOT NULL
 -- );
 
-DROP TABLE prediction_result;
 
-
-CREATE TABLE prediction_result (
-    prediction_result_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    future_predictions TEXT DEFAULT '[]',
-    days_list TEXT DEFAULT '[]',
-    brand_code INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    create_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    create_by TEXT NOT NULL,
-    update_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    update_by TEXT NOT NULL,
-    is_valid INTEGER DEFAULT 1 NOT NULL
-);
-
-
-INSERT INTO prediction_result (
-    future_predictions,
-    days_list,
-    brand_code,
-    user_id,
-    create_at,
-    create_by,
-    update_at,
-    update_by,
-    is_valid
-) VALUES (
-    '[3275.2364538230318, 3236.6430789332394, 3183.342918009302, 3121.5807838391393, 3056.1028504116907, 2990.8326806156515, 2928.830116446982]',
-    '["2024-07-05", "2024-07-08", "2024-07-09", "2024-07-10", "2024-07-11", "2024-07-12", "2024-07-16"]',
-    7203, 1, datetime('now', 'localtime', '+9 hours'), 'TEST', datetime('now', 'localtime', '+9 hours'), 'TEST', 1
-);
+-- INSERT INTO prediction_result (
+--     future_predictions,
+--     days_list,
+--     brand_code,
+--     user_id,
+--     create_at,
+--     create_by,
+--     update_at,
+--     update_by,
+--     is_valid
+-- ) VALUES (
+--     '[3275.2364538230318, 3236.6430789332394, 3183.342918009302, 3121.5807838391393, 3056.1028504116907, 2990.8326806156515, 2928.830116446982]',
+--     '["2024-07-05", "2024-07-08", "2024-07-09", "2024-07-10", "2024-07-11", "2024-07-12", "2024-07-16"]',
+--     7203, 1, datetime('now', 'localtime', '+9 hours'), 'TEST', datetime('now', 'localtime', '+9 hours'), 'TEST', 1
+-- );
 
 
 -- DROP TABLE brand;
