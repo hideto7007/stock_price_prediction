@@ -71,3 +71,10 @@ class PredictionResultConst(Enum):
     DAYS_LIST = "days_list"
     BRAND_CODE = "brand_code"
     USER_ID = "user_id"
+
+
+class BrandInfoModelConst(Enum):
+    BRAND_NAME = "brand_name"
+    BRAND_CODE = "brand_code"
+    LEARNED_MODEL_NAME = "learned_model_name"
+    USER_ID = "user_id"

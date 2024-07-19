@@ -1,13 +1,13 @@
+import json
 import unittest
 from unittest.mock import patch
 from fastapi.testclient import TestClient # type: ignore
-from requests.exceptions import Timeout
 
 from api.main import app
 from api.models.models import BrandModel, BrandInfoModel, PredictionResultModel
 from api.endpoints.stock_price import StockPriceBase, StockPriceService
 from api.databases.databases import get_db
-from const.const import HttpStatusCode, ErrorCode, PredictionResultConst
+from const.const import HttpStatusCode, ErrorCode, PredictionResultConst, BrandInfoModelConst
 from tests.api.database.test_database import get_test_db, init_db, drop_db
 
 # モック
@@ -23,11 +23,16 @@ GET_BRAND_INFO_LIST_PATH = "/brand_info_list"
 GET_BRAND_PATH = "/brand"
 CREATE_STOCK_PRICE_PATH = "/create_stock_price"
 UPDATE_STOCK_PRICE_PATH = "/upadte_stock_price"
-DELETE_BRAND_INFO_PATH = "/delete_brand_info/{brand_code}/{user_id}"
+DELETE_BRAND_INFO_PATH = "/delete_stock_price"
 
 # テストデータ
 data = [100.0, 200.0, 300.0]
 days = ["2023-07-01", "2023-07-02", "2023-07-03"]
+
+# テスト項目のこり
+# request_bodyのチェック、prediction
+# GETにtimeout処理追加してテストする
+
 
 
 def raise_db_error(*args, **kwargs):
@@ -58,7 +63,7 @@ class TestBase(unittest.TestCase):
     def params_error_check(self, code, msg, params_list, input_data_list, res_data):
         """
         パラメータのエラーチェック
-        
+
         例: res = [
             {
                 "code": ErrorCode.INT_VAILD.value,
@@ -76,7 +81,7 @@ class TestBase(unittest.TestCase):
     def request_body_error_check(self, code, msg, res_data):
         """
         リクエストボディーのエラーチェック
-        
+
         例: res = {
             "detail": [
                 {
@@ -87,9 +92,17 @@ class TestBase(unittest.TestCase):
         }
         """
         detail = res_data.get("detail")
-        print("detail", detail)
         self.assertEqual(detail[0].get("code"), code)
         self.assertEqual(detail[0].get("message"), msg)
+
+    def delete_client(self, url, data):
+        response = self.client.request(
+            method="DELETE",
+            url=url,
+            headers={"Content-Type": "application/json"},
+            content=json.dumps(data)
+        )
+        return response
 
 
 class TestGetStockPrice(TestBase):
@@ -375,31 +388,58 @@ class TestCreateStockPrice(TestBase):
 
         self.assertEqual(response.status_code, HttpStatusCode.SUCCESS.value)
 
-        result_db = self.db.query(PredictionResultModel).filter(
+        result_db_1 = self.db.query(BrandInfoModel).filter(
+            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.is_valid
+        ).first()
+        result_db_count_1 = self.db.query(BrandInfoModel).filter(
+            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.is_valid
+        ).count()
+
+        result_response_1 = {
+            BrandInfoModelConst.BRAND_NAME.value: result_db_1.brand_name,
+            BrandInfoModelConst.BRAND_CODE.value: result_db_1.brand_code,
+            BrandInfoModelConst.LEARNED_MODEL_NAME.value: result_db_1.learned_model_name,
+            BrandInfoModelConst.USER_ID.value: result_db_1.user_id
+        }
+        expected_response_1 = {
+            BrandInfoModelConst.BRAND_NAME.value: "日本ハム",
+            BrandInfoModelConst.BRAND_CODE.value: 2282,
+            BrandInfoModelConst.LEARNED_MODEL_NAME.value: "test.pth",
+            BrandInfoModelConst.USER_ID.value: 3
+        }
+
+        result_db_2 = self.db.query(PredictionResultModel).filter(
             PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
             PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).first()
-        result_db_count = self.db.query(PredictionResultModel).filter(
+        result_db_count_2 = self.db.query(PredictionResultModel).filter(
             PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
             PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).count()
-        self.assertEqual(result_db_count, 1)
 
-        result_response = {
-            PredictionResultConst.FUTURE_PREDICTIONS.value: result_db.future_predictions,
-            PredictionResultConst.DAYS_LIST.value: result_db.days_list,
-            PredictionResultConst.BRAND_CODE.value: result_db.brand_code,
-            PredictionResultConst.USER_ID.value: result_db.user_id
+        result_response_2 = {
+            PredictionResultConst.FUTURE_PREDICTIONS.value: result_db_2.future_predictions,
+            PredictionResultConst.DAYS_LIST.value: result_db_2.days_list,
+            PredictionResultConst.BRAND_CODE.value: result_db_2.brand_code,
+            PredictionResultConst.USER_ID.value: result_db_2.user_id
         }
-        expected_response = {
+        expected_response_2 = {
             PredictionResultConst.FUTURE_PREDICTIONS.value: "['100.1', '200.2', '300.6']",
             PredictionResultConst.DAYS_LIST.value: "['2024-07-16', '2024-07-17', '2024-07-18']",
             PredictionResultConst.BRAND_CODE.value: 2282,
             PredictionResultConst.USER_ID.value: 3
         }
-        self.assertEqual(result_response, expected_response)
+
+        self.assertEqual(result_db_count_1, 1)
+        self.assertEqual(result_db_count_2, 1)
+        self.assertEqual(result_response_1, expected_response_1)
+        self.assertEqual(result_response_2, expected_response_2)
 
     def test_create_stock_price_failed_duplication_check_01(self):
         """異常系: 重複した銘柄情報がある場合、409エラーを返す"""
@@ -502,7 +542,7 @@ class TestUpdateStockPrice(TestBase):
 
     @patch(STOCK_PRICE_BASE_PREDICTION)
     def test_update_stock_price_success_01(self, _stock_price_base_prediction):
-        """正常系: 予測データ登録API 正しく更新できる"""
+        """正常系: 予測データ更新API 正しく更新できる"""
         # 先にデータを登録する
         add_db_data_list_1 = []
         data_list_1 = [
@@ -566,33 +606,60 @@ class TestUpdateStockPrice(TestBase):
 
         self.assertEqual(response.status_code, HttpStatusCode.SUCCESS.value)
 
-        result_db = self.db.query(PredictionResultModel).filter(
+        result_db_1 = self.db.query(BrandInfoModel).filter(
+            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.is_valid
+        ).first()
+        result_db_count_1 = self.db.query(BrandInfoModel).filter(
+            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.is_valid
+        ).count()
+
+        result_response_1 = {
+            BrandInfoModelConst.BRAND_NAME.value: result_db_1.brand_name,
+            BrandInfoModelConst.BRAND_CODE.value: result_db_1.brand_code,
+            BrandInfoModelConst.LEARNED_MODEL_NAME.value: result_db_1.learned_model_name,
+            BrandInfoModelConst.USER_ID.value: result_db_1.user_id
+        }
+        expected_response_1 = {
+            BrandInfoModelConst.BRAND_NAME.value: "test1",
+            BrandInfoModelConst.BRAND_CODE.value: 3401,
+            BrandInfoModelConst.LEARNED_MODEL_NAME.value: "test_update.pth",
+            BrandInfoModelConst.USER_ID.value: 3
+        }
+
+        result_db_2 = self.db.query(PredictionResultModel).filter(
             PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
             PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).first()
-        result_db_count = self.db.query(PredictionResultModel).filter(
+        result_db_count_2 = self.db.query(PredictionResultModel).filter(
             PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
             PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).count()
-        self.assertEqual(result_db_count, 1)
 
-        result_response = {
-            PredictionResultConst.FUTURE_PREDICTIONS.value: result_db.future_predictions,
-            PredictionResultConst.DAYS_LIST.value: result_db.days_list,
-            PredictionResultConst.BRAND_CODE.value: result_db.brand_code,
-            PredictionResultConst.USER_ID.value: result_db.user_id
+        result_response_2 = {
+            PredictionResultConst.FUTURE_PREDICTIONS.value: result_db_2.future_predictions,
+            PredictionResultConst.DAYS_LIST.value: result_db_2.days_list,
+            PredictionResultConst.BRAND_CODE.value: result_db_2.brand_code,
+            PredictionResultConst.USER_ID.value: result_db_2.user_id
         }
-        expected_response = {
+        expected_response_2 = {
             PredictionResultConst.FUTURE_PREDICTIONS.value: "['101.1', '202.2', '303.6']",
             PredictionResultConst.DAYS_LIST.value: "['2024-07-20', '2024-07-21', '2024-07-22']",
             PredictionResultConst.BRAND_CODE.value: 3401,
             PredictionResultConst.USER_ID.value: 3
         }
-        self.assertEqual(result_response, expected_response)
 
-    def test_update_stock_price_failed_duplication_check_01(self):
+        self.assertEqual(result_db_count_1, 1)
+        self.assertEqual(result_db_count_2, 1)
+        self.assertEqual(result_response_1, expected_response_1)
+        self.assertEqual(result_response_2, expected_response_2)
+
+    def test_update_stock_price_failed_not_exists_check_01(self):
         """異常系: 更新対象の銘柄データが存在しない場合、404エラーを返す"""
         # 先にデータを登録する
         add_db_data_list = []
@@ -656,7 +723,7 @@ class TestUpdateStockPrice(TestBase):
             )
 
     @patch(STOCK_PRICE_BASE_PREDICTION)
-    def test_update_stock_price_failed_duplication_check_02(self, _stock_price_base_prediction):
+    def test_update_stock_price_failed_not_exists_check_02(self, _stock_price_base_prediction):
         """異常系: 更新対象の予測結果データが存在しない場合、404エラーを返す"""
         # あらかじめデータを登録する
         add_db_data_list_1 = []
@@ -746,84 +813,223 @@ class TestUpdateStockPrice(TestBase):
             )
 
 
-# class TestGetStockPrice(TestBase):
+class TestDeleteStockPrice(TestBase):
 
-#     def tearDown(self):
-#         self.db.query(PredictionResultModel).delete()
-#         self.db.query(BrandInfoModel).delete()
-#         self.db.commit()
-#         self.db.close()
+    def test_delete_stock_price_success_01(self):
+        """正常系: 予測データ削除API 正しく登録できる"""
+        # 先にデータを登録する
+        add_db_data_list_1 = []
+        data_list_1 = [
+            ["test1", 3401, "test1.pth", 3, True],
+            ["test2", 2229, "test2.pth", 2, True],
+            ["test3", 8989, "test3.pth", 10, True],
+            ["test4", 2221, "test4.pth", 1, False],
+        ]
+        for i in data_list_1:
+            add_db_data_list_1.append(BrandInfoModel(
+                brand_name=i[0],
+                brand_code=i[1],
+                learned_model_name=i[2],
+                user_id=i[3],
+                create_at=StockPriceBase.get_jst_now(),
+                create_by="test_user",
+                update_at=StockPriceBase.get_jst_now(),
+                update_by="test_user",
+                is_valid=i[4],
+            ))
+        self.db.add_all(add_db_data_list_1)
+        self.db.commit()
 
-#     def _path(self, brand_code="7203", user_id=1):
-#         return f"/get_stock_price?brand_code={brand_code}&user_id={user_id}"
+        add_db_data_list_2 = []
+        data_list_2 = [
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3401, 3, True],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2229, 2, True],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 8989, 10, True],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2221, 1, False],
+        ]
+        for i in data_list_2:
+            add_db_data_list_2.append(PredictionResultModel(
+                future_predictions=i[0],
+                days_list=i[1],
+                brand_code=i[2],
+                user_id=i[3],
+                create_at=StockPriceBase.get_jst_now(),
+                create_by="test_user",
+                update_at=StockPriceBase.get_jst_now(),
+                update_by="test_user",
+                is_valid=i[4],
+            ))
+        self.db.add_all(add_db_data_list_2)
+        self.db.commit()
 
-#     @patch(CHECK_BRAND_INFO)
-#     @patch(TEST_MAIN)
-#     def test_get_stock_price_success_01(self, mock_main_test, mock_check_brand_info):
-#         """正常系: 取得データを返す trainは実行しない"""
-#         mock_check_brand_info.return_value = True
-#         mock_main_test.return_value = (data, days)
+        # データセット
+        data = {
+            "brand_code": 8989,
+            "user_id": 10
+        }
 
-#         response = self.client.get(self.get_path())
+        # API実行
+        response = self.delete_client(DELETE_BRAND_INFO_PATH, data)
 
-#         self.assertEqual(response.status_code, HttpStatusCode.SUCCESS.value)
-#         self.assertEqual(response.json(), {
-#             "status": HttpStatusCode.SUCCESS.value,
-#             "result": {
-#                 "feature_stock_price": data,
-#                 "days_list": days
-#             }
-#         })
+        self.assertEqual(response.status_code, HttpStatusCode.SUCCESS.value)
 
-#     @patch(CHECK_BRAND_INFO)
-#     @patch(TRAIN_MAIN)
-#     @patch(TEST_MAIN)
-#     def test_get_stock_price_success_02(self, mock_main_test, mock_main_train, mock_check_brand_info):
-#         """正常系: 取得データを返す trainは実行する"""
-#         mock_check_brand_info.return_value = False
-#         mock_main_train.return_value = None
-#         mock_main_test.return_value = (data, days)
+        result_db_count_1 = self.db.query(BrandInfoModel).filter(
+            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.is_valid
+        ).count()
 
-#         response = self.client.get(self.get_path())
+        result_db_count_2 = self.db.query(PredictionResultModel).filter(
+            PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
+            PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
+            PredictionResultModel.is_valid
+        ).count()
 
-#         self.assertEqual(mock_main_train.return_value, None)
-#         self.assertEqual(response.status_code, HttpStatusCode.SUCCESS.value)
-#         self.assertEqual(response.json(), {
-#             "status": HttpStatusCode.SUCCESS.value,
-#             "result": {
-#                 "feature_stock_price": data,
-#                 "days_list": days
-#             }
-#         })
+        self.assertEqual(result_db_count_1, 0)
+        self.assertEqual(result_db_count_2, 0)
 
-#     def test_get_stock_price_key_error(self):
-#         """異常系: 400 エラーチェック 存在しない銘柄"""
+    def test_delete_stock_price_failed_not_exists_check_01(self):
+        """異常系: 削除対象の銘柄情報が見つからない場合、404エラーを返す"""
+        # 先にデータを登録する
+        add_db_data_list_1 = []
+        data_list_1 = [
+            ["test1", 3401, "test1.pth", 3, True],
+            ["test2", 2229, "test2.pth", 2, True],
+            ["test3", 5469, "test3.pth", 1, True],
+            ["test4", 2221, "test4.pth", 1, False],
+        ]
+        for i in data_list_1:
+            add_db_data_list_1.append(BrandInfoModel(
+                brand_name=i[0],
+                brand_code=i[1],
+                learned_model_name=i[2],
+                user_id=i[3],
+                create_at=StockPriceBase.get_jst_now(),
+                create_by="test_user",
+                update_at=StockPriceBase.get_jst_now(),
+                update_by="test_user",
+                is_valid=i[4],
+            ))
+        self.db.add_all(add_db_data_list_1)
+        self.db.commit()
 
-#         response = self.client.get(self.get_path("ddd", 1))
+        add_db_data_list_2 = []
+        data_list_2 = [
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3401, 3, True],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2229, 2, True],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 5469, 1, True],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2221, 1, False],
+        ]
+        for i in data_list_2:
+            add_db_data_list_2.append(PredictionResultModel(
+                future_predictions=i[0],
+                days_list=i[1],
+                brand_code=i[2],
+                user_id=i[3],
+                create_at=StockPriceBase.get_jst_now(),
+                create_by="test_user",
+                update_at=StockPriceBase.get_jst_now(),
+                update_by="test_user",
+                is_valid=i[4],
+            ))
+        self.db.add_all(add_db_data_list_2)
+        self.db.commit()
 
-#         self.assertEqual(response.status_code, HttpStatusCode.BADREQUEST.value)
-#         self.assertEqual(response.json(), {
-#             "detail": [
-#                 {
-#                     "code": ErrorCode.CHECK_EXIST.value,
-#                     "message": "'対象の銘柄は存在しません'"
-#                 }
-#             ]
-#         })
+        # データセット
+        data_1 = {
+            "brand_code": 9999,
+            "user_id": 1
+        }
+        data_2 = {
+            "brand_code": 2221,
+            "user_id": 1
+        }
 
-#     @patch(CHECK_BRAND_INFO)
-#     def test_get_stock_price_server_error(self, mock_check_brand_info):
-#         """異常系: 500 エラーチェック"""
-#         mock_check_brand_info.side_effect = Exception("Server error")
+        data_list = [
+            data_1,
+            data_2
+        ]
 
-#         response = self.client.get(self.get_path())
+        for data in data_list:
+            # API実行
+            response = self.delete_client(DELETE_BRAND_INFO_PATH, data)
 
-#         self.assertEqual(response.status_code, HttpStatusCode.SERVER_ERROR.value)
-#         self.assertEqual(response.json(), {
-#             "detail": [
-#                 {
-#                     "code": ErrorCode.SERVER_ERROR.value,
-#                     "message": "Server error"
-#                 }
-#             ]
-#         })
+            self.assertEqual(response.status_code, HttpStatusCode.NOT_FOUND.value)
+            self.request_body_error_check(
+                ErrorCode.NOT_DATA.value,
+                "削除対象の銘柄情報が見つかりません。",
+                response.json()
+            )
+
+    def test_delete_stock_price_failed_not_exists_check_02(self):
+        """異常系: 削除対象の予測結果データが見つからない場合、404エラーを返す"""
+        # 先にデータを登録する
+        add_db_data_list_1 = []
+        data_list_1 = [
+            ["test1", 3410, "test1.pth", 11, True],
+            ["test2", 9269, "test2.pth", 2, True],
+            ["test3", 3421, "test3.pth", 1, True],
+            ["test4", 1123, "test4.pth", 1, False],
+        ]
+        for i in data_list_1:
+            add_db_data_list_1.append(BrandInfoModel(
+                brand_name=i[0],
+                brand_code=i[1],
+                learned_model_name=i[2],
+                user_id=i[3],
+                create_at=StockPriceBase.get_jst_now(),
+                create_by="test_user",
+                update_at=StockPriceBase.get_jst_now(),
+                update_by="test_user",
+                is_valid=i[4],
+            ))
+        self.db.add_all(add_db_data_list_1)
+        self.db.commit()
+
+        add_db_data_list_2 = []
+        data_list_2 = [
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3411, 11, True],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 9269, 2, True],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3421, 1, False],
+            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 1123, 1, False],
+        ]
+        for i in data_list_2:
+            add_db_data_list_2.append(PredictionResultModel(
+                future_predictions=i[0],
+                days_list=i[1],
+                brand_code=i[2],
+                user_id=i[3],
+                create_at=StockPriceBase.get_jst_now(),
+                create_by="test_user",
+                update_at=StockPriceBase.get_jst_now(),
+                update_by="test_user",
+                is_valid=i[4],
+            ))
+        self.db.add_all(add_db_data_list_2)
+        self.db.commit()
+
+        # データセット
+        data_1 = {
+            "brand_code": 3410,
+            "user_id": 11
+        }
+        data_2 = {
+            "brand_code": 3421,
+            "user_id": 1
+        }
+
+        data_list = [
+            data_1,
+            data_2
+        ]
+
+        for data in data_list:
+            # API実行
+            response = self.delete_client(DELETE_BRAND_INFO_PATH, data)
+
+            self.assertEqual(response.status_code, HttpStatusCode.NOT_FOUND.value)
+            self.request_body_error_check(
+                ErrorCode.NOT_DATA.value,
+                "削除対象の予測結果データが見つかりません。",
+                response.json()
+            )

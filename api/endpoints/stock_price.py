@@ -135,7 +135,7 @@ class StockPriceService:
         if brand_info is None:
             raise HTTPException(
                 status_code=HttpStatusCode.NOT_FOUND.value,
-                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message="銘柄情報が見つかりません。").dict()]
+                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value, message="削除対象の銘柄情報が見つかりません。").dict()]
             )
         self._delete(brand_info)
 
@@ -147,8 +147,8 @@ class StockPriceService:
         ).first()
         if prediction_result is None:
             raise HTTPException(
-                status_code=HttpStatusCode.BADREQUEST.value,
-                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value, message="予測結果データが見つかりません。").dict()]
+                status_code=HttpStatusCode.NOT_FOUND.value,
+                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value, message="削除対象の予測結果データが見つかりません。").dict()]
             )
         self._delete(prediction_result)
 
