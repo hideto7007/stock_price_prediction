@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient # type: ignore
 
 from api.main import app
 from api.models.models import BrandModel, BrandInfoModel, PredictionResultModel
-from api.endpoints.stock_price import StockPriceBase, StockPriceService
+from api.endpoints.stock_price import StockPriceBase
 from api.databases.databases import get_db
 from const.const import HttpStatusCode, ErrorCode, PredictionResultConst, BrandInfoModelConst
 from tests.api.database.test_database import get_test_db, init_db, drop_db
@@ -29,34 +29,27 @@ DELETE_BRAND_INFO_PATH = "/delete_stock_price"
 data = [100.0, 200.0, 300.0]
 days = ["2023-07-01", "2023-07-02", "2023-07-03"]
 
-# テスト項目のこり
-# request_bodyのチェック、prediction
-# GETにtimeout処理追加してテストする
-
-
-
-def raise_db_error(*args, **kwargs):
-    raise Exception("Database connection error")
-
 
 class TestBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # テスト用データベースの初期化
+        """テスト用データベースの初期化"""
         init_db()
 
     @classmethod
     def tearDownClass(cls):
-        # テスト用データベースの削除
+        """テスト用データベースの削除"""
         drop_db()
 
     def setUp(self):
+        """セットアップ"""
         self.client = TestClient(app)
         self.db = next(get_test_db())
         app.dependency_overrides[get_db] = get_test_db
 
     def tearDown(self):
+        """テスト終了時処理z"""
         self.db.rollback()
         self.db.close()
 
@@ -96,6 +89,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(detail[0].get("message"), msg)
 
     def delete_client(self, url, data):
+        """削除クライアント"""
         response = self.client.request(
             method="DELETE",
             url=url,
@@ -103,6 +97,26 @@ class TestBase(unittest.TestCase):
             content=json.dumps(data)
         )
         return response
+
+
+class TestStockPriceService(TestBase):
+
+    @patch(TEST_MAIN)
+    @patch(TRAIN_MAIN)
+    def test_prediction_success_01(self, _train_main, _test_main):
+        """
+        正常系： 予測データが正しく取得できること
+        """
+        brand_name = "住友電気工業"
+        brand_code = 5802
+        _train_main.return_value = "test.pth"
+        _test_main.return_value = (data, days)
+
+        future_predictions, days_list, save_path = StockPriceBase.prediction(brand_name, brand_code)
+
+        self.assertEqual(future_predictions, str(data))
+        self.assertEqual(days_list, str(days))
+        self.assertEqual(save_path, "test.pth")
 
 
 class TestGetStockPrice(TestBase):
@@ -534,6 +548,29 @@ class TestCreateStockPrice(TestBase):
         self.request_body_error_check(
             ErrorCode.CHECK_EXIST.value,
             "予測結果データは既に登録済みです。",
+            response.json()
+        )
+
+    def test_create_stock_price_failed_not_exist_check_01(self):
+        """異常系: 存在しない銘柄の場合、400エラーを返す"""
+
+        # データセット
+        data = {
+            "brand_name": "test1",
+            "brand_code": 0,
+            "user_id": 1,
+            "create_by": "test",
+            "update_by": "test",
+            "is_valid": True
+        }
+
+        # API実行
+        response = self.client.post(CREATE_STOCK_PRICE_PATH, json=data)
+
+        self.assertEqual(response.status_code, HttpStatusCode.BADREQUEST.value)
+        self.request_body_error_check(
+            ErrorCode.CHECK_EXIST.value,
+            "'対象の銘柄は存在しません'",
             response.json()
         )
 

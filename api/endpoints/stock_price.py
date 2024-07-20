@@ -25,7 +25,7 @@ class StockPriceBase:
 
     @classmethod
     def prediction(cls, brand_name, user_id):
-        # インスタンス
+        """モデル学習を行い株価予測結果を算出する"""
         try:
             prediction_train = PredictionTrain(brand_name, user_id)
             prediction_train.check_brand_info()
@@ -41,7 +41,7 @@ class StockPriceBase:
 
     @classmethod
     def str_to_float_list(cls, str_list):
-        # インスタンス
+        """文字列形式の数値リストを浮動小数点数のリストに変換"""
         pattern = r'[-+]?\d*\.\d+|\d+'
         data = re.findall(pattern, str_list)
         data = [float(i) for i in data]
@@ -50,7 +50,7 @@ class StockPriceBase:
 
     @classmethod
     def str_to_str_list(cls, str_list):
-        # インスタンス
+        """文字列形式の数値リストを文字列のリストに変換"""
         pattern = r'(\d{4}-\d{2}-\d{2})'
         result1 = re.findall(pattern, str_list)
 
@@ -58,6 +58,7 @@ class StockPriceBase:
 
     @classmethod
     def get_jst_now(cls):
+        """日本時間の現在日時を取得"""
         return datetime.now() + timedelta(hours=9)
 
 
@@ -111,6 +112,7 @@ class StockPriceService:
         self.db.commit()
 
     def _exist_brand_info_check(self, data):
+        """銘柄テーブルにデータが存在するかチェック"""
         exist_check = self.db.query(BrandInfoModel).filter(
             BrandInfoModel.brand_code == data.brand_code,
             BrandInfoModel.user_id == data.user_id,
@@ -119,6 +121,7 @@ class StockPriceService:
         return exist_check
 
     def _exist_prediction_result_check(self, data):
+        """予測結果テーブルにデータが存在するかチェック"""
         exist_check = self.db.query(PredictionResultModel).filter(
             PredictionResultModel.brand_code == data.brand_code,
             PredictionResultModel.user_id == data.user_id,
@@ -127,6 +130,7 @@ class StockPriceService:
         return exist_check
 
     def delete_brand_info(self, data):
+        """銘柄テーブルのデータ削除"""
         brand_info = self.db.query(BrandInfoModel).filter(
             BrandInfoModel.brand_code == data.brand_code,
             BrandInfoModel.user_id == data.user_id,
@@ -140,6 +144,7 @@ class StockPriceService:
         self._delete(brand_info)
 
     def delete_prediction_result(self, data):
+        """予測結果テーブルのデータ削除"""
         prediction_result = self.db.query(PredictionResultModel).filter(
             PredictionResultModel.brand_code == data.brand_code,
             PredictionResultModel.user_id == data.user_id,
@@ -153,6 +158,7 @@ class StockPriceService:
         self._delete(prediction_result)
 
     def _create(self, create_data: CreateBrandInfo):
+        """銘柄情報と予測結果の登録処理"""
         if self._exist_brand_info_check(create_data) is not None:
             raise HTTPException(
                 status_code=HttpStatusCode.CONFLICT.value,
@@ -179,6 +185,7 @@ class StockPriceService:
         return {}
 
     def _update(self, update_data: UpdateBrandInfo):
+        """銘柄情報と予測結果の更新処理"""
         db_brand_info = self._exist_brand_info_check(update_data)
 
         if db_brand_info is None:
@@ -215,6 +222,7 @@ class StockPriceService:
         return {}
 
     def _brand_info_and_prediction_result_delete(self, delete_data: DeleteBrandInfo):
+        """銘柄情報と予測結果の削除処理"""
         self.delete_brand_info(delete_data)
         self.delete_prediction_result(delete_data)
 
