@@ -15,14 +15,18 @@ class HttpStatusCode(Enum):
     VALIDATION = 422
     TIMEOUT = 504
     BADREQUEST = 400
+    UNAUTHORIZED = 401
     CONFLICT = 409
     SERVER_ERROR = 500
+    TIME_OUT = 504
 
 
 class ErrorCode(Enum):
     CHECK_EXIST = 10
     INT_VAILD = 11
     NOT_DATA = 12
+    TIME_OUT = 13
+    UNAUTHORIZED = 14
     SERVER_ERROR = 50
 
 

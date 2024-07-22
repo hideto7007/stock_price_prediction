@@ -19,6 +19,10 @@ class ErrorMsg(BaseModel):
     message: str
 
 
+class Detail(BaseModel):
+    detail: List[ErrorMsg]
+
+
 class BrandInfoBase(BaseModel):
     brand_name: str = Field(..., max_length=128)
     brand_code: int = Field(...)
