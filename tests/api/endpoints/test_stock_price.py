@@ -30,6 +30,10 @@ data = [100.0, 200.0, 300.0]
 days = ["2023-07-01", "2023-07-02", "2023-07-03"]
 
 
+def raise_db_error(*args, **kwargs):
+    raise Exception("Database connection error")
+
+
 class TestBase(unittest.TestCase):
 
     @classmethod
@@ -1070,3 +1074,18 @@ class TestDeleteStockPrice(TestBase):
                 "削除対象の予測結果データが見つかりません。",
                 response.json()
             )
+
+
+class TestTimeOut(TestBase):
+    def test_timeout_middleware(self):
+        response = self.client.get("/slow")
+        error = {
+            "detail": [
+                {
+                    "code": ErrorCode.TIME_OUT.value,
+                    "message": 'read time out.'
+                }
+            ]
+        }
+        self.assertEqual(response.status_code,HttpStatusCode.TIME_OUT.value)
+        self.assertEqual(response.json(), error)

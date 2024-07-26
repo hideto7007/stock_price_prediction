@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends # type: ignore
 from sqlalchemy.orm import Session # type: ignore
 import re
@@ -290,3 +291,9 @@ async def delete_stock_price(delete_data: DeleteBrandInfo, db: Session = Depends
     """予測データ削除API"""
     service = StockPriceService(db)
     return service._brand_info_and_prediction_result_delete(delete_data)
+
+# Timeout用のAPI(テストでしか使わない)
+@router.get("/slow")
+async def slow_endpoint():
+    await asyncio.sleep(5)
+    return {"message": "This should timeout"}
