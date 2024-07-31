@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+torch = "==2.3.0"
+torchvision = "==0.18.0"
+torchaudio = "==2.3.0"
+coverage = "*"
+pandas-datareader = "*"
+numpy = "*"
+pandas = "*"
+beautifulsoup4 = "*"
+requests = "*"
+matplotlib = "*"
+scikit-learn = "*"
+jpholiday = "*"
+flake8 = "*"
+jose = "*"
+fastapi = {extras = ["all"], version = "*"}
+sqlalchemy = "*"
+python-jose = {extras = ["cryptography"], version = "*"}
+passlib = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"

@@ -1,9 +1,34 @@
 from pydantic import BaseModel, Field, field_validator # type: ignore
 # from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 
 # Pydanticモデル
+# トークンのデータモデル
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+# トークンに含まれるデータモデル
+class TokenData(BaseModel):
+    username: Union[str, None] = None
+
+
+# ユーザーのデータモデル
+class Account(BaseModel):
+    username: str
+    disabled: Union[bool, None] = None
+
+    class Config:
+        from_attributes = True
+
+
+# データベース内のユーザーデータモデル
+class AccountInDB(Account):
+    hashed_password: str
+
+
 class StockPriceResponse(BaseModel):
     feature_stock_price: List[float]
     days_list: List[str]
@@ -21,6 +46,16 @@ class ErrorMsg(BaseModel):
 
 class Detail(BaseModel):
     detail: List[ErrorMsg]
+
+
+class AccountBase(BaseModel):
+    username: str = Field(..., max_length=20)
+    hashed_password: str = Field(...)
+    disabled: bool
+
+
+class CreateAccount(AccountBase):
+    pass
 
 
 class BrandInfoBase(BaseModel):

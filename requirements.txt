@@ -10,7 +10,9 @@ beautifulsoup4
 requests
 matplotlib
 scikit-learn
-fastapi
-jpholiday
+fastapi[all]
+sqlalchemy
+python-jose[cryptography]
+passlib
 flake8
-"fastapi[all]" sqlalchemy
+jpholiday

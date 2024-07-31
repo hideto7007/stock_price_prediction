@@ -47,5 +47,14 @@ class PredictionResultModel(Base):
     is_valid = Column(Boolean, default=True, nullable=False)
 
 
+class AccountModel(Base):
+    __tablename__ = 'account'
+
+    account_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column(String, nullable=False, unique=True)
+    hashed_password = Column(String, nullable=False, unique=True)
+    user_id = Column(Integer, nullable=False)
+
+
 # # データベースとモデルを同期（既存のテーブルがある場合は実行しません）
 # Base.metadata.create_all(bind=engine)

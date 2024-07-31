@@ -3,8 +3,8 @@
 
 echo "test start"
 
-coverage run -m unittest discover
-coverage report
-coverage html
+pipenv run coverage run -m unittest discover
+pipenv run coverage report
+pipenv run coverage html
 
 echo "test end"

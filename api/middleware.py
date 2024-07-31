@@ -1,34 +1,53 @@
 # middleware.py
 from fastapi import Request, HTTPException # type: ignore
 from starlette.middleware.base import BaseHTTPMiddleware # type: ignore
-from starlette.status import HTTP_401_UNAUTHORIZED # type: ignore
+from fastapi.security import OAuth2PasswordBearer # type: ignore
 from starlette.types import ASGIApp
 from fastapi.responses import JSONResponse
-from fastapi import HTTPException
 import asyncio
+from typing import List
 
 from const.const import ErrorCode, HttpStatusCode
 from api.schemas.schemas import ErrorMsg, Detail
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-class SessionMiddleware(BaseHTTPMiddleware):
+
+class OAuth2Middleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp, oauth2_scheme: OAuth2PasswordBearer, exempt_paths: List[str] = None):
+        super().__init__(app)
+        self.oauth2_scheme = oauth2_scheme
+        self.exempt_paths = exempt_paths or ["/docs", "/redoc", "/openapi.json", "/favicon.ico"]
+
     async def dispatch(self, request: Request, call_next):
-        session_token = request.cookies.get("session_token")
-        
-        if not session_token or not self.is_valid_session(session_token):
-            raise HTTPException(
-                status_code=HttpStatusCode.UNAUTHORIZED.value,
-                detail=[ErrorMsg(code=ErrorCode.UNAUTHORIZED.value, message="セッションが無効です。").dict()]
+        # リクエストのパスが認証を必要としない場合はスキップ
+        if any(request.url.path.startswith(path) for path in self.exempt_paths):
+            return await call_next(request)
+
+        try:
+            token = await self.oauth2_scheme(request)
+            if not self.is_valid_token(token):
+                error_msg = ErrorMsg(code=ErrorCode.UNAUTHORIZED.value, message="トークンが無効です。")
+                detail = Detail(detail=[error_msg])
+                return JSONResponse(
+                    status_code=HttpStatusCode.UNAUTHORIZED.value,
+                    content=detail.dict()
+                )
+        except HTTPException as e:
+            # トークンがない、または不正なトークンが渡された場合
+            error_msg = ErrorMsg(code=ErrorCode.UNAUTHORIZED.value, message="認証に失敗しました。")
+            detail = Detail(detail=[error_msg])
+            return JSONResponse(
+                status_code=e.status_code,
+                content=detail.dict()
             )
-        
-        response = await call_next(request)
-        return response
-    
-    def is_valid_session(self, token: str) -> bool:
-        # セッションの有効性をチェックするロジックを実装
-        # 例えば、データベースやキャッシュからセッション情報を取得して検証する
-        return True
-    
+        return await call_next(request)
+
+    def is_valid_token(self, token: str) -> bool:
+        print("debug", token)
+        # トークンの有効性をチェックするロジックを実装
+        return True  # ここでは常に有効とする仮の実装
+
 
 class TimeoutMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp, timeout: int = 30):

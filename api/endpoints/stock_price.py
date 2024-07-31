@@ -194,7 +194,7 @@ class StockPriceService:
                 status_code=HttpStatusCode.NOT_FOUND.value,
                 detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value, message="更新対象の銘柄データが存在しません。").dict()]
             )
-        
+
         future_predictions, days_list, save_path = StockPriceBase.prediction(update_data.brand_name, update_data.user_id)
 
         db_prediction_result = self._exist_prediction_result_check(update_data)
@@ -272,6 +272,7 @@ async def brand(db: Session = Depends(get_db)):
     res = db.query(BrandModel).all()
     return res
 
+
 @router.post("/create_stock_price")
 async def create_stock_price(create_data: CreateBrandInfo, db: Session = Depends(get_db)):
     """予測データ登録API"""
@@ -292,8 +293,9 @@ async def delete_stock_price(delete_data: DeleteBrandInfo, db: Session = Depends
     service = StockPriceService(db)
     return service._brand_info_and_prediction_result_delete(delete_data)
 
-# Timeout用のAPI(テストでしか使わない)
+
 @router.get("/slow")
 async def slow_endpoint():
+    """Timeout検証用のAPI(テストでしか使わない)"""
     await asyncio.sleep(5)
     return {"message": "This should timeout"}

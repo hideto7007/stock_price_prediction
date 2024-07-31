@@ -1,15 +1,17 @@
 from fastapi import FastAPI, Request, HTTPException # type: ignore
-from fastapi.exceptions import RequestValidationError, HTTPException as FastAPIHTTPException # type: ignore
+from fastapi.exceptions import RequestValidationError # type: ignore
 from fastapi.responses import JSONResponse # type: ignore
-from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_504_GATEWAY_TIMEOUT # type: ignore
+from fastapi.security import OAuth2PasswordBearer # type: ignore
 
 from api.router.router import api_router
 from const.const import ErrorCode, HttpStatusCode
-from api.middleware import TimeoutMiddleware
-# from middleware import SessionMiddleware
+from api.middleware import TimeoutMiddleware, OAuth2Middleware
 
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -30,6 +32,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content=custom_errors,
     )
 
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
@@ -39,7 +42,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 
 # ミドルウェアの追加
-# app.add_middleware(SessionMiddleware)
+# app.add_middleware(OAuth2Middleware, oauth2_scheme=oauth2_scheme)
 # タイムアウトミドルウェアを追加（タイムアウト時間を指定）
 app.add_middleware(TimeoutMiddleware, timeout=3)
 app.include_router(api_router)
