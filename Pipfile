@@ -15,13 +15,12 @@ beautifulsoup4 = "*"
 requests = "*"
 matplotlib = "*"
 scikit-learn = "*"
-jpholiday = "*"
-flake8 = "*"
-jose = "*"
-fastapi = {extras = ["all"], version = "*"}
 sqlalchemy = "*"
-python-jose = {extras = ["cryptography"], version = "*"}
 passlib = "*"
+flake8 = "*"
+jpholiday = "*"
+fastapi = {extras = ["all"], version = "*"}
+python-jose = {extras = ["cryptography"], version = "*"}
 
 [dev-packages]
 
