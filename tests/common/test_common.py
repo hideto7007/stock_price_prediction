@@ -5,7 +5,6 @@ import unittest
 import datetime as dt
 import pandas as pd # type: ignore
 import numpy as np # type: ignore
-import torch # type: ignore
 from sklearn.preprocessing import StandardScaler # type: ignore
 from common.common import StockPriceData
 
@@ -353,10 +352,12 @@ class TestStockPriceData(unittest.TestCase):
             result = StockPriceData.moving_average(x)
             self.assertEqual(result, ex)
 
+    @unittest.skipIf(os.getenv('SKIP_CUDA_TESTS') == 'true', "Skipping CUDA tests")
     def test_data_split_01(self):
         """
         正常系: 学習データが正しく生成されていること
         """
+        import torch # type: ignore
         params = "トヨタ自動車"
         test_seq = 25
         test_len = 252
