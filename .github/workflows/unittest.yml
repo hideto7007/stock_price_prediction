@@ -22,10 +22,9 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
           ALGORITHM: ${{ secrets.ALGORITHM }}
           DATABASE_PATH: ${{ secrets.DATABASE_PATH }}
+          USE_CUDA: "False" 
         run: |
-          docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest -e CUDA_VISIBLE_DEVICES=-1 unittest /bin/bash -c "\
-            echo 'Inside container, CUDA_VISIBLE_DEVICES='$CUDA_VISIBLE_DEVICES && \
-            env && \
+          docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
             cd /stock_price_prediction && \
             pip install pipenv && \
             pipenv install --deploy --ignore-pipfile && \
