@@ -44,7 +44,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 # ミドルウェアの追加
 # app.add_middleware(OAuth2Middleware, oauth2_scheme=oauth2_scheme)
 # タイムアウトミドルウェアを追加（タイムアウト時間を指定）
-app.add_middleware(TimeoutMiddleware, timeout=20)
+app.add_middleware(TimeoutMiddleware, timeout=3)
 app.include_router(api_router)
 
 

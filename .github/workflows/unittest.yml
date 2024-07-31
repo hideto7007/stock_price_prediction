@@ -27,7 +27,6 @@ jobs:
             cd /stock_price_prediction && \
             pip install pipenv && \
             pipenv install --deploy --ignore-pipfile && \
-            pipenv install -r requirements.txt && \
             echo "debug1" && \
             pip list && \
             echo "debug1" && \

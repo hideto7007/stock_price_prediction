@@ -55,8 +55,12 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         self.timeout = timeout
 
     async def dispatch(self, request: Request, call_next):
+        timeout = self.timeout
+        # 特定のパスでタイムアウトを変更
+        if request.url.path.startswith("/create") or request.url.path.startswith("/update"):
+            timeout = 1800  # 30分
         try:
-            return await asyncio.wait_for(call_next(request), timeout=self.timeout)
+            return await asyncio.wait_for(call_next(request), timeout=timeout)
         except asyncio.TimeoutError:
             error_msg = ErrorMsg(code=ErrorCode.TIME_OUT, message="read time out.")
             detail = Detail(detail=[error_msg])

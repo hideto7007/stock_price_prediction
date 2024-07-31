@@ -1087,5 +1087,5 @@ class TestTimeOut(TestBase):
                 }
             ]
         }
-        self.assertEqual(response.status_code,HttpStatusCode.TIME_OUT.value)
+        self.assertEqual(response.status_code, HttpStatusCode.TIME_OUT.value)
         self.assertEqual(response.json(), error)
