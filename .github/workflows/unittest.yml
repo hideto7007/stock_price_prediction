@@ -22,15 +22,13 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
           ALGORITHM: ${{ secrets.ALGORITHM }}
           DATABASE_PATH: ${{ secrets.DATABASE_PATH }}
-          SKIP_CUDA_TESTS: true
         run: |
           docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
             export CUDA_VISIBLE_DEVICES=-1 && \
+            echo 'CUDA_VISIBLE_DEVICES='$CUDA_VISIBLE_DEVICES && \
             cd /stock_price_prediction && \
             pip install pipenv && \
             pipenv install --deploy --ignore-pipfile && \
-            echo "debug1" && \
             pipenv run pip list && \
-            echo "debug1" && \
             pipenv run coverage run -m unittest discover && \
             pipenv run coverage report"
