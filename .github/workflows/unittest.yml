@@ -18,17 +18,17 @@ jobs:
 
       - name: Run tests inside Docker container and Unittest
         env:
-          SECRET_KEY: ${{ env.SECRET_KEY }}
-          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ env.ACCESS_TOKEN_EXPIRE_MINUTES }}
-          ALGORITHM: ${{ env.ALGORITHM }}
-          DATABASE_PATH: ${{ env.DATABASE_PATH }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+          ALGORITHM: ${{ secrets.ALGORITHM }}
+          DATABASE_PATH: ${{ secrets.DATABASE_PATH }}
         run: |
           docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
             cd /stock_price_prediction && \
             pip install pipenv && \
             pipenv install --deploy --ignore-pipfile && \
             echo "debug1" && \
-            pip list && \
+            pipenv run pip list && \
             echo "debug1" && \
             pipenv run coverage run -m unittest discover && \
             pipenv run coverage report"
