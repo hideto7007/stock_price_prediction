@@ -1,6 +1,9 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 import unittest
 import datetime as dt
-import pandas as pd
+import pandas as pd # type: ignore
 import numpy as np # type: ignore
 import torch # type: ignore
 from sklearn.preprocessing import StandardScaler # type: ignore
