@@ -14,7 +14,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t unittest .
+          docker build --no-cache -t unittest .
 
       - name: Run tests inside Docker container and Unittest
         env:
