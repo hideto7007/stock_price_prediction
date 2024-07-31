@@ -5,6 +5,7 @@ ENV TZ=Asia/Tokyo
 # 環境変数を設定
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONPATH=/stock_price_prediction
+ENV CUDA_VISIBLE_DEVICES=-1
 
 # パッケージの更新と必要なパッケージのインストール
 RUN apt-get update && apt-get install -y \
