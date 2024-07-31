@@ -28,5 +28,8 @@ jobs:
             pip install pipenv && \
             pipenv install --deploy --ignore-pipfile && \
             pipenv install -r requirements.txt && \
+            echo "debug1" && \
+            pip list | grep torch && \
+            echo "debug1" && \
             pipenv run coverage run -m unittest discover && \
             pipenv run coverage report"
