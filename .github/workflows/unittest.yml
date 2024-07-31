@@ -24,6 +24,7 @@ jobs:
           DATABASE_PATH: ${{ secrets.DATABASE_PATH }}
         run: |
           docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
+            export CUDA_VISIBLE_DEVICES=-1 && \
             cd /stock_price_prediction && \
             pip install pipenv && \
             pipenv install --deploy --ignore-pipfile && \
