@@ -23,8 +23,7 @@ jobs:
           ALGORITHM: ${{ secrets.ALGORITHM }}
           DATABASE_PATH: ${{ secrets.DATABASE_PATH }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
-            export CUDA_VISIBLE_DEVICES=-1 && \
+          docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest -e CUDA_VISIBLE_DEVICES=-1 unittest /bin/bash -c "\
             echo 'CUDA_VISIBLE_DEVICES='$CUDA_VISIBLE_DEVICES && \
             cd /stock_price_prediction && \
             pip install pipenv && \
