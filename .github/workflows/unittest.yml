@@ -20,13 +20,13 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
             cd /stock_price_prediction && \
-            echo "SECRET_KEY=${{ env.SECRET_KEY }}" >> .env && \
-            echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ env.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> .env && \
-            echo "ALGORITHM=${{ env.ALGORITHM }}" >> .env && \
-            echo "DATABASE_PATH=${{ env.DATABASE_PATH }}" >> .env && \
-            echo "TEST_CREATE_PATH=${{ env.TEST_CREATE_PATH }}" >> .env && \
-            echo "TEST_DELETE_PATH=${{ env.TEST_DELETE_PATH }}" >> .env && \
-            echo "TEST_DATABASE_PATH=${{ env.TEST_DATABASE_PATH }}" >> .env && \
+            echo "SECRET_KEY=${{ vars.SECRET_KEY }}" >> .env && \
+            echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> .env && \
+            echo "ALGORITHM=${{ vars.ALGORITHM }}" >> .env && \
+            echo "DATABASE_PATH=${{ vars.DATABASE_PATH }}" >> .env && \
+            echo "TEST_CREATE_PATH=${{ vars.TEST_CREATE_PATH }}" >> .env && \
+            echo "TEST_DELETE_PATH=${{ vars.TEST_DELETE_PATH }}" >> .env && \
+            echo "TEST_DATABASE_PATH=${{ vars.TEST_DATABASE_PATH }}" >> .env && \
             echo '.env content:' && cat .env && \
             pip install pipenv && \
             pipenv install -r requirements.txt && \
