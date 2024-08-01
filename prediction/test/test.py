@@ -1,7 +1,5 @@
 import os
 import torch # type: ignore
-torch.backends.cudnn.enabled = False
-torch.set_default_tensor_type(torch.FloatTensor)
 import numpy as np # type: ignore
 import pandas as pd
 import datetime as dt
