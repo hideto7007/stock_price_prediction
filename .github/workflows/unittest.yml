@@ -27,7 +27,6 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
             cd /stock_price_prediction && \
             pip install pipenv && \
-            pipenv shell && \
             pipenv install -r requirements.txt && \
             pipenv run pip list && \
             pipenv run coverage run -m unittest discover && \
