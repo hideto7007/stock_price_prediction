@@ -28,6 +28,7 @@ jobs:
             echo "TEST_DELETE_PATH=${{ secrets.TEST_DELETE_PATH }}" >> .env && \
             echo "TEST_DATABASE_PATH=${{ secrets.TEST_DATABASE_PATH }}" >> .env && \
             echo "CUDA_VISIBLE_DEVICES=${{ secrets.CUDA_VISIBLE_DEVICES }}" >> .env && \
+            echo '.env content:' && cat .env && \
             pip install pipenv && \
             pipenv install -r requirements.txt && \
             pipenv run pip list && \
