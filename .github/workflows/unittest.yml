@@ -16,17 +16,26 @@ jobs:
         run: |
           docker build --no-cache -t unittest .
 
+      - name: Create .env file
+        run: |
+
       - name: Run tests inside Docker container and Unittest
         env:
-          SECRET_KEY: ${{ env.SECRET_KEY }}
-          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ env.ACCESS_TOKEN_EXPIRE_MINUTES }}
-          ALGORITHM: ${{ env.ALGORITHM }}
-          DATABASE_PATH: ${{ env.DATABASE_PATH }}
-          TEST_DATABASE_PATH: ${{ env.TEST_DATABASE_PATH }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+          ALGORITHM: ${{ secrets.ALGORITHM }}
+          DATABASE_PATH: ${{ secrets.DATABASE_PATH }}
+          TEST_DATABASE_PATH: ${{ secrets.TEST_DATABASE_PATH }}
           USE_CUDA: False
         run: |
           docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
             cd /stock_price_prediction && \
+            echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env && \
+            echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> .env && \
+            echo "ALGORITHM=${{ secrets.ALGORITHM }}" >> .env && \
+            echo "DATABASE_PATH=${{ secrets.DATABASE_PATH }}" >> .env && \
+            echo "TEST_DATABASE_PATH=${{ secrets.TEST_DATABASE_PATH }}" >> .env && \
+            echo "CUDA_VISIBLE_DEVICES=${{ secrets.CUDA_VISIBLE_DEVICES }}" >> .env && \
             pip install pipenv && \
             pipenv install -r requirements.txt && \
             pipenv run pip list && \
