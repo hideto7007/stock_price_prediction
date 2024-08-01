@@ -9,7 +9,10 @@ load_dotenv()
 TEST_DATABASE_PATH = os.getenv("TEST_DATABASE_PATH")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+print(BASE_DIR)
 TEST_DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, TEST_DATABASE_PATH)}"
+print(TEST_DATABASE_PATH)
+print(TEST_DATABASE_URL)
 
 
 engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
