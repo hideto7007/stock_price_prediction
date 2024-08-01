@@ -41,7 +41,6 @@ def execute_sql_file(engine, filepath):
 
 # テスト用のデータベース初期化
 def init_db(CREATE_SQL=os.path.join(BASE_DIR, TEST_CREATE_PATH)):
-    print("CREATE_SQL", CREATE_SQL)
     execute_sql_file(engine, CREATE_SQL)
 
 
