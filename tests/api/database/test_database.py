@@ -1,8 +1,13 @@
 import os
+import sqlite3
 from dotenv import load_dotenv # type: ignore
 from sqlalchemy import create_engine, text # type: ignore
 from sqlalchemy.ext.declarative import declarative_base # type: ignore
 from sqlalchemy.orm import sessionmaker # type: ignore
+
+from common.logger import Logger
+
+logger = Logger()
 
 load_dotenv()
 
@@ -39,11 +44,11 @@ def execute_sql_file(engine, filepath):
                     connection.execute(text(statement + ";"))
 
 
-# テスト用のデータベース初期化
+# テスト用のテーブル初期化
 def init_db(CREATE_SQL=os.path.join(BASE_DIR, TEST_CREATE_PATH)):
     execute_sql_file(engine, CREATE_SQL)
 
 
-# テスト用のデータベース削除
+# テスト用のテーブル削除
 def drop_db(DELETE_SQL=os.path.join(BASE_DIR, TEST_DELETE_PATH)):
     execute_sql_file(engine, DELETE_SQL)
