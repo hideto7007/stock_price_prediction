@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class ScrapingConst(Enum):
-    URL = "https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_PageID=WPLETmgR001Mdtl20&_DataStoreID=DSWPLETmgR001Control&_ActionID=DefaultAID&getFlg=on&burl=search_market&cat1=market&cat2=none&dir=info&file=market_meigara_225.html"
+    URL = "https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_PageID=WPLETmgR001Mdtl20&_DataStoreID=DSWPLETmgR001Control&_ActionID=DefaultAID&getFlg=on&burl=search_market&cat1=market&cat2=none&dir=info&file=market_meigara_225.html"  # noqa: E501
     SEARCH = "exchange_code=TKY"
     TAG = "a"
     FILE_NAME = "scraping.json"
@@ -27,6 +27,7 @@ class ErrorCode(Enum):
     NOT_DATA = 12
     TIME_OUT = 13
     UNAUTHORIZED = 14
+    LOST_CREDENTIALS = 15
     SERVER_ERROR = 50
 
 
@@ -82,3 +83,7 @@ class BrandInfoModelConst(Enum):
     BRAND_CODE = "brand_code"
     LEARNED_MODEL_NAME = "learned_model_name"
     USER_ID = "user_id"
+
+
+class LoginConst(Enum):
+    HEADERS = {"WWW-Authenticate": "Bearer"}

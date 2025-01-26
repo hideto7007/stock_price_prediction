@@ -24,3 +24,15 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 # To get the Swagger documentation, add 'dog' to the end of the URL 'http://127.0.0.1:8000/docs'.
 ```
+
+
+### pipenv create
+
+```bash
+# if exist pipenv 
+pipenv --rm
+# create pipenv 
+pipenv --python 3.12
+# come again
+pipenv shell
+```
