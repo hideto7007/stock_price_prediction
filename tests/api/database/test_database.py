@@ -1,9 +1,8 @@
 import os
-import sqlite3
-from dotenv import load_dotenv # type: ignore
-from sqlalchemy import create_engine, text # type: ignore
-from sqlalchemy.ext.declarative import declarative_base # type: ignore
-from sqlalchemy.orm import sessionmaker # type: ignore
+from dotenv import load_dotenv  # type: ignore
+from sqlalchemy import create_engine, text  # type: ignore
+from sqlalchemy.ext.declarative import declarative_base  # type: ignore
+from sqlalchemy.orm import sessionmaker  # type: ignore
 
 from common.logger import Logger
 
@@ -19,7 +18,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, TEST_DATABASE_PATH)}"
 
 
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

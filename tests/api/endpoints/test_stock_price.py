@@ -1,20 +1,25 @@
 import json
 import unittest
 from unittest.mock import patch
-from fastapi.testclient import TestClient # type: ignore
+from fastapi.testclient import TestClient  # type: ignore
 
 from api.main import app
 from api.models.models import BrandModel, BrandInfoModel, PredictionResultModel
 from api.endpoints.stock_price import StockPriceBase
 from api.databases.databases import get_db
-from const.const import HttpStatusCode, ErrorCode, PredictionResultConst, BrandInfoModelConst
+from const.const import (
+    HttpStatusCode, ErrorCode,
+    PredictionResultConst, BrandInfoModelConst
+)
 from tests.api.database.test_database import get_test_db, init_db, drop_db
 
 # モック
 CHECK_BRAND_INFO = 'prediction.train.train.PredictionTrain.check_brand_info'
 TRAIN_MAIN = 'prediction.train.train.PredictionTrain.main'
 TEST_MAIN = 'prediction.test.test.PredictionTest.main'
-STOCK_PRICE_BASE_PREDICTION = 'api.endpoints.stock_price.StockPriceBase.prediction'
+STOCK_PRICE_BASE_PREDICTION = (
+    'api.endpoints.stock_price.StockPriceBase.prediction'
+)
 GET_TEST_DB = 'tests.api.database.test_database.get_test_db'
 GET_DB = 'api.databases.databases.get_db'
 
@@ -57,7 +62,14 @@ class TestBase(unittest.TestCase):
         self.db.rollback()
         self.db.close()
 
-    def params_error_check(self, code, msg, params_list, input_data_list, res_data):
+    def params_error_check(
+        self,
+        code,
+        msg,
+        params_list,
+        input_data_list,
+        res_data
+    ):
         """
         パラメータのエラーチェック
 
@@ -70,7 +82,11 @@ class TestBase(unittest.TestCase):
         ]
         """
         self.assertEqual(len(res_data), len(params_list))
-        for res, param, input_data in zip(res_data, params_list, input_data_list):
+        for res, param, input_data in zip(
+            res_data,
+            params_list,
+            input_data_list
+        ):
             self.assertEqual(res.get("code"), code)
             self.assertEqual(res.get("detail"), f"{param} {msg}")
             self.assertEqual(res.get("input"), input_data)
@@ -116,7 +132,8 @@ class TestStockPriceService(TestBase):
         _train_main.return_value = "test.pth"
         _test_main.return_value = (data, days)
 
-        future_predictions, days_list, save_path = StockPriceBase.prediction(brand_name, brand_code)
+        future_predictions, days_list, save_path = StockPriceBase.prediction(
+            brand_name, brand_code)
 
         self.assertEqual(future_predictions, str(data))
         self.assertEqual(days_list, str(days))
@@ -134,10 +151,34 @@ class TestGetStockPrice(TestBase):
         }
         add_db_data_list = []
         data_list = [
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 1234, 1, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3212, 2, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 1111, 1, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2345, 1, False],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                1234,
+                1,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                3212,
+                2,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                1111,
+                1,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2345,
+                1,
+                False
+            ],
         ]
         for i in data_list:
             add_db_data_list.append(PredictionResultModel(
@@ -407,20 +448,25 @@ class TestCreateStockPrice(TestBase):
         self.assertEqual(response.status_code, HttpStatusCode.SUCCESS.value)
 
         result_db_1 = self.db.query(BrandInfoModel).filter(
-            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
-            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.brand_code == data.get(
+                BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(
+                BrandInfoModelConst.USER_ID.value),
             BrandInfoModel.is_valid
         ).first()
         result_db_count_1 = self.db.query(BrandInfoModel).filter(
-            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
-            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.brand_code == data.get(
+                BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(
+                BrandInfoModelConst.USER_ID.value),
             BrandInfoModel.is_valid
         ).count()
 
         result_response_1 = {
             BrandInfoModelConst.BRAND_NAME.value: result_db_1.brand_name,
             BrandInfoModelConst.BRAND_CODE.value: result_db_1.brand_code,
-            BrandInfoModelConst.LEARNED_MODEL_NAME.value: result_db_1.learned_model_name,
+            BrandInfoModelConst.LEARNED_MODEL_NAME.value:
+                result_db_1.learned_model_name,
             BrandInfoModelConst.USER_ID.value: result_db_1.user_id
         }
         expected_response_1 = {
@@ -431,25 +477,34 @@ class TestCreateStockPrice(TestBase):
         }
 
         result_db_2 = self.db.query(PredictionResultModel).filter(
-            PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
-            PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
+            PredictionResultModel.brand_code == data.get(
+                PredictionResultConst.BRAND_CODE.value),
+            PredictionResultModel.user_id == data.get(
+                PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).first()
         result_db_count_2 = self.db.query(PredictionResultModel).filter(
-            PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
-            PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
+            PredictionResultModel.brand_code == data.get(
+                PredictionResultConst.BRAND_CODE.value),
+            PredictionResultModel.user_id == data.get(
+                PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).count()
 
         result_response_2 = {
-            PredictionResultConst.FUTURE_PREDICTIONS.value: result_db_2.future_predictions,
+            PredictionResultConst.FUTURE_PREDICTIONS.value:
+                result_db_2.future_predictions,
             PredictionResultConst.DAYS_LIST.value: result_db_2.days_list,
             PredictionResultConst.BRAND_CODE.value: result_db_2.brand_code,
             PredictionResultConst.USER_ID.value: result_db_2.user_id
         }
         expected_response_2 = {
-            PredictionResultConst.FUTURE_PREDICTIONS.value: "['100.1', '200.2', '300.6']",
-            PredictionResultConst.DAYS_LIST.value: "['2024-07-16', '2024-07-17', '2024-07-18']",
+            PredictionResultConst.FUTURE_PREDICTIONS.value: (
+                "['100.1', '200.2', '300.6']"
+            ),
+            PredictionResultConst.DAYS_LIST.value: (
+                "['2024-07-16', '2024-07-17', '2024-07-18']"
+            ),
             PredictionResultConst.BRAND_CODE.value: 2282,
             PredictionResultConst.USER_ID.value: 3
         }
@@ -505,15 +560,42 @@ class TestCreateStockPrice(TestBase):
         )
 
     @patch(STOCK_PRICE_BASE_PREDICTION)
-    def test_create_stock_price_failed_duplication_check_02(self, _stock_price_base_prediction):
+    def test_create_stock_price_failed_duplication_check_02(
+        self,
+        _stock_price_base_prediction
+    ):
         """異常系: 重複した予測結果データがある場合、409エラーを返す"""
         # あらかじめデータを登録する
         add_db_data_list = []
         data_list = [
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 1234, 1, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2413, 3, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 1111, 1, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2345, 1, False],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                1234,
+                1,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2413,
+                3,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                1111,
+                1,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2345,
+                1,
+                False
+            ],
         ]
         for i in data_list:
             add_db_data_list.append(PredictionResultModel(
@@ -609,10 +691,34 @@ class TestUpdateStockPrice(TestBase):
 
         add_db_data_list_2 = []
         data_list_2 = [
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3401, 3, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2229, 2, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 5469, 1, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2221, 1, False],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                3401,
+                3,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2229,
+                2,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                5469,
+                1,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2221,
+                1,
+                False
+            ],
         ]
         for i in data_list_2:
             add_db_data_list_2.append(PredictionResultModel(
@@ -648,20 +754,25 @@ class TestUpdateStockPrice(TestBase):
         self.assertEqual(response.status_code, HttpStatusCode.SUCCESS.value)
 
         result_db_1 = self.db.query(BrandInfoModel).filter(
-            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
-            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.brand_code == data.get(
+                BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(
+                BrandInfoModelConst.USER_ID.value),
             BrandInfoModel.is_valid
         ).first()
         result_db_count_1 = self.db.query(BrandInfoModel).filter(
-            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
-            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.brand_code == data.get(
+                BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(
+                BrandInfoModelConst.USER_ID.value),
             BrandInfoModel.is_valid
         ).count()
 
         result_response_1 = {
             BrandInfoModelConst.BRAND_NAME.value: result_db_1.brand_name,
             BrandInfoModelConst.BRAND_CODE.value: result_db_1.brand_code,
-            BrandInfoModelConst.LEARNED_MODEL_NAME.value: result_db_1.learned_model_name,
+            BrandInfoModelConst.LEARNED_MODEL_NAME.value:
+                result_db_1.learned_model_name,
             BrandInfoModelConst.USER_ID.value: result_db_1.user_id
         }
         expected_response_1 = {
@@ -672,25 +783,35 @@ class TestUpdateStockPrice(TestBase):
         }
 
         result_db_2 = self.db.query(PredictionResultModel).filter(
-            PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
-            PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
+            PredictionResultModel.brand_code == data.get(
+                PredictionResultConst.BRAND_CODE.value),
+            PredictionResultModel.user_id == data.get(
+                PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).first()
         result_db_count_2 = self.db.query(PredictionResultModel).filter(
-            PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
-            PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
+            PredictionResultModel.brand_code == data.get(
+                PredictionResultConst.BRAND_CODE.value),
+            PredictionResultModel.user_id == data.get(
+                PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).count()
 
         result_response_2 = {
-            PredictionResultConst.FUTURE_PREDICTIONS.value: result_db_2.future_predictions,
+            PredictionResultConst.FUTURE_PREDICTIONS.value: (
+                result_db_2.future_predictions
+            ),
             PredictionResultConst.DAYS_LIST.value: result_db_2.days_list,
             PredictionResultConst.BRAND_CODE.value: result_db_2.brand_code,
             PredictionResultConst.USER_ID.value: result_db_2.user_id
         }
         expected_response_2 = {
-            PredictionResultConst.FUTURE_PREDICTIONS.value: "['101.1', '202.2', '303.6']",
-            PredictionResultConst.DAYS_LIST.value: "['2024-07-20', '2024-07-21', '2024-07-22']",
+            PredictionResultConst.FUTURE_PREDICTIONS.value: (
+                "['101.1', '202.2', '303.6']"
+            ),
+            PredictionResultConst.DAYS_LIST.value: (
+                "['2024-07-20', '2024-07-21', '2024-07-22']"
+            ),
             PredictionResultConst.BRAND_CODE.value: 3401,
             PredictionResultConst.USER_ID.value: 3
         }
@@ -756,7 +877,8 @@ class TestUpdateStockPrice(TestBase):
             response = self.client.put(UPDATE_STOCK_PRICE_PATH, json=data)
 
             # brand_codeが存在しないかつis_vaild = True
-            self.assertEqual(response.status_code, HttpStatusCode.NOT_FOUND.value)
+            self.assertEqual(response.status_code,
+                             HttpStatusCode.NOT_FOUND.value)
             self.request_body_error_check(
                 ErrorCode.NOT_DATA.value,
                 "更新対象の銘柄データが存在しません。",
@@ -764,7 +886,10 @@ class TestUpdateStockPrice(TestBase):
             )
 
     @patch(STOCK_PRICE_BASE_PREDICTION)
-    def test_update_stock_price_failed_not_exists_check_02(self, _stock_price_base_prediction):
+    def test_update_stock_price_failed_not_exists_check_02(
+        self,
+        _stock_price_base_prediction
+    ):
         """異常系: 更新対象の予測結果データが存在しない場合、404エラーを返す"""
         # あらかじめデータを登録する
         add_db_data_list_1 = []
@@ -791,10 +916,31 @@ class TestUpdateStockPrice(TestBase):
 
         add_db_data_list_2 = []
         data_list_2 = [
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 1234, 1, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2229, 4, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 1111, 1, False],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2345, 1, False],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                1234,
+                1,
+                True
+            ],
+            [
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2229,
+                4,
+                True
+            ],
+            [
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                1111,
+                1,
+                False
+            ],
+            [
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2345,
+                1,
+                False
+            ],
         ]
         for i in data_list_2:
             add_db_data_list_2.append(PredictionResultModel(
@@ -846,7 +992,8 @@ class TestUpdateStockPrice(TestBase):
             # API実行
             response = self.client.put(UPDATE_STOCK_PRICE_PATH, json=data)
 
-            self.assertEqual(response.status_code, HttpStatusCode.NOT_FOUND.value)
+            self.assertEqual(response.status_code,
+                             HttpStatusCode.NOT_FOUND.value)
             self.request_body_error_check(
                 ErrorCode.NOT_DATA.value,
                 "更新対象の予測結果データが存在しません。",
@@ -883,10 +1030,34 @@ class TestDeleteStockPrice(TestBase):
 
         add_db_data_list_2 = []
         data_list_2 = [
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3401, 3, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2229, 2, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 8989, 10, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2221, 1, False],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                3401,
+                3,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2229,
+                2,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                8989,
+                10,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2221,
+                1,
+                False
+            ],
         ]
         for i in data_list_2:
             add_db_data_list_2.append(PredictionResultModel(
@@ -915,14 +1086,18 @@ class TestDeleteStockPrice(TestBase):
         self.assertEqual(response.status_code, HttpStatusCode.SUCCESS.value)
 
         result_db_count_1 = self.db.query(BrandInfoModel).filter(
-            BrandInfoModel.brand_code == data.get(BrandInfoModelConst.BRAND_CODE.value),
-            BrandInfoModel.user_id == data.get(BrandInfoModelConst.USER_ID.value),
+            BrandInfoModel.brand_code == data.get(
+                BrandInfoModelConst.BRAND_CODE.value),
+            BrandInfoModel.user_id == data.get(
+                BrandInfoModelConst.USER_ID.value),
             BrandInfoModel.is_valid
         ).count()
 
         result_db_count_2 = self.db.query(PredictionResultModel).filter(
-            PredictionResultModel.brand_code == data.get(PredictionResultConst.BRAND_CODE.value),
-            PredictionResultModel.user_id == data.get(PredictionResultConst.USER_ID.value),
+            PredictionResultModel.brand_code == data.get(
+                PredictionResultConst.BRAND_CODE.value),
+            PredictionResultModel.user_id == data.get(
+                PredictionResultConst.USER_ID.value),
             PredictionResultModel.is_valid
         ).count()
 
@@ -956,10 +1131,34 @@ class TestDeleteStockPrice(TestBase):
 
         add_db_data_list_2 = []
         data_list_2 = [
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3401, 3, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2229, 2, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 5469, 1, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 2221, 1, False],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                3401,
+                3,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2229,
+                2,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                5469,
+                1,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                2221,
+                1,
+                False
+            ],
         ]
         for i in data_list_2:
             add_db_data_list_2.append(PredictionResultModel(
@@ -995,7 +1194,8 @@ class TestDeleteStockPrice(TestBase):
             # API実行
             response = self.delete_client(DELETE_BRAND_INFO_PATH, data)
 
-            self.assertEqual(response.status_code, HttpStatusCode.NOT_FOUND.value)
+            self.assertEqual(response.status_code,
+                             HttpStatusCode.NOT_FOUND.value)
             self.request_body_error_check(
                 ErrorCode.NOT_DATA.value,
                 "削除対象の銘柄情報が見つかりません。",
@@ -1029,10 +1229,34 @@ class TestDeleteStockPrice(TestBase):
 
         add_db_data_list_2 = []
         data_list_2 = [
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3411, 11, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 9269, 2, True],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 3421, 1, False],
-            ["[100.0,101.0,102.0]", "[2024-07-01,2024-07-02,2024-07-03]", 1123, 1, False],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                3411,
+                11,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                9269,
+                2,
+                True
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                3421,
+                1,
+                False
+            ],
+            [
+                "[100.0,101.0,102.0]",
+                "[2024-07-01,2024-07-02,2024-07-03]",
+                1123,
+                1,
+                False
+            ],
         ]
         for i in data_list_2:
             add_db_data_list_2.append(PredictionResultModel(
@@ -1068,7 +1292,8 @@ class TestDeleteStockPrice(TestBase):
             # API実行
             response = self.delete_client(DELETE_BRAND_INFO_PATH, data)
 
-            self.assertEqual(response.status_code, HttpStatusCode.NOT_FOUND.value)
+            self.assertEqual(response.status_code,
+                             HttpStatusCode.NOT_FOUND.value)
             self.request_body_error_check(
                 ErrorCode.NOT_DATA.value,
                 "削除対象の予測結果データが見つかりません。",

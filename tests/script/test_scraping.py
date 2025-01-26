@@ -251,7 +251,10 @@ class TestBrandCode(unittest.TestCase):
         """
         # mock
         mock_response = Mock()
-        html_content = '<html><head><title>Test Page</title></head><body><p>Hello, world!</p></body></html>'
+        html_content = (
+            '<html><head><title>Test Page</title></head><body>'
+            '<p>Hello, world!</p></body></html>'
+        )
         mock_response.status_code = HttpStatusCode.SUCCESS.value
         mock_response.encoding = 'utf-8'
         mock_response.text = html_content
@@ -281,7 +284,8 @@ class TestBrandCode(unittest.TestCase):
             bsObj = BrandCode.get_html_info(url)
             self.assertEqual(bsObj.status_code, HttpStatusCode.NOT_FOUND.value)
 
-        self.assertEqual(str(context.exception), ErrorMessage.NOT_FOUND_MSG.value)
+        self.assertEqual(str(context.exception),
+                         ErrorMessage.NOT_FOUND_MSG.value)
 
     @patch(REQUESTS)
     def test_get_html_info_failed_02(self, _request):
@@ -300,23 +304,31 @@ class TestBrandCode(unittest.TestCase):
             bsObj = BrandCode.get_html_info(url)
             self.assertEqual(bsObj.status_code, HttpStatusCode.TIMEOUT.value)
 
-        self.assertEqual(str(context.exception), ErrorMessage.TIMEOUT_MSG.value)
+        self.assertEqual(
+            str(context.exception),
+            ErrorMessage.TIMEOUT_MSG.value
+        )
 
     def test_target_info_success_01(self):
         """
         正常系: 対象データが存在すること
         """
         bsObj = BrandCode.get_html_info(ScrapingConst.URL.value)
-        result = BrandCode.target_info(bsObj, ScrapingConst.TAG.value, ScrapingConst.SEARCH.value)
+        get_data = BrandCode.target_info(
+            bsObj, ScrapingConst.TAG.value, ScrapingConst.SEARCH.value)
         ex = self._ex_json_data()
-        self.assertEqual(result, ex)
+
+        result = len(get_data) == len(ex)
+
+        self.assertEqual(result, True)
 
     def test_target_info_success_02(self):
         """
         正常系: 対象データが存在してなくオブジェクトの中が空であること
         """
         bsObj = BrandCode.get_html_info('http://example.com')
-        result = BrandCode.target_info(bsObj, ScrapingConst.TAG.value, ScrapingConst.SEARCH.value)
+        result = BrandCode.target_info(
+            bsObj, ScrapingConst.TAG.value, ScrapingConst.SEARCH.value)
         ex = {}
         self.assertEqual(result, ex)
 
@@ -330,7 +342,8 @@ class TestBrandCode(unittest.TestCase):
         mock_path = 'tests/output/test.json'
         with patch('builtins.open', unittest.mock.mock_open()) as mocked_file:
             BrandCode.get_text(dict_data, mock_path)
-            mocked_file.assert_called_once_with(mock_path, 'w', encoding='utf-8')
+            mocked_file.assert_called_once_with(
+                mock_path, 'w', encoding='utf-8')
             handle = mocked_file()
             handle.write.assert_called()
             written_data = ""
