@@ -1,32 +1,48 @@
-from pydantic import BaseModel, Field, field_validator # type: ignore
+from pydantic import BaseModel, Field, field_validator  # type: ignore
+from pydantic.generics import GenericModel
 # from datetime import datetime
-from typing import List, Optional, Union
+from typing import Generic, Optional, TypeVar, List
+
+# ジェネリック型 T を定義
+T = TypeVar("T")
 
 
 # Pydanticモデル
-# トークンのデータモデル
+class UserBaseModel(BaseModel):
+    user_name: str
+    user_email: str
+    user_password: str
+
+
+class UserCreate(UserBaseModel):
+    pass
+
+
+class UserAccessToken(BaseModel):
+    user_name: str
+    user_password: str
+
+
+class UserAccessTokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class User(BaseModel):
+    user_id: int
+    user_name: str
+
+    class Config:
+        orm_mode = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 
-# トークンに含まれるデータモデル
 class TokenData(BaseModel):
-    username: Union[str, None] = None
-
-
-# ユーザーのデータモデル
-class Account(BaseModel):
-    username: str
-    disabled: Union[bool, None] = None
-
-    class Config:
-        from_attributes = True
-
-
-# データベース内のユーザーデータモデル
-class AccountInDB(Account):
-    hashed_password: str
+    user_name: str
 
 
 class StockPriceResponse(BaseModel):
@@ -40,7 +56,7 @@ class SuccessResponseModel(BaseModel):
 
 
 class ErrorMsg(BaseModel):
-    code: int
+    code: Optional[int] = None
     message: str
 
 
@@ -48,14 +64,12 @@ class Detail(BaseModel):
     detail: List[ErrorMsg]
 
 
-class AccountBase(BaseModel):
-    username: str = Field(..., max_length=20)
-    hashed_password: str = Field(...)
-    disabled: bool
-
-
-class CreateAccount(AccountBase):
-    pass
+# Response クラスをジェネリック型で定義
+class Response(GenericModel, Generic[T]):
+    status_code: int
+    data: Optional[List[T] | T]
+    detail: Optional[List[ErrorMsg]]
+    headers: Optional[dict[str, str]]
 
 
 class BrandInfoBase(BaseModel):

@@ -313,11 +313,12 @@
 -- ('ファーストリテイリング', 9983, datetime('now', 'localtime', '+9 hours'), 'MASTER', datetime('now', 'localtime', '+9 hours'), 'MASTER', 1),
 -- ('ソフトバンクグループ', 9984, datetime('now', 'localtime', '+9 hours'), 'MASTER', datetime('now', 'localtime', '+9 hours'), 'MASTER', 1);
 
-DROP TABLE account;
+-- DROP TABLE account;
 
-CREATE TABLE account (
-    account_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    hashed_password TEXT NOT NULL UNIQUE,
-    user_id INTEGER NOT NULL
+DROP TABLE user;
+CREATE TABLE user (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_name TEXT NOT NULL,
+    user_email TEXT NOT NULL UNIQUE,
+    user_password TEXT NOT NULL UNIQUE
 );

@@ -18,7 +18,6 @@ class HttpStatusCode(Enum):
     UNAUTHORIZED = 401
     CONFLICT = 409
     SERVER_ERROR = 500
-    TIME_OUT = 504
 
 
 class ErrorCode(Enum):

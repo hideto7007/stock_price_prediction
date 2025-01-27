@@ -1,7 +1,13 @@
-from fastapi import APIRouter # type: ignore
+from fastapi import APIRouter  # type: ignore
 from api.endpoints import stock_price, login
 
+api_dict = {
+    "login": login.router,
+    "stock_price": stock_price.router
+}
 
 api_router = APIRouter()
-api_router.include_router(login.router)
-api_router.include_router(stock_price.router)
+
+
+for prefix, router in api_dict.items():
+    api_router.include_router(router, prefix=f"/api/{prefix}")

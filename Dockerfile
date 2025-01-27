@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     git \
     software-properties-common \
     iproute2 \
+    sqlite3 \
     && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update && apt-get install -y python3.12 python3.12-venv python3.12-dev \
     && apt-get clean

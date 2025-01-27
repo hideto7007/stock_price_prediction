@@ -1,11 +1,11 @@
 import os
-import torch # type: ignore
-import numpy as np # type: ignore
+import torch  # type: ignore
+import numpy as np  # type: ignore
 import pandas as pd
 import datetime as dt
 import jpholiday
 from sklearn.metrics import mean_absolute_error
-from matplotlib import pyplot as plt # type: ignore PySide2
+from matplotlib import pyplot as plt  # type: ignore PySide2
 
 from prediction.model.model import LSTM
 from prediction.dataset.dataset import TimeSeriesDataset
@@ -23,7 +23,8 @@ class PredictionTest(PredictionTrain):
 
     def get_model_path(self):
         for i in os.listdir(self.model_path):
-            if self.brand_info[self.brand_name] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+            if (self.brand_info[self.brand_name] in i and
+                    str(DataSetConst.SEQ_LENGTH.value) in i):
                 print(self.model_path)
                 self.model_path += i
                 break
@@ -68,7 +69,8 @@ class PredictionTest(PredictionTrain):
                 # predictionの次元数に応じて適切なアクセスを行う
                 if prediction.dim() == 3:
                     # 3次元の場合: [バッチサイズ, シーケンス長, 特徴量数]
-                    future_predictions.append(prediction[:, -1, :].squeeze().tolist())
+                    future_predictions.append(
+                        prediction[:, -1, :].squeeze().tolist())
                     next_input = prediction[:, -1, :].unsqueeze(1)
                 else:
                     # 2次元の場合: [バッチサイズ, 特徴量数]
@@ -76,10 +78,12 @@ class PredictionTest(PredictionTrain):
                     next_input = prediction.unsqueeze(1)
 
                 # 次の入力データを更新
-                current_data = torch.cat((current_data[:, 1:, :], next_input), dim=1)
+                current_data = torch.cat(
+                    (current_data[:, 1:, :], next_input), dim=1)
 
         # 予渲された標準化値を実際の株価に逆スケーリング
-        predicted_prices = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
+        predicted_prices = scaler.inverse_transform(
+            np.array(future_predictions).reshape(-1, 1))
 
         logger.info("predict future end")
         return predicted_prices
@@ -87,9 +91,12 @@ class PredictionTest(PredictionTrain):
     def get_plot_data(self, num):
         get_data = StockPriceData.get_data(self.brand_code)
         get_data = get_data.reset_index()
-        get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
-        date = get_data[DFConst.DATE.value][-1 * num:] # テストデータの日付
-        test_close = get_data[DFConst.CLOSE.value][-1 * num:].values.reshape(-1)  # テストデータの終値
+        get_data.sort_values(by=DFConst.DATE.value,
+                             ascending=True, inplace=True)
+        date = get_data[DFConst.DATE.value][-1 * num:]  # テストデータの日付
+        test_close = get_data[DFConst.CLOSE.value][-1 *
+                                                   # テストデータの終値
+                                                   num:].values.reshape(-1)
 
         return test_close, date
 
@@ -125,15 +132,17 @@ class PredictionTest(PredictionTrain):
         plt.show()
 
     def make_days(self, days):
-        days_list = [] # 未来の日付を格納
-        num = 30 # 例：1ヶ月のデータ
+        days_list = []  # 未来の日付を格納
+        num = 30  # 例：1ヶ月のデータ
         test_close, date = self.get_plot_data(num)
         get_today = list(date)[-1]
         day_count = 1
         while day_count <= days:
             feature_date = get_today + dt.timedelta(days=day_count)
-            is_holiday_date = dt.date(feature_date.year, feature_date.month, feature_date.day)
-            if feature_date.weekday() >= 5 or jpholiday.is_holiday(is_holiday_date):
+            is_holiday_date = dt.date(
+                feature_date.year, feature_date.month, feature_date.day)
+            if (feature_date.weekday() >= 5 or
+                    jpholiday.is_holiday(is_holiday_date)):
                 day_count += 1
                 days += 1
                 continue
@@ -174,7 +183,8 @@ class PredictionTest(PredictionTrain):
             else:
                 data_std, scaler = self.data_std(plot_check_flag)
             data, label = self.make_data(data_std)
-            _, _, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
+            _, _, test_x, test_y = StockPriceData.data_split(
+                data, label, DataSetConst.TEST_LEN.value)
 
             # DataLoaderの作成
             test_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
@@ -184,7 +194,8 @@ class PredictionTest(PredictionTrain):
             pred_ma, true_ma = self.predict_result(pred_ma, true_ma, scaler)
 
             # 未来予測
-            future_predictions = self.predict_future(model, test_x[-1], scaler, LSTMConst.DAYS.value)
+            future_predictions = self.predict_future(
+                model, test_x[-1], scaler, LSTMConst.DAYS.value)
             future_predictions = [i[0] for i in future_predictions]
 
             # 予測結果のプロット
