@@ -1,7 +1,7 @@
 
 from datetime import datetime, timedelta
 import os
-from common.authentication import Authentication
+from api.common.authentication import Authentication
 from dotenv import load_dotenv  # type: ignore
 from typing import Optional
 from api.models.models import UserModel

@@ -11,6 +11,7 @@ requests
 matplotlib
 scikit-learn
 fastapi[all]
+uvicorn[standard]
 sqlalchemy
 python-jose[cryptography]
 passlib

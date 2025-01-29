@@ -19,7 +19,7 @@ docker container exec -it stock_price_prediction /bin/bash
 
 ```bash
 # fastapi exec command(local)
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 
 # To get the Swagger documentation, add 'dog' to the end of the URL 'http://127.0.0.1:8000/docs'.
 ```
@@ -33,6 +33,14 @@ pipenv --rm
 pipenv --python 3.12
 # come again
 pipenv shell
+```
+
+### create env
+
+```bash
+python3 -m venv env
+source env/bin/activate
+deactivate
 ```
 
 ### make database

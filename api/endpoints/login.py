@@ -1,16 +1,15 @@
 
-from datetime import datetime, timedelta
-from email import message
+from datetime import timedelta
 import os
+
+from api.common.exceptions import BaseHTTPException, ConflictException, HttpExceptionHandler
 from api.usercase.login import Login
-from common.authentication import Authentication
 from dotenv import load_dotenv  # type: ignore
-from typing import Any, Optional
+from typing import Any
 from api.models.models import UserModel
-from const.const import ErrorCode, HttpStatusCode, LoginConst
+from const.const import HttpStatusCode, LoginConst
 from sqlalchemy.orm import Session  # type: ignore
-from fastapi import APIRouter, HTTPException, Depends  # type: ignore
-from fastapi.security import OAuth2PasswordRequestForm  # type: ignore
+from fastapi import APIRouter, Depends, Request
 from jose import JWTError, jwt  # type: ignore
 
 from api.databases.databases import get_db
@@ -18,7 +17,6 @@ from api.schemas.schemas import (
     ErrorMsg,
     Response,
     Token,
-    TokenData,
     User,
     UserAccessToken,
     UserAccessTokenResponse,
@@ -50,7 +48,8 @@ router = APIRouter()
         }
     })
 )
-def register_user(
+async def register_user(
+    request: Request,
     user: UserCreate,
     db: Session = Depends(get_db)
 ):
@@ -64,30 +63,23 @@ def register_user(
         戻り値:
             Response: レスポンス型
     """
-    login = Login()
-    db_user = login.get_user_name(db, user.user_name)
-    if db_user:
-        error_msg = ErrorMsg(
-            message="既に登録済みのユーザーです"
-        )
-        raise Response[ErrorMsg](
-            status_code=HttpStatusCode.BADREQUEST.value,
-            detail=error_msg
-        )
     try:
+        login = Login()
+        db_user = login.get_user_name(db, user.user_name)
+        if db_user:
+            raise ConflictException("既に登録済みのユーザーです")
         login.create_user(db, user)
         return Response[str](
             status_code=HttpStatusCode.SUCCESS,
             data="登録成功"
         )
-    except Exception as e:
-        error_msg = ErrorMsg(
-            message="予期せぬエラー" + str(e)
-        )
-        raise Response[str](
-            status_code=HttpStatusCode.SERVER_ERROR,
-            detail=error_msg
-        )
+    except BaseHTTPException as e:
+        return await HttpExceptionHandler.main_handler(request, e)
+
+        # HTTPException(
+        #     status_code=HttpStatusCode.SERVER_ERROR.value,
+        #     detail=error_msg.dict()
+        # )
 
 
 @router.post(
