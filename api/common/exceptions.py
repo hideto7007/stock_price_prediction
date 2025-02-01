@@ -1,3 +1,4 @@
+from typing import Any, Awaitable, Callable
 from api.schemas.schemas import ErrorMsg
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -5,12 +6,26 @@ from fastapi.responses import JSONResponse
 from const.const import ErrorCode, HttpStatusCode
 
 
-class ConflictException(Exception):
+class BaseHttpException(HTTPException):
+    """カスタムHTTP例外の基底クラス"""
     pass
 
 
-class BaseHTTPException(HTTPException):
-    pass
+class CustomBaseException(Exception):
+    """カスタム例外の基底クラス"""
+
+    def __init__(self, status_code: int, detail: str):
+        self.status_code = status_code
+        self.detail = detail
+        super().__init__(detail)
+
+
+class ConflictException(CustomBaseException):
+    def __init__(self, detail: str):
+        super().__init__(
+            status_code=HttpStatusCode.BADREQUEST.value,
+            detail=detail
+        )
 
 
 async def validation_exception_handler(
@@ -49,15 +64,18 @@ class HttpExceptionHandler(BaseException):
             app (FastAPI): fastAPIにエラーハンドラー追加
         """
 
-        app.add_exception_handler(
-            HTTPException, HttpExceptionHandler.server_error_handler)
-        app.add_exception_handler(
-            RequestValidationError, HttpExceptionHandler.valid_error_handler)
-        app.add_exception_handler(
-            Exception, HttpExceptionHandler.exception_handler)
+        handlers = {
+            HTTPException: HttpExceptionHandler.server_error_handler,
+            RequestValidationError: HttpExceptionHandler.valid_error_handler,
+            Exception: HttpExceptionHandler.exception_handler,
+            TypeError: HttpExceptionHandler.type_error_handler,
+        }
 
-    @classmethod
-    async def main_handler(cls, req: Request, exc: HTTPException):
+        for exc_type, handler in handlers.items():
+            app.add_exception_handler(exc_type, handler)
+
+    @staticmethod
+    async def main_handler(req: Request, exc: Any):
         """
         HTTPException のカスタムエラーハンドリング
 
@@ -68,15 +86,19 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        print("check", type(exc))
         if isinstance(exc, HTTPException):
-            return await cls.server_error_handler(req, exc)
+            return await HttpExceptionHandler.server_error_handler(req, exc)
         if isinstance(exc, RequestValidationError):
-            return await cls.valid_error_handler(req, exc)
-        return await cls.exception_handler(req, exc)
+            return await HttpExceptionHandler.valid_error_handler(req, exc)
+        if isinstance(exc, TypeError):
+            return await HttpExceptionHandler.type_error_handler(req, exc)
+        return await HttpExceptionHandler.exception_handler(req, exc)
 
-    @classmethod
-    async def server_error_handler(cls, req: Request, e: HTTPException):
+    @staticmethod
+    async def server_error_handler(
+        req: Request,
+        e: HTTPException
+    ) -> JSONResponse:
         """
         HTTPException のカスタムエラーハンドリング
 
@@ -87,7 +109,6 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        # TODO:ログ出力
         context = ErrorMsg(
             code=e.status_code,
             message=str(e)
@@ -97,12 +118,11 @@ class HttpExceptionHandler(BaseException):
             content=context.model_dump(),
         )
 
-    @classmethod
+    @staticmethod
     async def valid_error_handler(
-        cls,
         req: Request,
         e: RequestValidationError
-    ):
+    ) -> JSONResponse:
         """
         RequestValidationError のカスタムエラーハンドリング
 
@@ -123,24 +143,50 @@ class HttpExceptionHandler(BaseException):
             content=context.model_dump(),
         )
 
-    @classmethod
-    async def exception_handler(cls, req: Request, e: Exception):
+    @staticmethod
+    async def type_error_handler(
+        req: Request,
+        e: TypeError
+    ) -> JSONResponse:
         """
-        Exception のカスタムエラーハンドリング
+        CustomBaseException のカスタムエラーハンドリング
 
         引数:
             request (Request): 受け取ったリクエスト
-            exc (Exception): 発生した 例外
+            exc (CustomBaseException): 発生した 例外
 
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        # TODO:ログ出力
         context = ErrorMsg(
-            code=502,
+            code=HttpStatusCode.BADREQUEST.value,
             message=str(e)
         )
         return JSONResponse(
-            status_code=502,
+            status_code=HttpStatusCode.BADREQUEST.value,
+            content=context.model_dump(),
+        )
+
+    @staticmethod
+    async def exception_handler(
+        req: Request,
+        e: CustomBaseException
+    ) -> JSONResponse:
+        """
+        CustomBaseException のカスタムエラーハンドリング
+
+        引数:
+            request (Request): 受け取ったリクエスト
+            exc (CustomBaseException): 発生した 例外
+
+        戻り値:
+            JSONResponse: カスタムエラーレスポンス
+        """
+        context = ErrorMsg(
+            code=e.status_code,
+            message=str(e.detail)
+        )
+        return JSONResponse(
+            status_code=e.status_code,
             content=context.model_dump(),
         )
