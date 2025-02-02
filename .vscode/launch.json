@@ -8,8 +8,12 @@
             "name": "FastAPI デバッグ",
             "type": "debugpy",
             "request": "launch",
+            "module": "uvicorn",
             "args": [
-                "python ${workspaceFolder}/api/main.py"
+                "api.main:app",
+                "--host", "0.0.0.0",
+                "--port", "8000",
+                "--reload"
             ],
             "cwd": "${workspaceFolder}",  // プロジェクトのルートディレクトリを作業ディレクトリにする
             "jinja": true,

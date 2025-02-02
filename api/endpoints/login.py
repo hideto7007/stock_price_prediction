@@ -2,7 +2,11 @@
 from datetime import timedelta
 import os
 
-from api.common.exceptions import BaseHTTPException, ConflictException, HttpExceptionHandler
+from api.common.exceptions import (
+    ConflictException,
+    CustomBaseException,
+    HttpExceptionHandler
+)
 from api.usercase.login import Login
 from dotenv import load_dotenv  # type: ignore
 from typing import Any
@@ -73,13 +77,8 @@ async def register_user(
             status_code=HttpStatusCode.SUCCESS,
             data="登録成功"
         )
-    except BaseHTTPException as e:
+    except CustomBaseException as e:
         return await HttpExceptionHandler.main_handler(request, e)
-
-        # HTTPException(
-        #     status_code=HttpStatusCode.SERVER_ERROR.value,
-        #     detail=error_msg.dict()
-        # )
 
 
 @router.post(

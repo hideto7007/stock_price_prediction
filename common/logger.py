@@ -12,6 +12,9 @@ class ISOTimeFormatter(logging.Formatter):
         return s
 
 
+file_name = './Users/hideto/money_management/stock_price_prediction/logger.log'
+
+
 logger = logging.getLogger()
 fmt = ISOTimeFormatter(
     '%(asctime)s - %(levelname)s - %(message)s',
@@ -23,6 +26,10 @@ sh.setFormatter(fmt)
 logger.addHandler(sh)
 
 logger.setLevel(logging.INFO)
+logging.basicConfig(
+    filename=file_name,
+    level=logging.DEBUG
+)
 
 
 class Logger:

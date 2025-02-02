@@ -61,7 +61,7 @@ class Swagger:
     def swagger_responses(
         cls,
         res_dict: dict
-    ) -> dict[int, dict[str, Any]]:
+    ) -> dict[int | str, dict[str, Any]] | None:
         """
             共通レスポンス定義
 
@@ -70,7 +70,7 @@ class Swagger:
                 db (Session): dbインスタンス
 
             戻り値:
-                dict[int, dict[str, Any]]: レスポンス定義
+                dict[int | str, dict[str, Any]] | None: レスポンス定義
         """
         response_definitions = {}
         for status_code, v in res_dict.items():
