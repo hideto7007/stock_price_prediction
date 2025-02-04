@@ -1,5 +1,5 @@
 from typing import Any
-from api.schemas.schemas import ErrorMsg
+from api.schemas.schemas import Content
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -106,8 +106,8 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        context = ErrorMsg(
-            message=str(e)
+        context = Content[str](
+            result=str(e)
         )
         return JSONResponse(
             status_code=e.status_code,
@@ -129,8 +129,8 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        context = ErrorMsg(
-            message=str(e)
+        context = Content[str](
+            result=str(e)
         )
         return JSONResponse(
             status_code=HttpStatusCode.VALIDATION.value,
@@ -152,8 +152,8 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        context = ErrorMsg(
-            message=str(e)
+        context = Content[str](
+            result=str(e)
         )
         return JSONResponse(
             status_code=HttpStatusCode.BADREQUEST.value,
@@ -175,8 +175,8 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        context = ErrorMsg(
-            message=str(e)
+        context = Content[str](
+            result=str(e)
         )
         return JSONResponse(
             status_code=HttpStatusCode.BADREQUEST.value,
@@ -198,8 +198,8 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        context = ErrorMsg(
-            message=str(e)
+        context = Content[str](
+            result=str(e)
         )
         return JSONResponse(
             status_code=HttpStatusCode.SERVER_ERROR.value,

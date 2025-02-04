@@ -49,7 +49,7 @@ class Login:
         self,
         db: Session,
         user: UserCreate
-    ) -> Optional[UserModel]:
+    ) -> UserModel:
         """
             ユーザー情報登録
 
@@ -60,16 +60,20 @@ class Login:
             戻り値:
                 UserCreate: ユーザーモデル
         """
-        hashed_password = Authentication.hash_password(user.user_password)
-        db_user = UserModel(
-            user_name=user.user_name,
-            user_email=user.user_email,
-            hashed_password=hashed_password
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        return db_user
+        try:
+            hashed_password = Authentication.hash_password(user.user_password)
+            db_user = UserModel(
+                user_name=user.user_name,
+                user_email=user.user_email,
+                user_password=hashed_password
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+        except Exception as e:
+            db.rollback()
+            raise e
 
     def authenticate_user(
         self,
@@ -93,7 +97,7 @@ class Login:
             return False
         if not Authentication.verify_password(
             user_password,
-            user.user_password
+            str(user.user_password)
         ):
             return False
         return user

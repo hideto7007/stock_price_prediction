@@ -28,12 +28,11 @@ class UserAccessTokenResponse(BaseModel):
     token_type: str
 
 
-class User(BaseModel):
+class UserResponseModel(BaseModel):
     user_id: int
+    user_email: str
     user_name: str
-
-    class Config:
-        orm_mode = True
+    user_password: Optional[str] = None
 
 
 class Token(BaseModel):
@@ -55,20 +54,15 @@ class SuccessResponseModel(BaseModel):
     result: Optional[StockPriceResponse] = None
 
 
-class ErrorMsg(BaseModel):
-    message: str
+class Content(GenericModel, Generic[T]):
+    result: Optional[List[T] | T]
 
-
-class Detail(BaseModel):
-    detail: List[ErrorMsg]
 
 
 # Response クラスをジェネリック型で定義
 class Response(GenericModel, Generic[T]):
-    status_code: int
-    data: Optional[List[T] | T]
-    detail: Optional[List[ErrorMsg]]
-    headers: Optional[dict[str, str]]
+    data: Optional[List[T] | T] = None
+    headers: Optional[dict[str, str]] = None
 
 
 class BrandInfoBase(BaseModel):

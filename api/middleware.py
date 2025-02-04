@@ -1,4 +1,5 @@
 # middleware.py
+import uuid
 from fastapi import Request, HTTPException  # type: ignore
 from starlette.middleware.base import BaseHTTPMiddleware  # type: ignore
 from fastapi.security import OAuth2PasswordBearer  # type: ignore
@@ -7,8 +8,8 @@ from fastapi.responses import JSONResponse
 import asyncio
 from typing import List
 
-from const.const import ErrorCode, HttpStatusCode
-from api.schemas.schemas import ErrorMsg, Detail
+from const.const import HttpStatusCode
+from api.schemas.schemas import Content
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -18,7 +19,7 @@ class OAuth2Middleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.oauth2_scheme = oauth2_scheme
         self.exempt_paths = exempt_paths or [
-            "/docs", "/redoc", "/openapi.json", "/favicon.ico"]
+            "/docs", "/redoc", "/openapi.json", "/favicon.ico", "/login"]
 
     async def dispatch(self, request: Request, call_next):
         # リクエストのパスが認証を必要としない場合はスキップ
@@ -28,21 +29,17 @@ class OAuth2Middleware(BaseHTTPMiddleware):
         try:
             token = await self.oauth2_scheme(request)
             if not self.is_valid_token(token):
-                error_msg = ErrorMsg(
-                    code=ErrorCode.UNAUTHORIZED.value, message="トークンが無効です。")
-                detail = Detail(detail=[error_msg])
+                error_msg = Content[str](result="トークンが無効です。")
                 return JSONResponse(
                     status_code=HttpStatusCode.UNAUTHORIZED.value,
-                    content=detail.dict()
+                    content=error_msg.model_dump()
                 )
         except HTTPException as e:
             # トークンがない、または不正なトークンが渡された場合
-            error_msg = ErrorMsg(
-                code=ErrorCode.UNAUTHORIZED.value, message="認証に失敗しました。")
-            detail = Detail(detail=[error_msg])
+            error_msg = Content[str](result="認証に失敗しました。")
             return JSONResponse(
                 status_code=e.status_code,
-                content=detail.dict()
+                content=error_msg.model_dump()
             )
         return await call_next(request)
 
@@ -65,10 +62,19 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         try:
             return await asyncio.wait_for(call_next(request), timeout=timeout)
         except asyncio.TimeoutError:
-            error_msg = ErrorMsg(code=ErrorCode.TIME_OUT,
-                                 message="read time out.")
-            detail = Detail(detail=[error_msg])
+            error_msg = Content[str](result="read time out.")
             return JSONResponse(
                 status_code=HttpStatusCode.TIMEOUT.value,
-                content=detail.dict()
+                content=error_msg.model_dump()
             )
+
+
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    """リクエストごとに一意の request_id を設定する Middleware"""
+
+    async def dispatch(self, request: Request, call_next):
+        request_id = str(uuid.uuid4())
+        request.state.request_id = request_id
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response

@@ -2,6 +2,8 @@
 from datetime import timedelta
 import os
 
+from fastapi.responses import JSONResponse
+
 from api.common.exceptions import (
     ConflictException,
     CustomBaseException,
@@ -18,13 +20,14 @@ from jose import JWTError, jwt  # type: ignore
 
 from api.databases.databases import get_db
 from api.schemas.schemas import (
-    ErrorMsg,
+    Content,
     Response,
     Token,
-    User,
     UserAccessToken,
     UserAccessTokenResponse,
-    UserCreate
+    UserBaseModel,
+    UserCreate,
+    UserResponseModel
 )
 from utils.utils import Swagger
 
@@ -72,10 +75,18 @@ async def register_user(
         db_user = login.get_user_name(db, user.user_name)
         if db_user:
             raise ConflictException("既に登録済みのユーザーです")
-        login.create_user(db, user)
-        return Response[str](
-            status_code=HttpStatusCode.SUCCESS,
-            data="登録成功"
+        user = login.create_user(db, user)
+        context = Content[UserResponseModel](
+            result=UserResponseModel(
+                user_id=int(getattr(user, "user_id", 0)),
+                user_email=str(user.user_email),
+                user_name=str(user.user_name),
+                user_password=str(user.user_password)
+            )
+        )
+        return JSONResponse(
+            status_code=HttpStatusCode.SUCCESS.value,
+            content=context.model_dump()
         )
     except CustomBaseException as e:
         return await HttpExceptionHandler.main_handler(request, e)
@@ -104,7 +115,7 @@ async def access_token(
     user = login.authenticate_user(db, data.user_name, data.user_password)
     if not user:
         error_msg = [
-            ErrorMsg(
+            Content[str](
                 message="ユーザーIDまたはパスワードが間違っています。"
             )
         ]
@@ -131,7 +142,7 @@ async def access_token(
 @router.get(
     "/read_users_me",
     tags=["認証"],
-    response_model=User
+    response_model=UserBaseModel
 )
 async def read_users_me(token: str, db: Session = Depends(get_db)):
     """
@@ -146,7 +157,7 @@ async def read_users_me(token: str, db: Session = Depends(get_db)):
     """
     login = Login()
     error_msg = [
-        ErrorMsg(
+        Content[str](
             message="認証情報の有効期限が切れています。"
         )
     ]
@@ -163,7 +174,7 @@ async def read_users_me(token: str, db: Session = Depends(get_db)):
         user_info = login.get_user_name(db, user_name)
         if user_info is None:
             error_msg = [
-                ErrorMsg(
+                Content[str](
                     message="対象のユーザー情報がありません。"
                 )
             ]

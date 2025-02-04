@@ -10,7 +10,7 @@ from prediction.test.test import PredictionTest
 from api.models.models import BrandInfoModel, BrandModel, PredictionResultModel
 from api.databases.databases import get_db
 from api.schemas.schemas import (
-    ErrorMsg,
+    Content,
     CreateBrandInfo,
     UpdateBrandInfo,
     DeleteBrandInfo,
@@ -38,8 +38,9 @@ class StockPriceBase:
 
             return str(future_predictions), str(days_list), save_path
         except KeyError as e:
-            raise HTTPException(status_code=HttpStatusCode.BADREQUEST.value, detail=[
-                                ErrorMsg(code=ErrorCode.CHECK_EXIST.value, message=str(e)).dict()])
+            raise HTTPException(
+                status_code=HttpStatusCode.BADREQUEST.value,
+                detail=[Content(result=str(e)).dict()])
 
     @classmethod
     def str_to_float_list(cls, str_list):
@@ -83,7 +84,12 @@ class StockPriceService:
         )
         return db_brand_info
 
-    def _prediction_result_validation(self, future_predictions, days_list, create_data):
+    def _prediction_result_validation(
+        self,
+        future_predictions,
+        days_list,
+        create_data
+    ):
         """予測結果のバリデーションチェック"""
         db_prediction_result = PredictionResultModel(
             future_predictions=future_predictions,
@@ -141,8 +147,7 @@ class StockPriceService:
         if brand_info is None:
             raise HTTPException(
                 status_code=HttpStatusCode.NOT_FOUND.value,
-                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value,
-                                 message="削除対象の銘柄情報が見つかりません。").dict()]
+                detail=[Content(result="削除対象の銘柄情報が見つかりません。").dict()]
             )
         self._delete(brand_info)
 
@@ -156,8 +161,8 @@ class StockPriceService:
         if prediction_result is None:
             raise HTTPException(
                 status_code=HttpStatusCode.NOT_FOUND.value,
-                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value,
-                                 message="削除対象の予測結果データが見つかりません。").dict()]
+                detail=[Content(code=ErrorCode.NOT_DATA.value,
+                                result="削除対象の予測結果データが見つかりません。").dict()]
             )
         self._delete(prediction_result)
 
@@ -166,8 +171,8 @@ class StockPriceService:
         if self._exist_brand_info_check(create_data) is not None:
             raise HTTPException(
                 status_code=HttpStatusCode.CONFLICT.value,
-                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value,
-                                 message="銘柄情報は既に登録済みです。").dict()]
+                detail=[Content(code=ErrorCode.CHECK_EXIST.value,
+                                result="銘柄情報は既に登録済みです。").dict()]
             )
 
         future_predictions, days_list, save_path = StockPriceBase.prediction(
@@ -183,8 +188,8 @@ class StockPriceService:
         if self._exist_prediction_result_check(create_data) is not None:
             raise HTTPException(
                 status_code=HttpStatusCode.CONFLICT.value,
-                detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value,
-                                 message="予測結果データは既に登録済みです。").dict()]
+                detail=[Content(code=ErrorCode.CHECK_EXIST.value,
+                                result="予測結果データは既に登録済みです。").dict()]
             )
 
         # 予測結果登録
@@ -199,8 +204,8 @@ class StockPriceService:
         if db_brand_info is None:
             raise HTTPException(
                 status_code=HttpStatusCode.NOT_FOUND.value,
-                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value,
-                                 message="更新対象の銘柄データが存在しません。").dict()]
+                detail=[Content(code=ErrorCode.NOT_DATA.value,
+                                result="更新対象の銘柄データが存在しません。").dict()]
             )
 
         future_predictions, days_list, save_path = StockPriceBase.prediction(
@@ -218,8 +223,7 @@ class StockPriceService:
         if db_prediction_result is None:
             raise HTTPException(
                 status_code=HttpStatusCode.NOT_FOUND.value,
-                detail=[ErrorMsg(code=ErrorCode.NOT_DATA.value,
-                                 message="更新対象の予測結果データが存在しません。").dict()]
+                detail=[Content(result="更新対象の予測結果データが存在しません。").dict()]
             )
 
         db_prediction_result.future_predictions = future_predictions
@@ -232,7 +236,10 @@ class StockPriceService:
 
         return {}
 
-    def _brand_info_and_prediction_result_delete(self, delete_data: DeleteBrandInfo):
+    def _brand_info_and_prediction_result_delete(
+        self,
+        delete_data: DeleteBrandInfo
+    ):
         """銘柄情報と予測結果の削除処理"""
         self.delete_brand_info(delete_data)
         self.delete_prediction_result(delete_data)
@@ -255,14 +262,15 @@ def get_data(brand_code: int, user_id: int, db: Session = Depends(get_db)):
     if res is None:
         raise HTTPException(
             status_code=HttpStatusCode.NOT_FOUND.value,
-            detail=[ErrorMsg(code=ErrorCode.CHECK_EXIST.value,
-                             message="登録されてない予測データです").dict()]
+            detail=[Content(result="登録されてない予測データです").dict()]
         )
 
     # レスポンス形式に変換
     res_dict = {
-        PredictionResultConst.FUTURE_PREDICTIONS.value: StockPriceBase.str_to_float_list(res.future_predictions),
-        PredictionResultConst.DAYS_LIST.value: StockPriceBase.str_to_str_list(res.days_list),
+        PredictionResultConst.FUTURE_PREDICTIONS.value:
+        StockPriceBase.str_to_float_list(res.future_predictions),
+        PredictionResultConst.DAYS_LIST.value:
+        StockPriceBase.str_to_str_list(res.days_list),
         PredictionResultConst.BRAND_CODE.value: res.brand_code,
         PredictionResultConst.USER_ID.value: res.user_id
     }
@@ -299,7 +307,10 @@ async def brand(db: Session = Depends(get_db)):
     "/create_stock_price",
     tags=["株価予測"]
 )
-async def create_stock_price(create_data: CreateBrandInfo, db: Session = Depends(get_db)):
+async def create_stock_price(
+    create_data: CreateBrandInfo,
+    db: Session = Depends(get_db)
+):
     """予測データ登録API"""
     service = StockPriceService(db)
     return service._create(create_data)
@@ -309,7 +320,10 @@ async def create_stock_price(create_data: CreateBrandInfo, db: Session = Depends
     "/upadte_stock_price",
     tags=["株価予測"]
 )
-async def upadte_stock_price(update_data: UpdateBrandInfo, db: Session = Depends(get_db)):
+async def upadte_stock_price(
+    update_data: UpdateBrandInfo,
+    db: Session = Depends(get_db)
+):
     """予測データ更新API"""
     service = StockPriceService(db)
     return service._update(update_data)
@@ -319,7 +333,10 @@ async def upadte_stock_price(update_data: UpdateBrandInfo, db: Session = Depends
     "/delete_stock_price",
     tags=["株価予測"]
 )
-async def delete_stock_price(delete_data: DeleteBrandInfo, db: Session = Depends(get_db)):
+async def delete_stock_price(
+    delete_data: DeleteBrandInfo,
+    db: Session = Depends(get_db)
+):
     """予測データ削除API"""
     service = StockPriceService(db)
     return service._brand_info_and_prediction_result_delete(delete_data)
@@ -332,4 +349,4 @@ async def delete_stock_price(delete_data: DeleteBrandInfo, db: Session = Depends
 async def slow_endpoint():
     """Timeout検証用のAPI(テストでしか使わない)"""
     await asyncio.sleep(5)
-    return {"message": "This should timeout"}
+    return {"result": "This should timeout"}
