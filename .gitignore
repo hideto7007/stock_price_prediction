@@ -5,3 +5,4 @@
 /ping
 .env
 /env
+*.log
