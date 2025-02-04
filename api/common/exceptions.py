@@ -1,8 +1,9 @@
-from typing import Any, Awaitable, Callable
+from typing import Any
 from api.schemas.schemas import ErrorMsg
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from common.logger import Logger
 from const.const import ErrorCode, HttpStatusCode
 
 
@@ -12,20 +13,12 @@ class BaseHttpException(HTTPException):
 
 
 class CustomBaseException(Exception):
-    """カスタム例外の基底クラス"""
-
-    def __init__(self, status_code: int, detail: str):
-        self.status_code = status_code
-        self.detail = detail
-        super().__init__(detail)
+    """カスタムHTTP例外の基底クラス"""
+    pass
 
 
 class ConflictException(CustomBaseException):
-    def __init__(self, detail: str):
-        super().__init__(
-            status_code=HttpStatusCode.BADREQUEST.value,
-            detail=detail
-        )
+    pass
 
 
 async def validation_exception_handler(
@@ -69,6 +62,7 @@ class HttpExceptionHandler(BaseException):
             RequestValidationError: HttpExceptionHandler.valid_error_handler,
             Exception: HttpExceptionHandler.exception_handler,
             TypeError: HttpExceptionHandler.type_error_handler,
+            AttributeError: HttpExceptionHandler.attribute_error_handler,
         }
 
         for exc_type, handler in handlers.items():
@@ -86,12 +80,15 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
+        await Logger.error(req, exc)
         if isinstance(exc, HTTPException):
             return await HttpExceptionHandler.server_error_handler(req, exc)
         if isinstance(exc, RequestValidationError):
             return await HttpExceptionHandler.valid_error_handler(req, exc)
         if isinstance(exc, TypeError):
             return await HttpExceptionHandler.type_error_handler(req, exc)
+        if isinstance(exc, AttributeError):
+            return await HttpExceptionHandler.attribute_error_handler(req, exc)
         return await HttpExceptionHandler.exception_handler(req, exc)
 
     @staticmethod
@@ -110,7 +107,6 @@ class HttpExceptionHandler(BaseException):
             JSONResponse: カスタムエラーレスポンス
         """
         context = ErrorMsg(
-            code=e.status_code,
             message=str(e)
         )
         return JSONResponse(
@@ -133,9 +129,7 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        # TODO:ログ出力
         context = ErrorMsg(
-            code=HttpStatusCode.VALIDATION.value,
             message=str(e)
         )
         return JSONResponse(
@@ -149,17 +143,39 @@ class HttpExceptionHandler(BaseException):
         e: TypeError
     ) -> JSONResponse:
         """
-        CustomBaseException のカスタムエラーハンドリング
+        TypeError のカスタムエラーハンドリング
 
         引数:
             request (Request): 受け取ったリクエスト
-            exc (CustomBaseException): 発生した 例外
+            exc (TypeError): 発生した 例外
 
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
         context = ErrorMsg(
-            code=HttpStatusCode.BADREQUEST.value,
+            message=str(e)
+        )
+        return JSONResponse(
+            status_code=HttpStatusCode.BADREQUEST.value,
+            content=context.model_dump(),
+        )
+
+    @staticmethod
+    async def attribute_error_handler(
+        req: Request,
+        e: AttributeError
+    ) -> JSONResponse:
+        """
+        AttributeError のカスタムエラーハンドリング
+
+        引数:
+            request (Request): 受け取ったリクエスト
+            exc (AttributeError): 発生した 例外
+
+        戻り値:
+            JSONResponse: カスタムエラーレスポンス
+        """
+        context = ErrorMsg(
             message=str(e)
         )
         return JSONResponse(
@@ -183,10 +199,9 @@ class HttpExceptionHandler(BaseException):
             JSONResponse: カスタムエラーレスポンス
         """
         context = ErrorMsg(
-            code=e.status_code,
-            message=str(e.detail)
+            message=str(e)
         )
         return JSONResponse(
-            status_code=e.status_code,
+            status_code=HttpStatusCode.SERVER_ERROR.value,
             content=context.model_dump(),
         )

@@ -16,13 +16,11 @@ class ISOTimeFormatter(logging.Formatter):
         return s
 
 
-file_name = './logger.log'
-
-
 class SingletonLogger:
     _instance = None
+    __file_name = './logger.log'
 
-    def __new__(cls, log_file=file_name):
+    def __new__(cls, log_file=__file_name):
         if cls._instance is None:
             cls._instance = super(SingletonLogger, cls).__new__(cls)
             cls._instance._initialize(log_file)

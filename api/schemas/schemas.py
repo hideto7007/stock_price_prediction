@@ -56,7 +56,6 @@ class SuccessResponseModel(BaseModel):
 
 
 class ErrorMsg(BaseModel):
-    code: Optional[int] = None
     message: str
 
 
