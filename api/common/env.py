@@ -29,7 +29,6 @@ class Env:
         """インスタンス"""
         if self._instance is None:
             self._instance = self
-            load_dotenv()
             self._initialize()
         else:
             raise ValueError(
