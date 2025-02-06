@@ -1,23 +1,16 @@
 
 from datetime import datetime, timedelta
-import os
 from api.common.authentication import Authentication
-from dotenv import load_dotenv  # type: ignore
 from typing import Optional
+from api.common.env import Env
 from api.models.models import UserModel
 from sqlalchemy.orm import Session  # type: ignore
 from jose import jwt  # type: ignore
 
-from api.schemas.schemas import (
-    UserCreate
-)
+from api.schemas.login import UserCreateRequest
 
 
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+env = Env.get_instance()
 
 
 class Login:
@@ -48,17 +41,17 @@ class Login:
     def create_user(
         self,
         db: Session,
-        user: UserCreate
+        user: UserCreateRequest
     ) -> UserModel:
         """
             ユーザー情報登録
 
             引数:
                 db (Session): dbインスタンス
-                user (UserCreate): ユーザーモデル
+                user (UserCreateRequest): ユーザーモデル
 
             戻り値:
-                UserCreate: ユーザーモデル
+                UserModel: ユーザーモデル
         """
         try:
             hashed_password = Authentication.hash_password(user.user_password)
@@ -124,5 +117,9 @@ class Login:
         else:
             expire = datetime.utcnow() + timedelta(minutes=15)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        encoded_jwt = jwt.encode(
+            to_encode,
+            env.secret_key,
+            algorithm=env.algorithm
+        )
         return encoded_jwt
