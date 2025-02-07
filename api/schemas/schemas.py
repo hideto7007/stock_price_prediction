@@ -1,3 +1,4 @@
+from typing_extensions import Final
 from pydantic import BaseModel, Field, field_validator  # type: ignore
 from pydantic.generics import GenericModel
 # from datetime import datetime
@@ -7,56 +8,9 @@ from typing import Generic, Optional, TypeVar, List
 T = TypeVar("T")
 
 
-# Pydanticモデル
-class UserBaseModel(BaseModel):
-    user_name: str
-    user_email: str
-    user_password: str
-
-
-class UserCreate(UserBaseModel):
-    pass
-
-
-class UserAccessToken(BaseModel):
-    user_name: str
-    user_password: str
-
-
-class UserAccessTokenResponse(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class UserResponseModel(BaseModel):
-    user_id: int
-    user_email: str
-    user_name: str
-    user_password: Optional[str] = None
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    user_name: str
-
-
 class StockPriceResponse(BaseModel):
     feature_stock_price: List[float]
     days_list: List[str]
-
-
-class SuccessResponseModel(BaseModel):
-    status: int
-    result: Optional[StockPriceResponse] = None
-
-
-class Content(GenericModel, Generic[T]):
-    result: Optional[List[T] | T]
-
 
 
 # Response クラスをジェネリック型で定義

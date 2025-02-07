@@ -1,3 +1,4 @@
+from typing import Literal, Optional
 from typing_extensions import Final
 from pydantic import BaseModel  # type: ignore
 # from datetime import datetime
@@ -11,11 +12,11 @@ class UserBaseModel(BaseModel):
     user_id: int
     user_name: str
     user_email: str
-    user_password: str
+    user_password: Optional[str] = None
 
 
-class GetUserName(BaseModel):
-    user_name: str
+class UserLoginModel(UserBaseModel):
+    access_token: str
 
 
 ##################
@@ -27,7 +28,7 @@ class UserCreateRequest(BaseModel):
     user_password: str
 
 
-class UserAccessTokenRequest(BaseModel):
+class UserLoginRequest(BaseModel):
     user_name: str
     user_password: str
 
@@ -35,9 +36,9 @@ class UserAccessTokenRequest(BaseModel):
 ##################
 # レスポンスモデル #
 ##################
-class UserAccessTokenResponse(BaseModel):
-    access_token: str
-    token_type: Final[str] = "bearer"
+class UserLoginResponse(BaseModel):
+    user_info: UserLoginModel
+    token_type: Literal["bearer"] = "bearer"
 
 
 class UserResponseModel(UserBaseModel):

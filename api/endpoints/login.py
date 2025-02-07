@@ -1,25 +1,24 @@
 
 from datetime import timedelta
+from typing import cast
 
 from fastapi.responses import JSONResponse
 
 from api.common.env import Env
 from api.common.exceptions import (
-    ConflictException,
     HttpExceptionHandler
 )
-from api.schemas.login import GetUserName, UserCreateRequest
+from api.schemas.login import UserCreateRequest, UserLoginModel
 from api.usercase.login import Login
 from const.const import HttpStatusCode
 from sqlalchemy.orm import Session  # type: ignore
 from fastapi import APIRouter, Depends, Request
-from jose import jwt  # type: ignore
 
 from api.databases.databases import get_db
 from api.schemas.response import Content
 from api.schemas.login import (
-    UserAccessTokenRequest,
-    UserAccessTokenResponse,
+    UserLoginRequest,
+    UserLoginResponse,
     UserResponseModel
 )
 from utils.utils import Swagger
@@ -62,7 +61,12 @@ async def register_user(
         login = Login()
         db_user = login.get_user_name(db, user.user_name)
         if db_user:
-            raise ConflictException("既に登録済みのユーザーです")
+            return JSONResponse(
+                status_code=HttpStatusCode.CONFLICT.value,
+                content=Content[str](
+                    result="既に登録済みのユーザーです"
+                ).model_dump()
+            )
         user = login.create_user(db, user)
         context = Content[UserResponseModel](
             result=UserResponseModel(
@@ -81,27 +85,32 @@ async def register_user(
 
 
 @router.post(
-    "/access_token",
+    "/login_user",
     tags=["認証"],
     responses=Swagger.swagger_responses({
         200: {
-            "access_token": "access_token",
+            "user_info": {
+                "user_id": 1,
+                "user_name": "test",
+                "user_email": "test@example.com",
+                "access_token": "token"
+            },
             "token_type": "bearer"
         },
         401: "ユーザーIDまたはパスワードが間違っています。",
         500: "予期せぬエラーが発生しました"
     })
 )
-async def access_token(
+async def login_user(
     request: Request,
-    data: UserAccessTokenRequest,
+    data: UserLoginRequest,
     db: Session = Depends(get_db)
 ):
     """
         アクセストークン取得API
 
         引数:
-            user (UserAccessTokenRequest): リクエストボディ
+            user (UserLoginRequest): リクエストボディ
             db (Session): dbインスタンス
 
         戻り値:
@@ -118,16 +127,20 @@ async def access_token(
                 status_code=HttpStatusCode.UNAUTHORIZED.value,
                 content=content.model_dump()
             )
-        user_data = GetUserName(**user)
         access_token_expires = timedelta(
-            minutes=env.access_token_expire_minutes)
+            minutes=int(env.access_token_expire_minutes))
         access_token = login.create_access_token(
-            {"sub": user_data.user_name},
+            {"sub": user.user_name},
             access_token_expires
         )
-        context = Content[UserAccessTokenResponse](
-            result=UserAccessTokenResponse(
-                access_token=access_token
+        context = Content[UserLoginResponse](
+            result=UserLoginResponse(
+                user_info=UserLoginModel(
+                    user_id=cast(int, user.user_id),
+                    user_name=str(user.user_name),
+                    user_email=str(user.user_email),
+                    access_token=access_token
+                )
             )
         )
         return JSONResponse(
@@ -143,10 +156,11 @@ async def access_token(
     tags=["認証"],
     responses=Swagger.swagger_responses({
         200: {
-            "access_token": "access_token",
-            "token_type": "bearer"
+            "user_id": 17,
+            "user_name": "hideto",
+            "user_email": "test@example.com",
         },
-        401: "ユーザーIDまたはパスワードが間違っています。",
+        401: "認証情報の有効期限が切れています。or 対象のユーザー情報がありません。",
         500: "予期せぬエラーが発生しました"
     })
 )
@@ -167,27 +181,30 @@ async def read_users_me(
     """
     try:
         login = Login()
-        payload = jwt.decode(token, env.secret_key, algorithms=[env.algorithm])
-        user_name = payload.get("sub")
+        user_name = login.get_valid_user_name(token)
         if user_name is None:
             return JSONResponse(
                 status_code=HttpStatusCode.UNAUTHORIZED.value,
                 content=Content[str](
                     result="認証情報の有効期限が切れています。"
-                )
+                ).model_dump()
             )
-        user_info = login.get_user_name(db, user_name)
-        if user_info is None:
+        user = login.get_user_name(db, user_name)
+        if user is None:
             return JSONResponse(
                 status_code=HttpStatusCode.UNAUTHORIZED.value,
                 content=Content[str](
                     result="対象のユーザー情報がありません。"
-                )
+                ).model_dump()
             )
-        user_info = UserResponseModel(**user_info)
+        user_res = UserResponseModel(
+            user_id=cast(int, user.user_id),
+            user_name=str(user.user_name),
+            user_email=str(user.user_email),
+        )
         return JSONResponse(
             status_code=HttpStatusCode.SUCCESS.value,
-            content=user_info
+            content=user_res.model_dump()
         )
     except Exception as e:
         return await HttpExceptionHandler.main_handler(request, e)

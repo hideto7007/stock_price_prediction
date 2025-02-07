@@ -1,5 +1,5 @@
 from typing import Any
-from api.schemas.schemas import Content
+from api.schemas.response import Content
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse

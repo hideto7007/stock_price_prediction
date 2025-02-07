@@ -1,21 +1,18 @@
 from typing import Any
-from const.const import HttpStatusCode
 
 
 class Swagger:
     """swagger出力で使うクラス"""
 
     @classmethod
-    def generate_content_succss(
+    def generate_content(
         cls,
-        status: HttpStatusCode,
         val: Any
     ) -> dict:
         """
-            content成功部分生成
+            content生成
 
             引数:
-                status (HttpStatusCode): ステータスコード
                 val (Any): レスポンスに返すデータ
 
             戻り値:
@@ -25,34 +22,7 @@ class Swagger:
         return {
             "application/json": {
                 "example": {
-                    "status_code": status,
-                    "data": val
-                }
-            }
-        }
-
-    @classmethod
-    def generate_content_error(
-        cls,
-        status: HttpStatusCode,
-        val: Any
-    ) -> dict:
-        """
-            contentエラー部分生成
-
-            引数:
-                status (HttpStatusCode): ステータスコード
-                val (Any): レスポンスに返すデータ
-
-            戻り値:
-                dict: content定義
-        """
-
-        return {
-            "application/json": {
-                "example": {
-                    "status_code": status,
-                    "detail": val
+                    "result": val
                 }
             }
         }
@@ -77,48 +47,42 @@ class Swagger:
             if status_code == 200:
                 response_definitions[200] = {
                     "description": "成功時のレスポンス",
-                    "content": Swagger.generate_content_succss(
-                        HttpStatusCode.SUCCESS,
+                    "content": Swagger.generate_content(
                         v
                     )
                 }
             elif status_code == 400:
                 response_definitions[400] = {
                     "description": "リクエスト又はバリデーションエラー",
-                    "content": Swagger.generate_content_error(
-                        HttpStatusCode.BADREQUEST,
+                    "content": Swagger.generate_content(
                         v
                     )
                 }
             elif status_code == 401:
                 response_definitions[401] = {
                     "description": "認証エラー",
-                    "content": Swagger.generate_content_error(
-                        HttpStatusCode.UNAUTHORIZED,
+                    "content": Swagger.generate_content(
                         v
                     )
                 }
             elif status_code == 409:
                 response_definitions[409] = {
                     "description": "重複エラー",
-                    "content": Swagger.generate_content_error(
-                        HttpStatusCode.CONFLICT,
+                    "content": Swagger.generate_content(
                         v
                     )
                 }
             elif status_code == 500:
                 response_definitions[500] = {
                     "description": "サーバーエラー",
-                    "content": Swagger.generate_content_error(
-                        HttpStatusCode.SERVER_ERROR,
+                    "content": Swagger.generate_content(
                         v
                     )
                 }
             elif status_code == 503:
                 response_definitions[503] = {
                     "description": "タイムアウトエラー",
-                    "content": Swagger.generate_content_error(
-                        HttpStatusCode.TIMEOUT,
+                    "content": Swagger.generate_content(
                         v
                     )
                 }

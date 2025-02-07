@@ -22,7 +22,7 @@ class Login:
         self,
         db: Session,
         user_name: str
-    ) -> Optional[UserModel]:
+    ) -> UserModel | None:
         """
             登録済みのユーザー情報取得
 
@@ -73,7 +73,7 @@ class Login:
         db: Session,
         user_name: str,
         user_password: str
-    ) -> Optional[UserModel] | bool:
+    ) -> Optional[UserModel] | None:
         """
             認証チェック
 
@@ -87,12 +87,12 @@ class Login:
         """
         user = self.get_user_name(db, user_name)
         if not user:
-            return False
+            return None
         if not Authentication.verify_password(
             user_password,
             str(user.user_password)
         ):
-            return False
+            return None
         return user
 
     def create_access_token(
@@ -123,3 +123,21 @@ class Login:
             algorithm=env.algorithm
         )
         return encoded_jwt
+
+    def get_valid_user_name(
+        self,
+        token: str,
+    ) -> str | None:
+        """
+            認証トークンからログイン中の有効なユーザー名取得
+
+            引数:
+                token (str): トークン
+            戻り値:
+                UserCreate: ユーザーモデル
+        """
+        payload = jwt.decode(token, env.secret_key, algorithms=[env.algorithm])
+        user_name = payload.get("sub")
+        if user_name is None:
+            return None
+        return user_name
