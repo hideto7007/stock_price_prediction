@@ -1,8 +1,4 @@
-from fastapi.security import OAuth2PasswordBearer  # type: ignore
 from passlib.context import CryptContext  # type: ignore
-
-# OAuth2スキーマの定義
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 class Authentication:
@@ -12,9 +8,8 @@ class Authentication:
 
     __pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    @classmethod
+    @staticmethod
     def verify_password(
-        cls,
         plain_password: str,
         hashed_password: str
     ) -> bool:
@@ -34,9 +29,8 @@ class Authentication:
             hashed_password
         )
 
-    @classmethod
+    @staticmethod
     def hash_password(
-        cls,
         plain_password: str,
     ) -> str:
         """
