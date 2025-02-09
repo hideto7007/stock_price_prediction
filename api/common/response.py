@@ -26,4 +26,3 @@ class Response(JSONResponse):
         self.request = request
         self.status_code = status_code
         self.content = content
-
