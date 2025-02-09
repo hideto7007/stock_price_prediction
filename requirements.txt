@@ -17,3 +17,4 @@ python-jose[cryptography]
 passlib
 flake8
 jpholiday
+bcrypt==3.2.2

@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 from fastapi import Request
 import json
 
@@ -16,32 +17,33 @@ class ISOTimeFormatter(logging.Formatter):
         return s
 
 
-class SingletonLogger:
+class LoggerInitialize:
     _instance = None
     __file_name = './logger.log'
 
-    def __new__(cls, log_file=__file_name):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(SingletonLogger, cls).__new__(cls)
-            cls._instance._initialize(log_file)
+            cls._instance = super(LoggerInitialize, cls).__new__(cls)
+            cls._instance._initialize()
         return cls._instance
 
-    def _initialize(self, log_file):
+    def _initialize(self):
         """ロガーの初期化処理"""
         self.logger = logging.getLogger("app_logger")
-        if self.logger.hasHandlers():
-            return  # すでにハンドラが設定されていたら何もしない
-
         self.logger.setLevel(logging.DEBUG)
+        if self.logger.hasHandlers():
+            return
+
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
 
         # ログファイル存在チェック
-        if not os.path.isfile(log_file):
-            with open(log_file, "w"):
+        if not os.path.isfile(LoggerInitialize.__file_name):
+            with open(LoggerInitialize.__file_name, "w"):
                 pass
 
-        # ファイルハンドラ
         file_handler = logging.FileHandler(
-            log_file, mode='a', encoding='utf-8')
+            LoggerInitialize.__file_name, mode='a', encoding='utf-8')
         file_handler.setLevel(logging.DEBUG)
         fmt = ISOTimeFormatter(
             '%(asctime)s - %(levelname)s - %(message)s',
@@ -57,53 +59,65 @@ class SingletonLogger:
 class Logger:
     """ロギングヘルパークラス"""
     @staticmethod
-    async def error(req: Request, exc: Exception):
+    def error(
+        req: Request,
+        request_body: Any | str,
+        result: Any
+    ):
         """ERROR レベルのログを出力"""
-        logger = SingletonLogger().get_logger()
-
-        try:
-            body = await req.json()
-        except Exception:
-            body = await req.body()
+        logger = LoggerInitialize().get_logger()
 
         log_data = {
             "request_id": req.state.request_id,
             "method": req.method,
+            "header": dict(req.headers),
             "params": dict(req.query_params),
-            "body": body,
+            "request_body": request_body,
             "url": str(req.url),
-            "error": str(exc)
+            "error": result
         }
 
-        logger.error(json.dumps(log_data, ensure_ascii=False))  # JSON形式でログを出力
-        traceback.print_exc()  # 例外の詳細なトレースバックを出力
+        logger.error(json.dumps(log_data, ensure_ascii=False))
+        traceback.print_exc()
 
     @staticmethod
-    async def info(req: Request, message: str):
+    def info(
+        req: Request,
+        request_body: Any | str,
+        result: Any
+    ):
         """INFO レベルのログを出力"""
-        logger = SingletonLogger().get_logger()
+        logger = LoggerInitialize().get_logger()
 
         log_data = {
             "request_id": req.state.request_id,
             "method": req.method,
+            "header": dict(req.headers),
             "params": dict(req.query_params),
+            "request_body": request_body,
             "url": str(req.url),
-            "message": message
+            "result": result
         }
 
         logger.info(json.dumps(log_data, ensure_ascii=False))
 
     @staticmethod
-    async def debug(req: Request, message: str):
+    def debug(
+        req: Request,
+        request_body: Any | str,
+        result: Any
+    ):
         """DEBUG レベルのログを出力"""
-        logger = SingletonLogger().get_logger()
+        logger = LoggerInitialize().get_logger()
 
         log_data = {
             "request_id": req.state.request_id,
             "method": req.method,
+            "header": dict(req.headers),
             "params": dict(req.query_params),
+            "request_body": request_body,
             "url": str(req.url),
-            "message": message
+            "result": result
         }
 
         logger.debug(json.dumps(log_data, ensure_ascii=False))

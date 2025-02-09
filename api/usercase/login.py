@@ -1,11 +1,12 @@
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from api.common.authentication import Authentication
-from typing import Optional
+from typing import Any, Optional
 from api.common.env import Env
+from api.common.exceptions import ExpiredSignatureException
 from api.models.models import UserModel
-from sqlalchemy.orm import Session  # type: ignore
-from jose import jwt  # type: ignore
+from sqlalchemy.orm import Session
+from jose import jwt
 
 from api.schemas.login import UserCreateRequest
 
@@ -17,6 +18,30 @@ class Login:
     """
     ログインクラス
     """
+
+    @staticmethod
+    def get_payload(
+        token: str,
+    ) -> dict[str, Any] | None:
+        """
+            認証トークンから情報取得
+
+            引数:
+                token (str): トークン
+            戻り値:
+                dict[str, Any]: payload情報
+        """
+        try:
+            payload = jwt.decode(
+                token,
+                env.secret_key,
+                algorithms=[env.algorithm]
+            )
+            return payload  # 正常な場合はデコードされたペイロードを返す
+        except ExpiredSignatureException as e:
+            raise e
+        except Exception:
+            return None
 
     def get_user_name(
         self,
@@ -113,9 +138,9 @@ class Login:
         """
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=15)
+            expire = datetime.now(timezone.utc) + timedelta(minutes=15)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(
             to_encode,
@@ -136,8 +161,8 @@ class Login:
             戻り値:
                 UserCreate: ユーザーモデル
         """
-        payload = jwt.decode(token, env.secret_key, algorithms=[env.algorithm])
-        user_name = payload.get("sub")
-        if user_name is None:
+        payload = self.get_payload(token)
+        if payload is None:
             return None
+        user_name = payload.get("sub")
         return user_name

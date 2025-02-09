@@ -143,10 +143,22 @@ async def login_user(
                 )
             )
         )
-        return JSONResponse(
+        response = JSONResponse(
             status_code=HttpStatusCode.SUCCESS.value,
             content=context.model_dump()
         )
+
+        # ログイン時にトークンセット
+        response.set_cookie(
+            key="auth_stock_price_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="strict"
+        )
+
+        return response
+
     except Exception as e:
         return await HttpExceptionHandler.main_handler(request, e)
 

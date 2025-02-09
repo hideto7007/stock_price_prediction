@@ -1,5 +1,4 @@
 from typing import Literal, Optional
-from typing_extensions import Final
 from pydantic import BaseModel  # type: ignore
 # from datetime import datetime
 

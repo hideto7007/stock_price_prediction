@@ -1,9 +1,10 @@
 from typing import Any
+
+from jose import ExpiredSignatureError
 from api.schemas.response import Content
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from common.logger import Logger
 from const.const import ErrorCode, HttpStatusCode
 
 
@@ -18,6 +19,14 @@ class CustomBaseException(Exception):
 
 
 class ConflictException(CustomBaseException):
+    pass
+
+
+class ExpiredSignatureException(ExpiredSignatureError):
+    pass
+
+
+class TokenRequiredException(Exception):
     pass
 
 
@@ -80,13 +89,14 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        await Logger.error(req, exc)
         if isinstance(exc, HTTPException):
             return await HttpExceptionHandler.server_error_handler(req, exc)
         if isinstance(exc, RequestValidationError):
             return await HttpExceptionHandler.valid_error_handler(req, exc)
         if isinstance(exc, TypeError):
             return await HttpExceptionHandler.type_error_handler(req, exc)
+        if isinstance(exc, ExpiredSignatureException):
+            return await HttpExceptionHandler.jwt_exception_handler(req, exc)
         if isinstance(exc, AttributeError):
             return await HttpExceptionHandler.attribute_error_handler(req, exc)
         return await HttpExceptionHandler.exception_handler(req, exc)
@@ -180,6 +190,29 @@ class HttpExceptionHandler(BaseException):
         )
         return JSONResponse(
             status_code=HttpStatusCode.BADREQUEST.value,
+            content=context.model_dump(),
+        )
+
+    @staticmethod
+    async def jwt_exception_handler(
+        req: Request,
+        e: ExpiredSignatureException
+    ) -> JSONResponse:
+        """
+        ExpiredSignatureException のカスタムエラーハンドリング
+
+        引数:
+            request (Request): 受け取ったリクエスト
+            exc (ExpiredSignatureException): 発生した 例外
+
+        戻り値:
+            JSONResponse: カスタムエラーレスポンス
+        """
+        context = Content[str](
+            result=str(e)
+        )
+        return JSONResponse(
+            status_code=HttpStatusCode.UNAUTHORIZED.value,
             content=context.model_dump(),
         )
 

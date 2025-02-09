@@ -1,11 +1,8 @@
 from api.common.exceptions import HttpExceptionHandler
 from fastapi import FastAPI
-from fastapi.security import OAuth2PasswordBearer  # type: ignore
 from api.router.router import api_router
-from api.middleware import RequestIDMiddleware, TimeoutMiddleware
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+from api.middleware import OAuth2Middleware, RequestWritingLoggerMiddleware
+from utils.utils import Swagger
 
 app = FastAPI()
 
@@ -18,8 +15,11 @@ HttpExceptionHandler.add(app)
 # )
 
 # ミドルウェアの追加
-# app.add_middleware(OAuth2Middleware, oauth2_scheme=oauth2_scheme)
+app.add_middleware(OAuth2Middleware)
 # タイムアウトミドルウェアを追加（タイムアウト時間を指定）
-app.add_middleware(TimeoutMiddleware, timeout=5)
-app.add_middleware(RequestIDMiddleware)
+# app.add_middleware(TimeoutMiddleware, timeout=5)
+app.add_middleware(RequestWritingLoggerMiddleware)
+# app.add_middleware(MiddlewareTest)
 app.include_router(api_router)
+
+app.openapi = lambda: Swagger.custom_openapi(app)
