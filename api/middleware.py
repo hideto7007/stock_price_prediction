@@ -124,10 +124,9 @@ class RequestWritingLoggerMiddleware(BaseHTTPMiddleware):
 
         return body
 
-    def password_mask(self, request_body: Any | str) -> Any | str:
-
+    def password_mask(self, request_body: Any | str) -> Any:
         if isinstance(request_body, dict) and \
                 request_body["user_password"] is not None:
-            request_body["user_password"] = None
+            request_body["user_password"] = "********"
 
         return request_body

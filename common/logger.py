@@ -1,11 +1,11 @@
 import logging
+import traceback
 from typing import Any
 from fastapi import Request
 import json
 
 from datetime import datetime, timedelta, timezone
 import os
-import traceback
 
 
 class ISOTimeFormatter(logging.Formatter):
@@ -67,6 +67,8 @@ class Logger:
         """ERROR レベルのログを出力"""
         logger = LoggerInitialize().get_logger()
 
+        error_traceback = traceback.format_exc()
+
         log_data = {
             "request_id": req.state.request_id,
             "method": req.method,
@@ -74,11 +76,14 @@ class Logger:
             "params": dict(req.query_params),
             "request_body": request_body,
             "url": str(req.url),
-            "error": result
+            "error": result if isinstance(result, str) else str(result)
         }
 
+        if error_traceback and error_traceback.strip() != "NoneType: None":
+            log_data["traceback"] = error_traceback
+            print(error_traceback)
+
         logger.error(json.dumps(log_data, ensure_ascii=False))
-        traceback.print_exc()
 
     @staticmethod
     def info(

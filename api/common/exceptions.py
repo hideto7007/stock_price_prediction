@@ -5,6 +5,7 @@ from api.schemas.response import Content
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from common.logger import Logger
 from const.const import ErrorCode, HttpStatusCode
 
 
@@ -89,6 +90,7 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
+        Logger.error(req, {}, exc)
         if isinstance(exc, HTTPException):
             return await HttpExceptionHandler.server_error_handler(req, exc)
         if isinstance(exc, RequestValidationError):
