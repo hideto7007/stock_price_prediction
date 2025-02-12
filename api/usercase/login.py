@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from jose import jwt
 
 from api.schemas.login import UserCreateRequest
+from utils.utils import Utils
 
 
 env = Env.get_instance()
@@ -59,9 +60,10 @@ class Login:
                 str: ハッシュ化したパスワード
         """
 
-        return db.query(UserModel) \
-                 .filter(UserModel.user_name == user_name) \
-                 .first()
+        return db.query(UserModel).filter(
+            UserModel.user_name == user_name,
+            UserModel.is_valid == 1
+        ).first()
 
     def create_user(
         self,
@@ -83,7 +85,12 @@ class Login:
             db_user = UserModel(
                 user_name=user.user_name,
                 user_email=user.user_email,
-                user_password=hashed_password
+                user_password=hashed_password,
+                create_at=Utils.today(),
+                create_by=user.user_name,
+                update_at=Utils.today(),
+                update_by=user.user_name,
+                is_valid=1
             )
             db.add(db_user)
             db.commit()

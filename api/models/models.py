@@ -60,6 +60,12 @@ class UserModel(Base):
     user_name = Column(String, nullable=False)
     user_email = Column(String, nullable=False, unique=True)
     user_password = Column(String, nullable=False, unique=True)
+    create_at = Column(DateTime, default=datetime.astimezone, nullable=False)
+    create_by = Column(String, nullable=False)
+    update_at = Column(DateTime, default=datetime.astimezone,
+                       onupdate=datetime.astimezone, nullable=False)
+    update_by = Column(String, nullable=False)
+    is_valid = Column(Boolean, default=True, nullable=False)
 
 
 # # データベースとモデルを同期（既存のテーブルがある場合は実行しません）
