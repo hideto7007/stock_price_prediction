@@ -1,7 +1,7 @@
 # middleware.py
 import json
 import uuid
-from fastapi import Request  # type: ignore
+from fastapi import HTTPException, Request  # type: ignore
 from starlette.middleware.base import BaseHTTPMiddleware  # type: ignore
 from fastapi.security import OAuth2PasswordBearer  # type: ignore
 from starlette.types import ASGIApp
@@ -52,6 +52,10 @@ class OAuth2Middleware(BaseHTTPMiddleware):
         except TokenRequiredException as e:
             return await HttpExceptionHandler.main_handler(request, e)
         except ExpiredSignatureException as e:
+            return await HttpExceptionHandler.main_handler(request, e)
+        except HTTPException as e:
+            # トークンがそもそもセットされてないとここの例外でキャッチする
+            # TODO:ただ、標準のエラーだとなんかダサいから後々ここは対応する
             return await HttpExceptionHandler.main_handler(request, e)
         return await call_next(request)
 
@@ -126,7 +130,7 @@ class RequestWritingLoggerMiddleware(BaseHTTPMiddleware):
 
     def password_mask(self, request_body: Any | str) -> Any:
         if isinstance(request_body, dict) and \
-                request_body["user_password"] is not None:
+                request_body.get("user_password") is not None:
             request_body["user_password"] = "********"
 
         return request_body
