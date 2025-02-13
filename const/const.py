@@ -86,3 +86,11 @@ class BrandInfoModelConst(Enum):
 
 class LoginConst(Enum):
     HEADERS = {"WWW-Authenticate": "Bearer"}
+
+
+class LoginFieldConst(Enum):
+    USER_ID = "user_id"
+    USER_NAME = "user_name"
+    USER_EMAIL = "user_email"
+    USER_PASSWORD = "user_password"
+    ACCESS_TOKEN = "access_token"

@@ -8,7 +8,16 @@ from api.common.env import Env
 from api.common.exceptions import (
     HttpExceptionHandler
 )
-from api.schemas.login import UserCreateRequest, UserLoginModel
+from api.common.response import ValidationResponse
+from api.validation.login import (
+    LoginUserValidation, ReadUsersMeValidation,
+    RegisterUserValidation
+)
+from api.schemas.login import (
+    ReadUsersMeRequest, UserCreateRequest,
+    UserLoginModel
+)
+from api.schemas.validation import ValidatonModel
 from api.usercase.login import Login
 from const.const import HttpStatusCode
 from sqlalchemy.orm import Session  # type: ignore
@@ -58,6 +67,16 @@ async def register_user(
             Response: レスポンス型
     """
     try:
+        # バリデーションチェック
+        valid = RegisterUserValidation(user)
+
+        if len(valid) > 0:
+            return ValidationResponse(
+                content=Content[list[ValidatonModel]](
+                    result=valid
+                ).model_dump()
+            )
+
         login = Login()
         db_user = login.get_user_name(db, user.user_name)
         if db_user:
@@ -107,7 +126,7 @@ async def login_user(
     db: Session = Depends(get_db)
 ):
     """
-        アクセストークン取得API
+        ログイン情報取得API
 
         引数:
             user (UserLoginRequest): リクエストボディ
@@ -117,6 +136,16 @@ async def login_user(
             Response: レスポンス型
     """
     try:
+        # バリデーションチェック
+        valid = LoginUserValidation(data)
+
+        if len(valid) > 0:
+            return ValidationResponse(
+                content=Content[list[ValidatonModel]](
+                    result=valid
+                ).model_dump()
+            )
+
         login = Login()
         user = login.authenticate_user(db, data.user_name, data.user_password)
         if not user:
@@ -192,6 +221,20 @@ async def read_users_me(
             Response: レスポンス型
     """
     try:
+        # バリデーションチェック
+        valid = ReadUsersMeValidation(
+            ReadUsersMeRequest(
+                access_token=token
+            )
+        )
+
+        if len(valid) > 0:
+            return ValidationResponse(
+                content=Content[list[ValidatonModel]](
+                    result=valid
+                ).model_dump()
+            )
+
         login = Login()
         user_name = login.get_valid_user_name(token)
         if user_name is None:

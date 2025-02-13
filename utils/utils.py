@@ -1,7 +1,28 @@
+import datetime
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
+import pytz
+
+
+class Utils:
+    """アプリケーションに関するデータ取得"""
+
+    @staticmethod
+    def today() -> datetime.datetime:
+        """日本時間の現在時刻取得"""
+        return datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
+
+    @staticmethod
+    def date() -> datetime.date:
+        """現在の日付を取得"""
+        return datetime.date.today()
+
+    @staticmethod
+    def time() -> datetime.time:
+        """現在の時間を取得"""
+        return datetime.datetime.now().time()
 
 
 class Swagger:

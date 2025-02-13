@@ -32,6 +32,10 @@ class UserLoginRequest(BaseModel):
     user_password: str
 
 
+class ReadUsersMeRequest(BaseModel):
+    access_token: str
+
+
 ##################
 # レスポンスモデル #
 ##################
