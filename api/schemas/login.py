@@ -7,27 +7,38 @@ from pydantic import BaseModel  # type: ignore
 # ユーザーケースでも使うモデル #
 ###########################
 
-class UserBaseModel(BaseModel):
+class BaseUserModel(BaseModel):
     user_id: int
     user_name: str
     user_email: str
     user_password: Optional[str] = None
 
 
-class UserLoginModel(UserBaseModel):
+class LoginUserModel(BaseUserModel):
     access_token: str
 
 
 ##################
 # リクエストモデル #
 ##################
-class UserCreateRequest(BaseModel):
+class CreateUserRequest(BaseModel):
     user_name: str
     user_email: str
     user_password: str
 
 
-class UserLoginRequest(BaseModel):
+class UpdateUserRequest(BaseModel):
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
+    user_confirmation_password: Optional[str] = None
+    user_password: Optional[str] = None
+
+
+class RestoreUserRequest(CreateUserRequest):
+    pass
+
+
+class LoginUserRequest(BaseModel):
     user_name: str
     user_password: str
 
@@ -36,13 +47,17 @@ class ReadUsersMeRequest(BaseModel):
     access_token: str
 
 
+class UserIdRequest(BaseModel):
+    user_id: int
+
+
 ##################
 # レスポンスモデル #
 ##################
-class UserLoginResponse(BaseModel):
-    user_info: UserLoginModel
+class LoginUserResponse(BaseModel):
+    user_info: LoginUserModel
     token_type: Literal["bearer"] = "bearer"
 
 
-class UserResponseModel(UserBaseModel):
+class UserResponseModel(BaseUserModel):
     pass

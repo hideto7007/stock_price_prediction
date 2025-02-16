@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from common.logger import Logger
-from const.const import ErrorCode, HttpStatusCode
+from const.const import HttpStatusCode
 
 
 class BaseHttpException(HTTPException):
@@ -23,37 +23,16 @@ class ConflictException(CustomBaseException):
     pass
 
 
+class NotFoundException(CustomBaseException):
+    pass
+
+
 class ExpiredSignatureException(ExpiredSignatureError):
     pass
 
 
 class TokenRequiredException(Exception):
     pass
-
-
-async def validation_exception_handler(
-    request: Request,
-    exc: RequestValidationError
-):
-    """
-    リクエストバリデーションエラー時のハンドリング
-    """
-    errors = exc.errors()
-    custom_errors = []
-    for error in errors:
-        loc = error.get("loc", [])
-        input_msg = error.get("input", [])
-        custom_errors.append(
-            {
-                "code": ErrorCode.INT_VAILD.value,
-                "detail": f"{loc[1]} パラメータは整数値のみです。",
-                "input": input_msg
-            }
-        )
-    return JSONResponse(
-        status_code=HttpStatusCode.VALIDATION.value,
-        content=custom_errors,
-    )
 
 
 class HttpExceptionHandler(BaseException):
@@ -72,6 +51,8 @@ class HttpExceptionHandler(BaseException):
             RequestValidationError: HttpExceptionHandler.valid_error_handler,
             Exception: HttpExceptionHandler.exception_handler,
             TypeError: HttpExceptionHandler.type_error_handler,
+            ConflictException: HttpExceptionHandler.conflict_error_handler,
+            NotFoundException: HttpExceptionHandler.not_found_error_handler,
             AttributeError: HttpExceptionHandler.attribute_error_handler,
         }
 
@@ -97,6 +78,10 @@ class HttpExceptionHandler(BaseException):
             return await HttpExceptionHandler.valid_error_handler(req, exc)
         if isinstance(exc, TypeError):
             return await HttpExceptionHandler.type_error_handler(req, exc)
+        if isinstance(exc, ConflictException):
+            return await HttpExceptionHandler.conflict_error_handler(req, exc)
+        if isinstance(exc, NotFoundException):
+            return await HttpExceptionHandler.not_found_error_handler(req, exc)
         if isinstance(exc, ExpiredSignatureException):
             return await HttpExceptionHandler.jwt_exception_handler(req, exc)
         if isinstance(exc, AttributeError):
@@ -169,6 +154,52 @@ class HttpExceptionHandler(BaseException):
         )
         return JSONResponse(
             status_code=HttpStatusCode.BADREQUEST.value,
+            content=context.model_dump(),
+        )
+
+    @staticmethod
+    async def conflict_error_handler(
+        req: Request,
+        e: ConflictException
+    ) -> JSONResponse:
+        """
+        ConflictException のカスタムエラーハンドリング
+
+        引数:
+            request (Request): 受け取ったリクエスト
+            exc (ConflictException): 発生した 例外
+
+        戻り値:
+            JSONResponse: カスタムエラーレスポンス
+        """
+        context = Content[str](
+            result=str(e)
+        )
+        return JSONResponse(
+            status_code=HttpStatusCode.CONFLICT.value,
+            content=context.model_dump(),
+        )
+
+    @staticmethod
+    async def not_found_error_handler(
+        req: Request,
+        e: NotFoundException
+    ) -> JSONResponse:
+        """
+        NotFoundException のカスタムエラーハンドリング
+
+        引数:
+            request (Request): 受け取ったリクエスト
+            exc (NotFoundException): 発生した 例外
+
+        戻り値:
+            JSONResponse: カスタムエラーレスポンス
+        """
+        context = Content[str](
+            result=str(e)
+        )
+        return JSONResponse(
+            status_code=HttpStatusCode.NOT_FOUND.value,
             content=context.model_dump(),
         )
 

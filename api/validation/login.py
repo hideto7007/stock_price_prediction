@@ -3,7 +3,7 @@
 import re
 from typing import Final, List, Literal
 from api.schemas.login import (
-    ReadUsersMeRequest, UserCreateRequest, UserLoginRequest
+    ReadUsersMeRequest, CreateUserRequest, LoginUserRequest, UserIdRequest
 )
 from api.schemas.validation import ValidatonModel
 from api.validation.validation import AbstractValidation, ValidationError
@@ -16,7 +16,7 @@ REGEX_PASSWORD: Final[str] = (
 )
 
 
-class RegisterUserValidation(AbstractValidation[UserCreateRequest]):
+class RegisterUserValidation(AbstractValidation[CreateUserRequest]):
     """ログイン情報登録バリデーション"""
 
     ##############################
@@ -70,7 +70,7 @@ class RegisterUserValidation(AbstractValidation[UserCreateRequest]):
         return True
 
 
-class LoginUserValidation(AbstractValidation[UserLoginRequest]):
+class LoginUserValidation(AbstractValidation[LoginUserRequest]):
     """ログイン情報取得バリデーション"""
 
     ##############################
@@ -131,4 +131,28 @@ class ReadUsersMeValidation(AbstractValidation[ReadUsersMeRequest]):
         return ValidationError.generater(
             LFC.ACCESS_TOKEN.value,
             f"{LFC.ACCESS_TOKEN.value}は必須です。"
+        )
+
+
+class UserIdValidation(AbstractValidation[UserIdRequest]):
+    """ユーザーidチェックバリデーション"""
+
+    ##############################
+    # プライベートメソッド（内部処理）#
+    ##############################
+    def result(self) -> List[ValidatonModel]:
+        return ValidationError.valid_result([
+            self.validate_int(),
+        ])
+
+    ########################################
+    # オーバーライドメソッド（バリデーション処理）#
+    ########################################
+
+    def validate_int(self) -> ValidatonModel | Literal[True]:
+        if isinstance(self.data.user_id, int):
+            return True
+        return ValidationError.generater(
+            LFC.USER_ID.value,
+            f"{LFC.USER_ID.value}は必須です。"
         )

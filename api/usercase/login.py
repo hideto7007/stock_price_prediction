@@ -1,14 +1,20 @@
 
 from datetime import datetime, timedelta, timezone
+from sqlalchemy.exc import IntegrityError
 from api.common.authentication import Authentication
 from typing import Any, Optional
 from api.common.env import Env
-from api.common.exceptions import ExpiredSignatureException
+from api.common.exceptions import (
+    ConflictException, ExpiredSignatureException, NotFoundException
+)
 from api.models.models import UserModel
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from jose import jwt
 
-from api.schemas.login import UserCreateRequest
+from api.schemas.login import (
+    CreateUserRequest, RestoreUserRequest, UpdateUserRequest
+)
 from utils.utils import Utils
 
 
@@ -44,44 +50,155 @@ class Login:
         except Exception:
             return None
 
-    def get_user_name(
+    def get_user_info(
         self,
         db: Session,
-        user_name: str
+        user_name: Optional[str] = None,
+        user_id: Optional[int] = None
     ) -> UserModel | None:
         """
             登録済みのユーザー情報取得
 
             引数:
                 db (Session): dbインスタンス
+                user_name (Optional[str]): ユーザー名 デフォルト None
+                user_id (Optional[int]): ユーザーid デフォルト None
+
+            戻り値:
+                str: userモデル
+        """
+
+        return db.query(UserModel).filter(
+            or_(
+                *(filter for filter in [
+                    UserModel.user_name == user_name if user_name else None,
+                    UserModel.user_id == user_id if user_id else None
+                ] if filter is not None),
+            ),
+            UserModel.is_valid == 1
+        ).first()
+
+    def get_delete_user(
+        self,
+        db: Session,
+        user_name: str
+    ) -> UserModel | None:
+        """
+            削除済みのユーザー情報取得
+
+            引数:
+                db (Session): dbインスタンス
                 user_name (str): ユーザー名
 
             戻り値:
-                str: ハッシュ化したパスワード
+                str: userモデル
         """
 
         return db.query(UserModel).filter(
             UserModel.user_name == user_name,
-            UserModel.is_valid == 1
+            UserModel.is_valid == 0
         ).first()
+
+    def _user_password_update(
+        self,
+        plain_password: str,
+        hash_password: str,
+        new_password: str
+    ) -> str:
+        """
+            現在のパスワード存在チェック後新規ハッシュパスワード発行
+
+            引数:
+                plain_password (str): 登録済みのパスワード
+                hash_password (str): 登録済みのハッシュパスワード
+                new_password (str): 新規登録するパスワード
+
+            戻り値:
+                str: new_password
+        """
+
+        verify_password = Authentication.verify_password(
+            plain_password,
+            hash_password
+        )
+
+        # パスワードの存在チェック
+        if verify_password:
+            return Authentication.hash_password(
+                new_password
+            )
+        raise NotFoundException("存在しないパスワードです。")
+
+    def _delete_make_recode(
+        self,
+        val: str,
+    ) -> str:
+        """
+            削除時に登録するレコード作成
+
+            引数:
+                val (str): レコード
+
+            戻り値:
+                Column[str]: 削除レコード
+        """
+
+        return f'{val}_delete'
+
+    def save_user(
+        self,
+        db: Session,
+        data: CreateUserRequest
+    ) -> UserModel:
+        """
+            新規登録 or 削除済みのユーザー情報復活
+
+            引数:
+                db (Session): dbインスタンス
+                data (CreateUserRequest): リクエストデータ
+
+            戻り値:
+                UserModel: ユーザーモデル
+        """
+        # 削除ずみのユーザー存在チェック
+        user = self.get_delete_user(
+            db,
+            self._delete_make_recode(data.user_name)
+        )
+
+        if user:
+            restore_data = RestoreUserRequest(
+                user_name=data.user_name,
+                user_email=data.user_email,
+                user_password=data.user_password
+            )
+            # 削除済みユーザーを復活
+            new_user = self.restore_user(db, user, restore_data)
+        else:
+            # 完全新規登録
+            new_user = self.create_user(db, data)
+
+        return new_user
 
     def create_user(
         self,
         db: Session,
-        user: UserCreateRequest
+        user: CreateUserRequest
     ) -> UserModel:
         """
             ユーザー情報登録
 
             引数:
                 db (Session): dbインスタンス
-                user (UserCreateRequest): ユーザーモデル
+                user (CreateUserRequest): ユーザーモデル
 
             戻り値:
                 UserModel: ユーザーモデル
         """
         try:
-            hashed_password = Authentication.hash_password(user.user_password)
+            hashed_password = Authentication.hash_password(
+                user.user_password
+            )
             db_user = UserModel(
                 user_name=user.user_name,
                 user_email=user.user_email,
@@ -90,12 +207,145 @@ class Login:
                 create_by=user.user_name,
                 update_at=Utils.today(),
                 update_by=user.user_name,
-                is_valid=1
+                is_valid=True
             )
             db.add(db_user)
             db.commit()
             db.refresh(db_user)
             return db_user
+        except IntegrityError:
+            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
+        finally:
+            db.rollback()
+
+    def restore_user(
+        self,
+        db: Session,
+        user: UserModel,
+        restore_data: RestoreUserRequest
+    ) -> UserModel:
+        """
+            新規登録時に既に削除済みのユーザーが存在していたらそのレコードに対して更新
+            引数:
+                db (Session): dbインスタンス
+                user (UserModel): ユーザーモデル
+                restore_data (RestoreUserRequest): 更新するユーザー情報を含むリクエストデータ
+
+            戻り値:
+                UserModel: ユーザーモデル
+        """
+        try:
+            user.user_name = Utils.column_str(restore_data.user_name)
+            user.user_email = Utils.column_str(restore_data.user_email)
+            user.user_password = Utils.column_str(
+                Authentication.hash_password(
+                    restore_data.user_password
+                )
+            )
+            user.update_at = Utils.column_datetime(Utils.today())
+            user.update_by = Utils.column_str(restore_data.user_name)
+            user.is_valid = Utils.column_bool(True)
+            db.commit()
+            db.refresh(user)
+            return user
+        except NotFoundException as e:
+            raise e
+        except IntegrityError:
+            db.rollback()
+            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
+        except Exception as e:
+            db.rollback()
+            raise e
+
+    def update_user(
+        self,
+        db: Session,
+        user_id: int,
+        update_data: UpdateUserRequest
+    ) -> None:
+        """
+            ユーザー情報登録
+
+            引数:
+                db (Session): dbインスタンス
+                user_id (int): ユーザーid
+                update_data (UpdateUserRequest): 更新するユーザー情報を含むリクエストデータ
+
+            戻り値:
+                None
+        """
+        try:
+            user = self.get_user_info(db, None, user_id)
+            if user is None:
+                raise NotFoundException("存在しないユーザーです。")
+
+            if update_data.user_name is not None:
+                user.user_name = Utils.column_str(update_data.user_name)
+                user.update_by = Utils.column_str(update_data.user_name)
+
+            if update_data.user_email is not None:
+                user.user_email = Utils.column_str(update_data.user_email)
+
+            if update_data.user_password is not None and \
+                    update_data.user_confirmation_password is not None:
+                user.user_password = Utils.column_str(
+                    self._user_password_update(
+                        update_data.user_confirmation_password,
+                        str(user.user_password),
+                        update_data.user_password
+                    )
+                )
+            user.update_at = Utils.column_datetime(Utils.today())
+            db.commit()
+            db.refresh(user)
+            return None
+        except NotFoundException as e:
+            raise e
+        except IntegrityError:
+            db.rollback()
+            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
+        except Exception as e:
+            db.rollback()
+            raise e
+
+    def delete_user(
+        self,
+        db: Session,
+        user_id: int,
+    ) -> None:
+        """
+            ユーザー情報登録
+
+            引数:
+                db (Session): dbインスタンス
+                user_id (int): ユーザーid
+
+            戻り値:
+                None
+        """
+        try:
+            user = self.get_user_info(db, None, user_id)
+            if user is None:
+                raise NotFoundException("存在しないユーザーです。")
+
+            user_name = self._delete_make_recode(str(user.user_name))
+            user_email = self._delete_make_recode(
+                str(user.user_email))
+
+            user.user_name = Utils.column_str(user_name)
+            user.user_email = Utils.column_str(user_email)
+            user.update_at = Utils.column_datetime(Utils.today())
+            user.update_by = Utils.column_str(user_name)
+            user.is_valid = Utils.column_bool(False)
+
+            db.commit()
+            db.refresh(user)
+            return None
+        except NotFoundException as e:
+            raise e
+        except IntegrityError:
+            db.rollback()
+            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
         except Exception as e:
             db.rollback()
             raise e
@@ -117,7 +367,7 @@ class Login:
             戻り値:
                 UserCreate: ユーザーモデル
         """
-        user = self.get_user_name(db, user_name)
+        user = self.get_user_info(db, user_name)
         if not user:
             return None
         if not Authentication.verify_password(

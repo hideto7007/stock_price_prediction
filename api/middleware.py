@@ -54,8 +54,6 @@ class OAuth2Middleware(BaseHTTPMiddleware):
         except ExpiredSignatureException as e:
             return await HttpExceptionHandler.main_handler(request, e)
         except HTTPException as e:
-            # トークンがそもそもセットされてないとここの例外でキャッチする
-            # TODO:ただ、標準のエラーだとなんかダサいから後々ここは対応する
             return await HttpExceptionHandler.main_handler(request, e)
         return await call_next(request)
 

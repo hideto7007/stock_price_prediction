@@ -48,3 +48,7 @@ deactivate
 ```bash
 sqlite3 ./db/database.db < ./db/sql/create.sql
 ```
+
+### debug 起動方法
+
+- docker から抜けてからデバッグ起動

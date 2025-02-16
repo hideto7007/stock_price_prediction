@@ -1,9 +1,10 @@
 import datetime
-from typing import Any
+from typing import Any, cast
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 import pytz
+from sqlalchemy import Column
 
 
 class Utils:
@@ -23,6 +24,54 @@ class Utils:
     def time() -> datetime.time:
         """現在の時間を取得"""
         return datetime.datetime.now().time()
+
+    ###################
+    # sqlalchemy型へ変換 #
+    ###################
+
+    @staticmethod
+    def column_str(val: str) -> Column[str]:
+        return cast(Column[str], val)
+
+    @staticmethod
+    def column_int(val: int) -> Column[int]:
+        return cast(Column[int], val)
+
+    @staticmethod
+    def column_float(val: float) -> Column[float]:
+        return cast(Column[float], val)
+
+    @staticmethod
+    def column_bool(val: bool) -> Column[bool]:
+        return cast(Column[bool], val)
+
+    @staticmethod
+    def column_datetime(val: datetime.datetime) -> Column[datetime.datetime]:
+        return cast(Column[datetime.datetime], val)
+
+    ###################
+    # pythonh標準型変換 #
+    ###################
+
+    @staticmethod
+    def str(val: Column[str]) -> str:
+        return cast(str, val)
+
+    @staticmethod
+    def int(val: Column[int]) -> int:
+        return cast(int, val)
+
+    @staticmethod
+    def float(val: Column[float]) -> float:
+        return cast(float, val)
+
+    @staticmethod
+    def bool(val: Column[bool]) -> bool:
+        return cast(bool, val)
+
+    @staticmethod
+    def datetime(val: Column[datetime.datetime]) -> datetime.datetime:
+        return cast(datetime.datetime, val)
 
 
 class Swagger:
