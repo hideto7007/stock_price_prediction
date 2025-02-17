@@ -51,6 +51,7 @@ class HttpExceptionHandler(BaseException):
             RequestValidationError: HttpExceptionHandler.valid_error_handler,
             Exception: HttpExceptionHandler.exception_handler,
             TypeError: HttpExceptionHandler.type_error_handler,
+            KeyError: HttpExceptionHandler.key_error_handler,
             ConflictException: HttpExceptionHandler.conflict_error_handler,
             NotFoundException: HttpExceptionHandler.not_found_error_handler,
             AttributeError: HttpExceptionHandler.attribute_error_handler,
@@ -78,6 +79,8 @@ class HttpExceptionHandler(BaseException):
             return await HttpExceptionHandler.valid_error_handler(req, exc)
         if isinstance(exc, TypeError):
             return await HttpExceptionHandler.type_error_handler(req, exc)
+        if isinstance(exc, KeyError):
+            return await HttpExceptionHandler.key_error_handler(req, exc)
         if isinstance(exc, ConflictException):
             return await HttpExceptionHandler.conflict_error_handler(req, exc)
         if isinstance(exc, NotFoundException):
@@ -145,6 +148,29 @@ class HttpExceptionHandler(BaseException):
         引数:
             request (Request): 受け取ったリクエスト
             exc (TypeError): 発生した 例外
+
+        戻り値:
+            JSONResponse: カスタムエラーレスポンス
+        """
+        context = Content[str](
+            result=str(e)
+        )
+        return JSONResponse(
+            status_code=HttpStatusCode.BADREQUEST.value,
+            content=context.model_dump(),
+        )
+
+    @staticmethod
+    async def key_error_handler(
+        req: Request,
+        e: KeyError
+    ) -> JSONResponse:
+        """
+        KeyError のカスタムエラーハンドリング
+
+        引数:
+            request (Request): 受け取ったリクエスト
+            exc (KeyError): 発生した 例外
 
         戻り値:
             JSONResponse: カスタムエラーレスポンス

@@ -1,4 +1,3 @@
-from typing_extensions import Final
 from pydantic import BaseModel, Field, field_validator  # type: ignore
 from pydantic.generics import GenericModel
 # from datetime import datetime

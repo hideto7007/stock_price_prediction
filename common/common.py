@@ -1,27 +1,76 @@
 import json
-import datetime as dt
+import datetime
+from typing import Tuple
+import numpy as np
 import torch
 from pandas_datareader import data
+import pandas as pd
 
 from const.const import ScrapingConst, DFConst
 
 
 class StockPriceData:
+    """
+    株価データクラス
+    """
+
     @classmethod
-    def get_data(cls, brand_code, start=dt.date(1900, 1, 1), end=dt.date.today()):
+    def get_data(
+        cls,
+        brand_code: str,
+        start: datetime.datetime = datetime.datetime(1900, 1, 1),
+        end: datetime.datetime = datetime.datetime.today()
+    ) -> pd.DataFrame:
+        """
+            DataReaderから株価データ取得
+
+            引数:
+                brand_code (str): 銘柄
+                start (datetime.datetime): 取得開始日 (デフォルト: 1900/1/1)
+                end (datetime.datetime): 取得終了日 (デフォルト: 今日の日付)
+            戻り値:
+                pd.DataFrame: 株価データ一覧
+        """
         return data.DataReader(f'{brand_code}.JP', 'stooq', start, end)
 
     @classmethod
-    def stock_price_average(cls, df):
-        return (
-            df[DFConst.COLUMN.value[0]] +
-            df[DFConst.COLUMN.value[1]] +
-            df[DFConst.COLUMN.value[2]] +
-            df[DFConst.COLUMN.value[3]]
-        ) / len(df.columns)
+    def stock_price_average(cls, df: pd.DataFrame) -> float:
+        """
+        株価の平均値取得
+
+        引数:
+            df (pd.DataFrame): データフレーム
+
+        戻り値:
+            float: 株価の平均値
+        """
+        # 指定カラムが存在するかチェック
+        columns = [
+            DFConst.COLUMN.value[0],
+            DFConst.COLUMN.value[1],
+            DFConst.COLUMN.value[2],
+            DFConst.COLUMN.value[3]
+        ]
+        for col in columns:
+            if col not in df.columns:
+                raise ValueError(f"指定されたカラム '{col}' がデータフレームに存在しません。")
+
+        return df[columns].mean().mean()  # ✅ 安全に平均を取得
 
     @classmethod
-    def moving_average(cls, price_list):
+    def moving_average(
+        cls,
+        price_list: list[int | float]
+    ) -> list[int | float]:
+        """
+        移動平均値取得
+
+        引数:
+            price_list (list[int | float]): 株価リスト
+
+        戻り値:
+            list[int | float]: 移動平均値の結果
+        """
         moving_average_list = []
 
         if len(price_list) % 2 != 0:
@@ -46,8 +95,21 @@ class StockPriceData:
     @classmethod
     def get_text_data(
         cls,
-        file_path=ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value
-    ):
+        file_path: str = (
+            ScrapingConst.DIR.value +
+            "/" +
+            ScrapingConst.FILE_NAME.value
+        )
+    ) -> dict[str, str]:
+        """
+        移動平均値取得
+
+        引数:
+            file_path (str): ファイルパス デフォルト ./output/scraping.json
+
+        戻り値:
+            dict[str, str]: 銘柄データ
+        """
         file_path = file_path
         with open(file_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
@@ -55,7 +117,27 @@ class StockPriceData:
         return data
 
     @classmethod
-    def data_split(cls, data, label, len):
+    def data_split(
+        cls,
+        data: np.ndarray,
+        label: np.ndarray,
+        len: int
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        データセットを訓練データとテストデータに分割する
+
+        引数:
+            data (np.ndarray): 入力データ（特徴量）
+            label (np.ndarray): 正解ラベル
+            len (int): テストデータのサンプル数
+
+        戻り値:
+            Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+                - train_x (torch.Tensor): 訓練データの特徴量
+                - train_y (torch.Tensor): 訓練データのラベル
+                - test_x (torch.Tensor): テストデータの特徴量
+                - test_y (torch.Tensor): テストデータのラベル
+        """
         test_len = int(len)
         train_len = int(data.shape[0] - test_len)
 

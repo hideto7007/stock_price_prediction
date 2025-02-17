@@ -1,32 +1,54 @@
+from typing import List, Tuple
 import os
-import numpy as np # type: ignore
-from sklearn.preprocessing import StandardScaler # type: ignore
-import torch # type: ignore
-import torch.nn as nn # type: ignore
-from matplotlib import pyplot as plt # type: ignore
+from fastapi import Request
+import numpy as np  # type: ignore
+import pandas as pd
+from sklearn.preprocessing import StandardScaler  # type: ignore
+import torch  # type: ignore
+import torch.nn as nn  # type: ignore
+from matplotlib import pyplot as plt  # type: ignore
+from torch.utils.data import DataLoader
 
 from common.common import StockPriceData
 from prediction.model.model import LSTM
 from prediction.dataset.dataset import TimeSeriesDataset
-from const.const import DFConst, ScrapingConst, TrainConst, DataSetConst
+from const.const import (
+    DFConst,
+    ScrapingConst,
+    TrainConst,
+    DataSetConst as DSC
+)
 from common.logger import Logger
-
-logger = Logger()
 
 
 class PredictionTrain:
-    def __init__(self, brand_name, user_id):
+    def __init__(
+        self,
+        req: Request,
+        brand_name: str,
+        user_id: int
+    ) -> None:
+        self.req = req
         self.brand_name = brand_name
         self.user_id = user_id
         self.path = "/stock_price_prediction"
         self.model_path = f'{self.path}/save/{self.user_id}/'
-        self.brand_info = StockPriceData.get_text_data(self.path + "/" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
-        self.brand_code = self.brand_info.get(self.brand_name)
-        self.device = torch.device(TrainConst.CUDA.value
-                                   if torch.cuda.is_available()
-                                   else TrainConst.CPU.value)
+        self.brand_info = StockPriceData.get_text_data(
+            self.path + "/" +
+            ScrapingConst.DIR.value +
+            "/" + ScrapingConst.FILE_NAME.value
+        )
+        self.brand_code = self.brand_info[self.brand_name]
+        self.device = torch.device(
+            TrainConst.CUDA.value
+            if torch.cuda.is_available()
+            else TrainConst.CPU.value
+        )
 
-    def check_brand_info(self):
+    def check_brand_info(self) -> None:
+        """
+            銘柄存在チェック
+        """
         # is_exist = False
         if self.brand_info.get(self.brand_name) is None:
             raise KeyError("対象の銘柄は存在しません")
@@ -36,73 +58,170 @@ class PredictionTrain:
         #     return is_exist
 
         # for i in os.listdir(self.model_path):
-        #     if self.brand_info[self.brand_name] in i and str(DataSetConst.SEQ_LENGTH.value) in i:
+        #     if self.brand_info[self.brand_name] in i and \
+        #             str(DSC.SEQ_LENGTH.value) in i:
         #         is_exist = True
 
         # return is_exist
 
-    def data_std(self, plot_check_flag):
+    def data_std(
+        self,
+        plot_check_flag: bool
+    ) -> Tuple[np.ndarray, StandardScaler]:
+        """
+            機械学習用にデータの標準化
+
+            引数:
+                plot_check_flag (str): トークン
+            戻り値:
+                Tuple[np.ndarray, StandardScaler]:
+                    - ma_std (np.ndarray): 標準化された移動平均データ
+                    - scaler (StandardScaler): 使用した標準化スケーラー
+        """
         get_data = StockPriceData.get_data(self.brand_code)
         get_data = get_data.reset_index()
         get_data = get_data.drop(DFConst.DROP_COLUMN.value, axis=1)
-        get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
-        get_data[DataSetConst.MA.value] = get_data[DFConst.CLOSE.value].rolling(window=DataSetConst.SEQ_LENGTH.value, min_periods=0).mean()
+        get_data.sort_values(
+            by=DFConst.DATE.value,
+            ascending=True, inplace=True
+        )
+        get_data[DSC.MA.value] = get_data[DFConst.CLOSE.value].rolling(
+            window=DSC.SEQ_LENGTH.value, min_periods=0).mean()
 
         if plot_check_flag:
             self.get_data_check(get_data)
 
         # 標準化
-        ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
+        ma = get_data[DSC.MA.value].to_numpy().reshape(-1, 1)
         scaler = StandardScaler()
         ma_std = scaler.fit_transform(ma)
-        logger.info("ma: {}".format(ma))
-        logger.info("ma_std: {}".format(ma_std))
+        Logger.info(self.req, {}, "ma: {}".format(ma))
+        Logger.info(self.req, {}, "ma_std: {}".format(ma_std))
 
         return ma_std, scaler
 
-    def plot_check(self, epoch, train_loss_list, val_loss_list):
+    def plot_check(
+        self,
+        epoch: int,
+        train_loss_list: List[float],
+        val_loss_list: List[float]
+    ) -> None:
+        """
+        学習の損失 (Loss) の推移をプロットする
+
+        引数:
+            epoch (int): 総エポック数
+            train_loss_list (List[float]): 訓練データの損失リスト
+            val_loss_list (List[float]): 検証データの損失リスト
+
+        戻り値:
+            None: 画像を保存し、グラフを表示
+        """
         plt.figure()
         plt.title('Train and Test Loss')
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
-        plt.plot(range(1, epoch + 1), train_loss_list, color='blue',
-                 linestyle='-', label='Train_Loss')
-        plt.plot(range(1, epoch + 1), val_loss_list, color='red',
-                 linestyle='--', label='Test_Loss')
-        plt.legend()  # 凡例
-        plt.savefig(f"{self.path}/ping/train_and_test_loss.png")
-        plt.show()  # 表示
 
-    def get_data_check(self, df):
+        plt.plot(range(1, epoch + 1), train_loss_list, color='blue',
+                 linestyle='-', label='Train Loss')
+
+        plt.plot(range(1, epoch + 1), val_loss_list, color='red',
+                 linestyle='--', label='Test Loss')
+
+        plt.legend()
+
+        # グラフを保存
+        save_path = f"{self.path}/ping/train_and_test_loss.png"
+        plt.savefig(save_path)
+        print(f"Lossグラフを保存しました: {save_path}")
+
+        plt.show()
+
+    def get_data_check(self, df: pd.DataFrame) -> None:
+        """
+        株価データの可視化を行う
+
+        引数:
+            df (pd.DataFrame): 株価データを含むDataFrame
+
+        戻り値:
+            None: 画像を保存し、グラフを表示
+        """
         plt.figure()
         plt.title('Z_Holdings')
         plt.xlabel('Date')
         plt.ylabel('Stock Price')
-        plt.plot(df[DFConst.DATE.value], df[DFConst.CLOSE.value], color='black',
-                 linestyle='-', label='close')
-        plt.plot(df[DFConst.DATE.value], df[DataSetConst.MA.value], color='red',
-                 linestyle='--', label='25MA')
-        plt.legend()  # 凡例
-        plt.savefig(f"{self.path}/ping/Z_Holdings.png")
-        plt.show()
 
-    def make_data(self, ma_std):
+        plt.plot(
+            df[DFConst.DATE.value],
+            df[DFConst.CLOSE.value],
+            color='black',
+            linestyle='-', label='Close Price'
+        )
+
+        plt.plot(
+            df[DFConst.DATE.value],
+            df[DSC.MA.value],
+            color='red',
+            linestyle='--',
+            label='25-Day MA'
+        )
+
+        plt.legend()
+
+        save_path = f"{self.path}/ping/Z_Holdings.png"
+        plt.savefig(save_path)
+        print(f"株価グラフを保存しました: {save_path}")
+
+        plt.show()  # グラフを表示
+
+    def make_data(
+        self,
+        ma_std: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        時系列データを学習用の入力データとラベルデータに変換する
+
+        引数:
+            ma_std (np.ndarray): 標準化済みの移動平均データ
+
+        戻り値:
+            Tuple[np.ndarray, np.ndarray]:
+                - data (np.ndarray): 学習用の入力データ
+                - label (np.ndarray): 学習用のラベルデータ
+        """
         data = []
         label = []
         # 何日分を学習させるか決める
-        for i in range(len(ma_std) - DataSetConst.SEQ_LENGTH.value):
-            data.append(ma_std[i:i + DataSetConst.SEQ_LENGTH.value])
-            label.append(ma_std[i + DataSetConst.SEQ_LENGTH.value])
+        for i in range(len(ma_std) - DSC.SEQ_LENGTH.value):
+            data.append(ma_std[i:i + DSC.SEQ_LENGTH.value])
+            label.append(ma_std[i + DSC.SEQ_LENGTH.value])
         # ndarrayに変換
         data = np.array(data)
         label = np.array(label)
-        logger.info("data size: {}".format(data.shape))
-        logger.info("label size: {}".format(label.shape))
+        Logger.info(self.req, {}, "data size: {}".format(data.shape))
+        Logger.info(self.req, {}, "label size: {}".format(label.shape))
 
         return data, label
 
-    def train(self, train_data, val_data):
-        logger.info("learning start")
+    def train(
+        self,
+        train_data: DataLoader,
+        val_data: DataLoader
+    ) -> Tuple[List[float], List[float]]:
+        """
+        LSTM モデルを訓練する
+
+        引数:
+            train_data (DataLoader): 訓練用データローダー
+            val_data (DataLoader): 検証用データローダー
+
+        戻り値:
+            Tuple[List[float], List[float]]:
+                - train_loss_list (List[float]): エポックごとの訓練損失
+                - val_loss_list (List[float]): エポックごとの検証損失
+        """
+        Logger.info(self.req, {}, "learning start")
         model = LSTM().to(self.device)
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters())
@@ -158,19 +277,56 @@ class PredictionTrain:
                 best_epoch = epoch + 1
                 self.model_save(model)
 
-            logger.info(f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%) Train_Loss: {batch_train_loss:.2E} Val_Loss: {batch_val_loss:.2E}')
+            Logger.info(
+                self.req,
+                {},
+                f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%)'
+                f'Train_Loss: {batch_train_loss:.2E} Val_Loss: {batch_val_loss:.2E}'  # noqa
+            )
 
-        logger.info(f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}')
+        Logger.info(
+            self.req,
+            {},
+            f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}'
+        )
 
         return train_loss_list, val_loss_list
 
-    def model_save(self, model):
+    def model_save(self, model: nn.Module) -> None:
+        """
+        学習済みモデルを保存する
+
+        引数:
+            model (nn.Module): 保存する PyTorch モデル
+
+        戻り値:
+            None
+        """
         os.makedirs(self.model_path, exist_ok=True)
-        self.save_path = f'{self.model_path}{TrainConst.BEST_MODEL.value}_brand_code_{self.brand_code}_seq_len_{DataSetConst.SEQ_LENGTH.value}.pth'
-        logger.info("model save")
+        self.save_path = (
+            f"{self.model_path}{TrainConst.BEST_MODEL.value}_"
+            f"brand_code_{self.brand_code}_"
+            f"seq_len_{DSC.SEQ_LENGTH.value}.pth"
+        )
+        Logger.info(
+            self.req,
+            {}, "model save"
+        )
         torch.save(model.state_dict(), self.save_path)
 
-    def main(self, plot_check_flag=False):
+    def main(
+        self,
+        plot_check_flag: bool = False
+    ) -> str:
+        """
+        LSTM 訓練学習
+
+        引数:
+            plot_check_flag (bool): プロットフラグ
+
+        戻り値:
+            str: 訓練学習モデルパス
+        """
         try:
             # 学習データ作成
             if plot_check_flag:
@@ -178,23 +334,29 @@ class PredictionTrain:
             else:
                 data_std, _ = self.data_std(plot_check_flag)
             data, label = self.make_data(data_std)
-            train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label, DataSetConst.TEST_LEN.value)
+            train_x, train_y, test_x, test_y = StockPriceData.data_split(
+                data, label, DSC.TEST_LEN.value)
 
             # DataLoaderの作成
             train_loader = TimeSeriesDataset.dataloader(train_x, train_y)
             val_loader = TimeSeriesDataset.dataloader(test_x, test_y, False)
 
             # 学習
-            train_loss_list, val_loss_list = self.train(train_loader, val_loader)
-            logger.info("train finish!!")
+            train_loss_list, val_loss_list = self.train(
+                train_loader, val_loader)
+            Logger.info(
+                self.req,
+                {},
+                "train finish!!"
+            )
 
             # lossを確認
             if plot_check_flag:
-                self.plot_check(TrainConst.EPOCHS.value, train_loss_list, val_loss_list)
+                self.plot_check(TrainConst.EPOCHS.value,
+                                train_loss_list, val_loss_list)
 
             return self.save_path
         except Exception as e:
-            logger.error(e)
             raise e
 
 
@@ -209,5 +371,5 @@ class PredictionTrain:
 #         if is_exist == False:
 #             prediction_train.main()
 #     except Exception as e:
-#         logger.error(e)
+#         Logger.error(e)
 #         raise e

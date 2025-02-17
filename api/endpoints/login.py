@@ -1,6 +1,5 @@
 
 from datetime import timedelta
-from typing import cast
 
 from fastapi.responses import JSONResponse
 
@@ -30,7 +29,7 @@ from api.schemas.login import (
     LoginUserResponse,
     UserResponseModel
 )
-from utils.utils import Swagger
+from utils.utils import Swagger, Utils
 
 
 env = Env.get_instance()
@@ -89,7 +88,7 @@ async def register_user(
         user = login.save_user(db, user)
         context = Content[UserResponseModel](
             result=UserResponseModel(
-                user_id=cast(int, user.user_id),
+                user_id=Utils.int(user.user_id),
                 user_email=str(user.user_email),
                 user_name=str(user.user_name),
                 user_password=str(user.user_password)
@@ -165,7 +164,7 @@ async def login_user(
         context = Content[LoginUserResponse](
             result=LoginUserResponse(
                 user_info=LoginUserModel(
-                    user_id=cast(int, user.user_id),
+                    user_id=Utils.int(user.user_id),
                     user_name=str(user.user_name),
                     user_email=str(user.user_email),
                     access_token=access_token
@@ -256,7 +255,7 @@ async def read_users_me(
             status_code=HttpStatusCode.SUCCESS.value,
             content=Content[UserResponseModel](
                 result=UserResponseModel(
-                    user_id=cast(int, user.user_id),
+                    user_id=Utils.int(user.user_id),
                     user_name=str(user.user_name),
                     user_email=str(user.user_email)
                 )
@@ -322,7 +321,7 @@ async def user_info(
             status_code=HttpStatusCode.SUCCESS.value,
             content=Content[UserResponseModel](
                 result=UserResponseModel(
-                    user_id=cast(int, user.user_id),
+                    user_id=Utils.int(user.user_id),
                     user_name=str(user.user_name),
                     user_email=str(user.user_email)
                 )
