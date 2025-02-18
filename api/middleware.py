@@ -1,9 +1,9 @@
 # middleware.py
 import json
 import uuid
-from fastapi import HTTPException, Request  # type: ignore
-from starlette.middleware.base import BaseHTTPMiddleware  # type: ignore
-from fastapi.security import OAuth2PasswordBearer  # type: ignore
+from fastapi import HTTPException, Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.security import OAuth2PasswordBearer
 from starlette.types import ASGIApp
 from fastapi.responses import JSONResponse, StreamingResponse
 import asyncio

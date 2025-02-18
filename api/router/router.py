@@ -1,4 +1,4 @@
-from fastapi import APIRouter  # type: ignore
+from fastapi import APIRouter
 from api.endpoints import stock_price, login
 
 api_dict = {

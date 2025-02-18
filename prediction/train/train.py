@@ -1,12 +1,12 @@
 from typing import List, Tuple
 import os
 from fastapi import Request
-import numpy as np  # type: ignore
+import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler  # type: ignore
-import torch  # type: ignore
-import torch.nn as nn  # type: ignore
-from matplotlib import pyplot as plt  # type: ignore
+from sklearn.preprocessing import StandardScaler
+import torch
+import torch.nn as nn
+from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 
 from common.common import StockPriceData

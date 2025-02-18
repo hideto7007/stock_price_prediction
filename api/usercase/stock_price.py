@@ -1,6 +1,6 @@
-from typing import Optional, Tuple
-from fastapi import Request  # type: ignore
-from sqlalchemy.orm import Session  # type: ignore
+from typing import Any, List, Optional, Tuple
+from fastapi import Request
+from sqlalchemy.orm import Session
 import re
 
 from api.common.exceptions import ConflictException, NotFoundException
@@ -50,12 +50,15 @@ class StockPriceBase:
             raise e
 
     @classmethod
-    def str_to_float_list(cls, str_list):
+    def str_to_float_list(
+        cls,
+        str_list: Any
+    ) -> List[float]:
         """
         文字列形式の数値リストを浮動小数点数のリストに変換する
 
         引数:
-            str_list (str): 数値が含まれた文字列 (例: "3.14, 2.71, -1.0")
+            str_list (Any): 数値が含まれた文字列 (例: "3.14, 2.71, -1.0")
 
         戻り値:
             List[float]: 文字列内の数値を抽出し、`float` 型に変換したリスト
@@ -67,12 +70,15 @@ class StockPriceBase:
         return data
 
     @classmethod
-    def str_to_str_list(cls, str_list):
+    def str_to_str_list(
+        cls,
+        str_list: Any
+    ) -> List[str]:
         """
         文字列内の日付 (YYYY-MM-DD) を抽出し、リストとして返す
 
         引数:
-            str_list (str): 日付を含む文字列 (例: "2024-01-01, 2023-12-25")
+            str_list (Any): 日付を含む文字列 (例: "2024-01-01, 2023-12-25")
 
         戻り値:
             List[str]: 抽出された日付文字列のリスト (例: ["2024-01-01", "2023-12-25"])
@@ -86,6 +92,47 @@ class StockPriceBase:
 class StockPriceService:
     def __init__(self, db: Session):
         self.db = db
+
+    def get_prediction_info(
+        self,
+        user_id: int,
+        brand_code: int,
+    ) -> PredictionResultModel | None:
+        """
+        予測情報取得
+
+        引数:
+            user_id (int): ユーザーid
+            brand_code (int): 銘柄コード
+
+        戻り値:
+            PredictionResultModel | None: 予想結果dbモデル (データが0件の場合、None)
+        """
+
+        return self.db.query(PredictionResultModel).filter(
+            PredictionResultModel.brand_code == brand_code,
+            PredictionResultModel.user_id == user_id,
+            PredictionResultModel.is_valid == 1
+        ).first()
+
+    def get_brand_list(
+        self,
+        user_id: int,
+    ) -> List[BrandInfoModel]:
+        """
+        ユーザーの学習ずみ銘柄情報取得
+
+        引数:
+            user_id (int): ユーザーid
+
+        戻り値:
+            List[BrandInfoModel]: 銘柄情報dbモデル (データが0件の場合、空リスト)
+        """
+
+        return self.db.query(BrandInfoModel).filter(
+            BrandInfoModel.user_id == user_id,
+            BrandInfoModel.is_valid == 1
+        ).all()
 
     def _brand_info_model(
         self,

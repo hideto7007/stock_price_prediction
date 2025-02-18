@@ -19,7 +19,7 @@ from api.schemas.login import (
 from api.schemas.validation import ValidatonModel
 from api.usercase.login import Login
 from const.const import HttpStatusCode
-from sqlalchemy.orm import Session  # type: ignore
+from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, Request
 
 from api.databases.databases import get_db
@@ -59,6 +59,7 @@ async def register_user(
         ログイン情報登録API
 
         引数:
+            request (Request): fastapiリクエスト
             user (CreateUserRequest): リクエストボディ
             db (Session): dbインスタンス
 
@@ -128,6 +129,7 @@ async def login_user(
         ログイン情報取得API
 
         引数:
+            request (Request): fastapiリクエスト
             user (LoginUserRequest): リクエストボディ
             db (Session): dbインスタンス
 
@@ -213,6 +215,7 @@ async def read_users_me(
         ユーザー情報取得API
 
         引数:
+            request (Request): fastapiリクエスト
             token (str): アクセストークン
             db (Session): dbインスタンス
 
@@ -287,6 +290,7 @@ async def user_info(
         ユーザー情報取得API
 
         引数:
+            request (Request): fastapiリクエスト
             user_id (int): ユーザーid
             db (Session): dbインスタンス
 
@@ -332,7 +336,7 @@ async def user_info(
 
 
 @router.put(
-    "/users_update/{user_id}",
+    "/update_user/{user_id}",
     tags=["認証"],
     responses=Swagger.swagger_responses({
         200: "ユーザー情報の更新成功",
@@ -340,7 +344,7 @@ async def user_info(
         500: "予期せぬエラーが発生しました"
     })
 )
-async def users_update(
+async def update_user(
     request: Request,
     user_id: int,
     data: UpdateUserRequest,
@@ -350,6 +354,7 @@ async def users_update(
         ユーザー情報更新API
 
         引数:
+            request (Request): fastapiリクエスト
             user_id (int): ユーザーid
             db (Session): dbインスタンス
 
@@ -384,7 +389,7 @@ async def users_update(
 
 
 @router.delete(
-    "/users_delete/{user_id}",
+    "/delete_user/{user_id}",
     tags=["認証"],
     responses=Swagger.swagger_responses({
         200: "ユーザー情報の削除成功",
@@ -392,7 +397,7 @@ async def users_update(
         500: "予期せぬエラーが発生しました"
     })
 )
-async def users_delete(
+async def delete_user(
     request: Request,
     user_id: int,
     db: Session = Depends(get_db)
@@ -401,6 +406,7 @@ async def users_delete(
         ユーザー情報削除API
 
         引数:
+            request (Request): fastapiリクエスト
             user_id (int): ユーザーid
             db (Session): dbインスタンス
 

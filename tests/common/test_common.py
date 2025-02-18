@@ -1,10 +1,10 @@
 import os
 import unittest
 import datetime as dt
-import pandas as pd  # type: ignore
-import numpy as np  # type: ignore
-import torch  # type: ignore
-from sklearn.preprocessing import StandardScaler  # type: ignore
+import pandas as pd
+import numpy as np
+import torch
+from sklearn.preprocessing import StandardScaler
 from common.common import StockPriceData
 
 from const.const import DFConst, DataSetConst, ScrapingConst

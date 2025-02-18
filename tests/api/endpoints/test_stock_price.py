@@ -1,7 +1,7 @@
 import json
 import unittest
 from unittest.mock import patch
-from fastapi.testclient import TestClient  # type: ignore
+from fastapi.testclient import TestClient
 
 from api.main import app
 from api.models.models import BrandModel, BrandInfoModel, PredictionResultModel

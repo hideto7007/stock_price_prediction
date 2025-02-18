@@ -1,4 +1,4 @@
-from torch.utils.data import TensorDataset, DataLoader  # type: ignore
+from torch.utils.data import TensorDataset, DataLoader
 
 from const.const import DataSetConst
 

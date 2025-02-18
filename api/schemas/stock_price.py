@@ -62,7 +62,7 @@ class BrandResponse(BaseModel):
 
 
 class PredictionResultResponse(BaseModel):
-    future_predictions: str
-    days_list: str
+    future_predictions: list[float]
+    days_list: List[str]
     brand_code: int
     user_id: int
