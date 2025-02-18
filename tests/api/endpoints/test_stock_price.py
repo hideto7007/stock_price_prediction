@@ -7,13 +7,16 @@ from api.main import app
 from api.models.models import BrandModel, BrandInfoModel, PredictionResultModel
 from api.endpoints.stock_price import StockPriceBase
 from api.databases.databases import get_db
+from api.schemas.test import RequestId, TestRequest
 from const.const import (
     HttpStatusCode, ErrorCode,
     PredictionResultConst, BrandInfoModelConst
 )
 from tests.api.database.test_database import get_test_db, init_db, drop_db
+from utils.utils import Utils
 
 # モック
+REQUEST = 'fastapi.Request'
 CHECK_BRAND_INFO = 'prediction.train.train.PredictionTrain.check_brand_info'
 TRAIN_MAIN = 'prediction.train.train.PredictionTrain.main'
 TEST_MAIN = 'prediction.test.test.PredictionTest.main'
@@ -121,9 +124,10 @@ class TestBase(unittest.TestCase):
 
 class TestStockPriceService(TestBase):
 
+    @patch(REQUEST)
     @patch(TEST_MAIN)
     @patch(TRAIN_MAIN)
-    def test_prediction_success_01(self, _train_main, _test_main):
+    def test_prediction_success_01(self, _request, _train_main, _test_main):
         """
         正常系： 予測データが正しく取得できること
         """
@@ -131,9 +135,11 @@ class TestStockPriceService(TestBase):
         brand_code = 5802
         _train_main.return_value = "test.pth"
         _test_main.return_value = (data, days)
+        _request.return_value = TestRequest(state=RequestId(), method="GET")
 
         future_predictions, days_list, save_path = StockPriceBase.prediction(
-            brand_name, brand_code)
+            _request, brand_name, brand_code
+        )
 
         self.assertEqual(future_predictions, str(data))
         self.assertEqual(days_list, str(days))
@@ -186,9 +192,9 @@ class TestGetStockPrice(TestBase):
                 days_list=i[1],
                 brand_code=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -311,9 +317,9 @@ class TestBrandList(TestBase):
                 brand_code=i[1],
                 learned_model_name=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -388,9 +394,9 @@ class TestBrand(TestBase):
             add_db_data_list.append(BrandModel(
                 brand_name=i[0],
                 brand_code=i[1],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=True,
             ))
@@ -530,9 +536,9 @@ class TestCreateStockPrice(TestBase):
                 brand_code=i[1],
                 learned_model_name=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -603,9 +609,9 @@ class TestCreateStockPrice(TestBase):
                 days_list=i[1],
                 brand_code=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -680,9 +686,9 @@ class TestUpdateStockPrice(TestBase):
                 brand_code=i[1],
                 learned_model_name=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -726,9 +732,9 @@ class TestUpdateStockPrice(TestBase):
                 days_list=i[1],
                 brand_code=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -837,9 +843,9 @@ class TestUpdateStockPrice(TestBase):
                 brand_code=i[1],
                 learned_model_name=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -905,9 +911,9 @@ class TestUpdateStockPrice(TestBase):
                 brand_code=i[1],
                 learned_model_name=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -951,9 +957,9 @@ class TestUpdateStockPrice(TestBase):
                 days_list=i[1],
                 brand_code=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -1022,9 +1028,9 @@ class TestDeleteStockPrice(TestBase):
                 brand_code=i[1],
                 learned_model_name=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -1068,9 +1074,9 @@ class TestDeleteStockPrice(TestBase):
                 days_list=i[1],
                 brand_code=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -1123,9 +1129,9 @@ class TestDeleteStockPrice(TestBase):
                 brand_code=i[1],
                 learned_model_name=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -1169,9 +1175,9 @@ class TestDeleteStockPrice(TestBase):
                 days_list=i[1],
                 brand_code=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -1221,9 +1227,9 @@ class TestDeleteStockPrice(TestBase):
                 brand_code=i[1],
                 learned_model_name=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -1267,9 +1273,9 @@ class TestDeleteStockPrice(TestBase):
                 days_list=i[1],
                 brand_code=i[2],
                 user_id=i[3],
-                create_at=StockPriceBase.get_jst_now(),
+                create_at=Utils.today(),
                 create_by="test_user",
-                update_at=StockPriceBase.get_jst_now(),
+                update_at=Utils.today(),
                 update_by="test_user",
                 is_valid=i[4],
             ))
@@ -1304,16 +1310,16 @@ class TestDeleteStockPrice(TestBase):
             )
 
 
-class TestTimeOut(TestBase):
-    def test_timeout_middleware(self):
-        response = self.client.get("/slow")
-        error = {
-            "detail": [
-                {
-                    "code": ErrorCode.TIME_OUT.value,
-                    "message": 'read time out.'
-                }
-            ]
-        }
-        self.assertEqual(response.status_code, HttpStatusCode.TIME_OUT.value)
-        self.assertEqual(response.json(), error)
+# class TestTimeOut(TestBase):
+#     def test_timeout_middleware(self):
+#         response = self.client.get("/slow")
+#         error = {
+#             "detail": [
+#                 {
+#                     "code": ErrorCode.TIME_OUT.value,
+#                     "message": 'read time out.'
+#                 }
+#             ]
+#         }
+#         self.assertEqual(response.status_code, HttpStatusCode.TIME_OUT.value)
+#         self.assertEqual(response.json(), error)

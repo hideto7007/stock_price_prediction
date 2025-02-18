@@ -253,11 +253,13 @@ class PredictionTest(PredictionTrain):
         get_today = list(date)[-1]
         day_count = 1
         while day_count <= days:
-            feature_date = get_today + dt.timedelta(days=day_count)
+            feature_date: dt.datetime = (
+                get_today + dt.timedelta(days=day_count)
+            )
             is_holiday_date = dt.date(
                 feature_date.year, feature_date.month, feature_date.day)
-            if (feature_date.weekday() >= 5 or
-                    jpholiday.is_holiday(is_holiday_date)):
+            if feature_date.weekday() >= 5 or \
+                    jpholiday.is_holiday(is_holiday_date):
                 day_count += 1
                 days += 1
                 continue

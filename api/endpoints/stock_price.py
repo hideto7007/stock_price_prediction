@@ -6,12 +6,11 @@ from api.schemas.response import Content
 from api.usercase.stock_price import StockPriceBase, StockPriceService
 from api.models.models import BrandInfoModel, BrandModel, PredictionResultModel
 from api.databases.databases import get_db
-from api.schemas.schemas import (
-    CreateBrandInfo,
-    UpdateBrandInfo,
-    DeleteBrandInfo,
-    BrandInfoList,
-    Brand,
+from api.schemas.stock_price import (
+    CreateBrandInfoRequest,
+    UpdateBrandInfoRequest,
+    BrandInfoListResponse,
+    BrandResponse,
 )
 from const.const import HttpStatusCode, PredictionResultConst
 
@@ -50,9 +49,9 @@ def get_data(brand_code: int, user_id: int, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/brand_info_list",
+    "/brand_info_list{user_id}",
     tags=["株価予測"],
-    response_model=list[BrandInfoList]
+    response_model=list[BrandInfoListResponse]
 )
 async def brand_list(user_id: int, db: Session = Depends(get_db)):
     """対象ユーザーの学習ずみ銘柄情報取得API"""
@@ -67,7 +66,7 @@ async def brand_list(user_id: int, db: Session = Depends(get_db)):
 @router.get(
     "/brand",
     tags=["株価予測"],
-    response_model=list[Brand]
+    response_model=list[BrandResponse]
 )
 async def brand(db: Session = Depends(get_db)):
     """全ての銘柄取得API"""
@@ -81,7 +80,7 @@ async def brand(db: Session = Depends(get_db)):
 )
 async def create_stock_price(
     request: Request,
-    create_data: CreateBrandInfo,
+    create_data: CreateBrandInfoRequest,
     db: Session = Depends(get_db)
 ):
     """予測データ登録API"""
@@ -90,30 +89,34 @@ async def create_stock_price(
 
 
 @router.put(
-    "/upadte_stock_price",
+    "/upadte_stock_price/{user_id}",
     tags=["株価予測"]
 )
 async def upadte_stock_price(
     request: Request,
-    update_data: UpdateBrandInfo,
+    user_id: int,
+    update_data: UpdateBrandInfoRequest,
     db: Session = Depends(get_db)
 ):
     """予測データ更新API"""
     service = StockPriceService(db)
-    return service._update(request, update_data)
+    return service._update(request, user_id, update_data)
 
 
 @router.delete(
-    "/delete_stock_price",
+    "/delete_stock_price/{user_id}/{brand_code}",
     tags=["株価予測"]
 )
 async def delete_stock_price(
-    delete_data: DeleteBrandInfo,
+    user_id: int,
+    brand_code: int,
     db: Session = Depends(get_db)
 ):
     """予測データ削除API"""
     service = StockPriceService(db)
-    return service._brand_info_and_prediction_result_delete(delete_data)
+    return service._brand_info_and_prediction_result_delete(
+        user_id, brand_code
+    )
 
 
 @router.get(
