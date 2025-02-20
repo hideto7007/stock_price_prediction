@@ -30,6 +30,11 @@ class PredictionResultBase(BaseModel):
     is_valid: bool
 
 
+class BrandInfo(BaseModel):
+    brand_name: str
+    brand_code: int
+
+
 ##################
 # リクエストモデル #
 ##################
@@ -56,9 +61,8 @@ class BrandInfoListResponse(BaseModel):
     user_id: int
 
 
-class BrandResponse(BaseModel):
-    brand_name: str
-    brand_code: int
+class BrandInfoResponse(BrandInfo):
+    pass
 
 
 class PredictionResultResponse(BaseModel):

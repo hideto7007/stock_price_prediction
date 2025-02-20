@@ -22,13 +22,25 @@ logger = Logger()
 
 
 class PredictionTest(PredictionTrain):
+    """
+    株価予測を評価するクラス
+
+    """
+
     def __init__(
         self,
         req: Request,
         brand_name: str,
+        brand_info: dict[str, str],
         user_id: int
     ) -> None:
-        super().__init__(req, brand_name, user_id)
+        """
+        PredictionTest クラスのコンストラクタ
+
+        引数:
+            PredictionTrain クラスのコンストラクタ継承
+        """
+        super().__init__(req, brand_name, brand_info, user_id)
 
     def get_model_path(self) -> None:
         """
@@ -228,7 +240,7 @@ class PredictionTest(PredictionTrain):
                  linestyle=':', label=f'predicted_{DataSetConst.MA.value}')
         plt.legend()  # 凡例
         plt.xticks(rotation=30)
-        plt.savefig(f"{self.path}/ping/predicted.png")
+        plt.savefig("./ping/predicted.png")
         plt.show()
 
     def make_days(
@@ -294,7 +306,7 @@ class PredictionTest(PredictionTrain):
         plt.legend()  # 凡例
         plt.xticks(rotation=30)
         Logger.info(self.req, {}, "save plot")
-        plt.savefig(f"{self.path}/ping/feature_predicted.png")
+        plt.savefig("./ping/feature_predicted.png")
         plt.show()
 
     def main(

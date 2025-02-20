@@ -6,7 +6,7 @@ import re
 from api.common.exceptions import ConflictException, NotFoundException
 from prediction.train.train import PredictionTrain
 from prediction.test.test import PredictionTest
-from api.models.models import BrandInfoModel, PredictionResultModel
+from api.models.models import BrandInfoModel, BrandModel, PredictionResultModel
 from api.schemas.stock_price import (
     CreateBrandInfoRequest,
     UpdateBrandInfoRequest
@@ -15,11 +15,15 @@ from utils.utils import Utils
 
 
 class StockPriceBase:
+    """
+    株価予測ベースクラス
+    """
 
     @staticmethod
     def prediction(
         req: Request,
         brand_name: str,
+        brand_info: dict[str, str],
         user_id: int
     ) -> Tuple[str, str, str]:
         """
@@ -28,6 +32,7 @@ class StockPriceBase:
         引数:
             req (Request): リクエスト
             brand_name (str): 銘柄
+            brand_info (dict[str, str]): 銘柄一覧
             user_id (int): ユーザーid
 
         戻り値:
@@ -37,12 +42,16 @@ class StockPriceBase:
                 - save_path (str): 保存ファイルパス
         """
         try:
-            prediction_train = PredictionTrain(req, brand_name, user_id)
+            prediction_train = PredictionTrain(
+                req, brand_name, brand_info, user_id
+            )
             prediction_train.check_brand_info()
 
             save_path = prediction_train.main()
 
-            prediction_test = PredictionTest(req, brand_name, user_id)
+            prediction_test = PredictionTest(
+                req, brand_name, brand_info, user_id
+            )
             future_predictions, days_list = prediction_test.main()
 
             return str(future_predictions), str(days_list), save_path
@@ -90,7 +99,17 @@ class StockPriceBase:
 
 
 class StockPriceService:
-    def __init__(self, db: Session):
+    """
+    株価予測のサービスクラス
+    """
+
+    def __init__(self, db: Session) -> None:
+        """
+        StockPriceService クラスのコンストラクタ
+
+        引数:
+            db (Session): dbインスタンス
+        """
         self.db = db
 
     def get_prediction_info(
@@ -133,6 +152,38 @@ class StockPriceService:
             BrandInfoModel.user_id == user_id,
             BrandInfoModel.is_valid == 1
         ).all()
+
+    def get_brand_all_list(
+        self
+    ) -> List[BrandModel]:
+        """
+        全ての銘柄取得
+
+        引数:
+        戻り値:
+            List[BrandModel]: 銘柄dbモデル (データが0件の場合、空リスト)
+        """
+
+        return self.db.query(BrandModel).all()
+
+    def brand_info(
+        self
+    ) -> dict[str, str]:
+        """
+        学習用の銘柄情報取得
+
+        引数:
+        戻り値:
+            dict[str, str]: 銘柄情報 (データが0件の場合、空リスト)
+        """
+
+        data = {}
+
+        brand = self.get_brand_all_list()
+        for b in brand:
+            data[b.brand_name] = str(b.brand_code)
+
+        return data
 
     def _brand_info_model(
         self,
@@ -346,6 +397,7 @@ class StockPriceService:
         future_predictions, days_list, save_path = StockPriceBase.prediction(
             req,
             create_data.brand_name,
+            self.brand_info(),
             create_data.user_id
         )
 
@@ -390,6 +442,7 @@ class StockPriceService:
         future_predictions, days_list, save_path = StockPriceBase.prediction(
             req,
             update_data.brand_name,
+            self.brand_info(),
             user_id
         )
 

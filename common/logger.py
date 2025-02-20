@@ -41,7 +41,6 @@ class LoggerInitialize:
         if not os.path.isfile(LoggerInitialize.__file_name):
             with open(LoggerInitialize.__file_name, "w"):
                 pass
-
         file_handler = logging.FileHandler(
             LoggerInitialize.__file_name, mode='a', encoding='utf-8')
         file_handler.setLevel(logging.DEBUG)

@@ -14,7 +14,6 @@ from prediction.model.model import LSTM
 from prediction.dataset.dataset import TimeSeriesDataset
 from const.const import (
     DFConst,
-    ScrapingConst,
     TrainConst,
     DataSetConst as DSC
 )
@@ -22,23 +21,42 @@ from common.logger import Logger
 
 
 class PredictionTrain:
+    """
+    株価予測のためのモデル学習を管理するクラス
+
+    引数:
+        req (Request): FastAPI のリクエストオブジェクト
+        brand_name (str): 銘柄名
+        brand_info (dict[str, str]): 銘柄名と銘柄コードのマッピング
+        user_id (int): ユーザーID
+    """
+
     def __init__(
         self,
         req: Request,
         brand_name: str,
+        brand_info: dict[str, str],
         user_id: int
     ) -> None:
+        """
+        PredictionTrain クラスのコンストラクタ
+
+        - 指定された銘柄名 (`brand_name`) に対応する銘柄コードを取得
+        - モデルの保存パスを設定
+        - GPU/CPU の選択
+
+        引数:
+            req (Request): API リクエストオブジェクト
+            brand_name (str): 銘柄名
+            brand_info (Dict[str, str]): 銘柄情報（ブランド名とコードのマッピング）
+            user_id (int): ユーザーID
+        """
         self.req = req
         self.brand_name = brand_name
+        self.brand_info = brand_info
         self.user_id = user_id
-        self.path = "/stock_price_prediction"
-        self.model_path = f'{self.path}/save/{self.user_id}/'
-        self.brand_info = StockPriceData.get_text_data(
-            self.path + "/" +
-            ScrapingConst.DIR.value +
-            "/" + ScrapingConst.FILE_NAME.value
-        )
         self.brand_code = self.brand_info[self.brand_name]
+        self.model_path = f'./save/{self.user_id}/'
         self.device = torch.device(
             TrainConst.CUDA.value
             if torch.cuda.is_available()
@@ -47,7 +65,13 @@ class PredictionTrain:
 
     def check_brand_info(self) -> None:
         """
-            銘柄存在チェック
+        指定された銘柄が `brand_info` 内に存在するかをチェックする
+
+        - `brand_info` 内に `brand_name` が存在しない場合、`KeyError` を発生させる
+        - モデルの存在チェック部分はコメントアウト（後で復活する可能性あり）
+
+        例外:
+            KeyError: 銘柄情報に `brand_name` が存在しない場合
         """
         # is_exist = False
         if self.brand_info.get(self.brand_name) is None:
@@ -131,7 +155,7 @@ class PredictionTrain:
         plt.legend()
 
         # グラフを保存
-        save_path = f"{self.path}/ping/train_and_test_loss.png"
+        save_path = "./ping/train_and_test_loss.png"
         plt.savefig(save_path)
         print(f"Lossグラフを保存しました: {save_path}")
 
@@ -169,7 +193,7 @@ class PredictionTrain:
 
         plt.legend()
 
-        save_path = f"{self.path}/ping/Z_Holdings.png"
+        save_path = "./ping/Z_Holdings.png"
         plt.savefig(save_path)
         print(f"株価グラフを保存しました: {save_path}")
 
