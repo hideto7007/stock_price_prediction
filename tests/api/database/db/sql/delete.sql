@@ -1,5 +1,7 @@
-DROP TABLE brand_info;
+DROP TABLE IF DROP TABLE brand_info;
 
-DROP TABLE prediction_result;
+DROP TABLE IF DROP TABLE prediction_result;
 
-DROP TABLE brand;
+DROP TABLE IF DROP TABLE brand;
+
+DROP TABLE IF DROP TABLE user;
