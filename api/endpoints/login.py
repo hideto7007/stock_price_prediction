@@ -363,6 +363,8 @@ async def update_user(
     """
     try:
         # バリデーションチェック
+        # リクエストボディ内のデータは更新対象毎に
+        # 異なるのでここではバリデーションチェックを行わない
         valid = UserIdValidation(
             UserIdRequest(
                 user_id=user_id

@@ -5,15 +5,28 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from api.common.exceptions import HttpExceptionHandler, NotFoundException
+from api.common.response import ValidationResponse
 from api.schemas.response import Content
+from api.schemas.validation import ValidatonModel
 from api.usercase.stock_price import StockPriceBase, StockPriceService
 from api.databases.databases import get_db
 from api.schemas.stock_price import (
+    BrandInfoListValidationModel,
     BrandInfoResponse,
     CreateBrandInfoRequest,
+    DeleteBrandInfoValidationModel,
+    GetPredictionDataValidationModel,
     PredictionResultResponse,
     UpdateBrandInfoRequest,
-    BrandInfoListResponse
+    BrandInfoListResponse,
+    UpdateBrandInfoValidationModel
+)
+from api.validation.stock_price import (
+    GetPredictionDataValidation,
+    BrandInfoListValidation,
+    CreateBrandInfoRequestValidation,
+    UpdateBrandInfoRequestValidation,
+    DeleteBrandInfoRequestValidation
 )
 from const.const import HttpStatusCode
 from utils.utils import Swagger, Utils
@@ -56,6 +69,21 @@ async def get_prediction_data(
     """
 
     try:
+        # バリデーションチェック
+        valid = GetPredictionDataValidation(
+            GetPredictionDataValidationModel(
+                user_id=user_id,
+                brand_code=brand_code
+            )
+        )
+
+        if len(valid) > 0:
+            return ValidationResponse(
+                content=Content[list[ValidatonModel]](
+                    result=valid
+                ).model_dump()
+            )
+
         service = StockPriceService(db)
         res = service.get_prediction_info(user_id, brand_code)
 
@@ -130,6 +158,20 @@ async def brand_info_list(
             Response: レスポンス型
     """
     try:
+        # バリデーションチェック
+        valid = BrandInfoListValidation(
+            BrandInfoListValidationModel(
+                user_id=user_id,
+            )
+        )
+
+        if len(valid) > 0:
+            return ValidationResponse(
+                content=Content[list[ValidatonModel]](
+                    result=valid
+                ).model_dump()
+            )
+
         service = StockPriceService(db)
         res_list = service.get_brand_list(user_id)
 
@@ -237,6 +279,16 @@ async def create_stock_price(
             Response: レスポンス型
     """
     try:
+        # バリデーションチェック
+        valid = CreateBrandInfoRequestValidation(data)
+
+        if len(valid) > 0:
+            return ValidationResponse(
+                content=Content[list[ValidatonModel]](
+                    result=valid
+                ).model_dump()
+            )
+
         service = StockPriceService(db)
         service._create(request, data)
 
@@ -279,6 +331,23 @@ async def upadte_stock_price(
             Response: レスポンス型
     """
     try:
+        # バリデーションチェック
+        valid = UpdateBrandInfoRequestValidation(
+            UpdateBrandInfoValidationModel(
+                user_id=user_id,
+                brand_name=data.brand_name,
+                brand_code=data.brand_code,
+                update_by=data.update_by,
+            )
+        )
+
+        if len(valid) > 0:
+            return ValidationResponse(
+                content=Content[list[ValidatonModel]](
+                    result=valid
+                ).model_dump()
+            )
+
         service = StockPriceService(db)
         service._update(request, user_id, data)
 
@@ -316,6 +385,21 @@ async def delete_stock_price(
             Response: レスポンス型
     """
     try:
+        # バリデーションチェック
+        valid = DeleteBrandInfoRequestValidation(
+            DeleteBrandInfoValidationModel(
+                user_id=user_id,
+                brand_code=brand_code
+            )
+        )
+
+        if len(valid) > 0:
+            return ValidationResponse(
+                content=Content[list[ValidatonModel]](
+                    result=valid
+                ).model_dump()
+            )
+
         service = StockPriceService(db)
         service._brand_info_and_prediction_result_delete(
             user_id, brand_code

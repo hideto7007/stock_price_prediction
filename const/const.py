@@ -94,3 +94,11 @@ class LoginFieldConst(Enum):
     USER_EMAIL = "user_email"
     USER_PASSWORD = "user_password"
     ACCESS_TOKEN = "access_token"
+
+
+class StockPriceFieldConst(Enum):
+    BRAND_CODE = "brand_code"
+    BRAND_NAME = "brand_name"
+    CREATE_BY = "create_by"
+    UPDATE_BY = "update_by"
+    IS_VALID = "is_valid"

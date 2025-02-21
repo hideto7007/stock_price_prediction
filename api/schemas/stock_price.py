@@ -70,3 +70,23 @@ class PredictionResultResponse(BaseModel):
     days_list: List[str]
     brand_code: int
     user_id: int
+
+
+#####################
+# バリデーションモデル #
+#####################
+class GetPredictionDataValidationModel(BaseModel):
+    user_id: int
+    brand_code: int
+
+
+class BrandInfoListValidationModel(BaseModel):
+    user_id: int
+
+
+class UpdateBrandInfoValidationModel(UpdateBrandInfoRequest):
+    user_id: int
+
+
+class DeleteBrandInfoValidationModel(GetPredictionDataValidationModel):
+    pass

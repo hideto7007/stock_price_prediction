@@ -1,19 +1,12 @@
 
 
-import re
-from typing import Final, List, Literal
+from typing import List, Literal
 from api.schemas.login import (
     ReadUsersMeRequest, CreateUserRequest, LoginUserRequest, UserIdRequest
 )
 from api.schemas.validation import ValidatonModel
 from api.validation.validation import AbstractValidation, ValidationError
 from const.const import LoginFieldConst as LFC
-
-
-REGEX_EMAIL: Final[str] = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-REGEX_PASSWORD: Final[str] = (
-    r'^(?=.*[A-Z])(?=.*[.!?/-])[a-zA-Z0-9.!?/-]{8,24}$'
-)
 
 
 class RegisterUserValidation(AbstractValidation[CreateUserRequest]):
@@ -24,50 +17,25 @@ class RegisterUserValidation(AbstractValidation[CreateUserRequest]):
     ##############################
     def result(self) -> List[ValidatonModel]:
         return ValidationError.valid_result([
-            self.validate_str(),
-            self.validate_email(),
-            self.validate_password(),
+            self.user_name(),
+            self.user_email(),
+            self.user_password(),
         ])
 
-    ########################################
-    # オーバーライドメソッド（バリデーション処理）#
-    ########################################
+    #######################
+    # バリデーション呼び出し #
+    #######################
+    def user_name(self) -> ValidatonModel | Literal[True]:
+        return self.validate_str(self.data.user_name, LFC.USER_NAME.value)
 
-    def validate_str(self) -> ValidatonModel | Literal[True]:
-        if len(self.data.user_name) > 0:
-            return True
-        return ValidationError.generater(
-            LFC.USER_NAME.value,
-            f"{LFC.USER_NAME.value}は必須です。"
+    def user_email(self) -> ValidatonModel | Literal[True]:
+        return self.validate_email(self.data.user_email, LFC.USER_EMAIL.value)
+
+    def user_password(self) -> ValidatonModel | Literal[True]:
+        return self.validate_password(
+            self.data.user_password,
+            LFC.USER_PASSWORD.value
         )
-
-    def validate_email(self) -> ValidatonModel | Literal[True]:
-        if len(self.data.user_email) == 0:
-            return ValidationError.generater(
-                LFC.USER_EMAIL.value,
-                f"{LFC.USER_EMAIL.value}は必須です。"
-            )
-        elif re.match(REGEX_EMAIL, self.data.user_email) is None:
-            return ValidationError.generater(
-                LFC.USER_EMAIL.value,
-                f"{LFC.USER_EMAIL.value}の形式が間違っています。"
-            )
-        return True
-
-    def validate_password(self) -> ValidatonModel | Literal[True]:
-        if len(self.data.user_password) == 0:
-            return ValidationError.generater(
-                LFC.USER_PASSWORD.value,
-                f"{LFC.USER_PASSWORD.value}は必須です。"
-            )
-        elif re.match(REGEX_PASSWORD, self.data.user_password) is None:
-            return ValidationError.generater(
-                LFC.USER_PASSWORD.value,
-                f"{LFC.USER_PASSWORD.value}は8文字以上24文字以下、"
-                f"大文字、記号(ビックリマーク(!)、ピリオド(.)、スラッシュ(/)、"
-                f"クエスチョンマーク(?)、ハイフン(-))を含めてください"
-            )
-        return True
 
 
 class LoginUserValidation(AbstractValidation[LoginUserRequest]):
@@ -78,36 +46,21 @@ class LoginUserValidation(AbstractValidation[LoginUserRequest]):
     ##############################
     def result(self) -> List[ValidatonModel]:
         return ValidationError.valid_result([
-            self.validate_str(),
-            self.validate_password(),
+            self.user_name(),
+            self.user_password(),
         ])
 
-    ########################################
-    # オーバーライドメソッド（バリデーション処理）#
-    ########################################
+    #######################
+    # バリデーション呼び出し #
+    #######################
+    def user_name(self) -> ValidatonModel | Literal[True]:
+        return self.validate_str(self.data.user_name, LFC.USER_NAME.value)
 
-    def validate_str(self) -> ValidatonModel | Literal[True]:
-        if len(self.data.user_name) > 0:
-            return True
-        return ValidationError.generater(
-            LFC.USER_NAME.value,
-            f"{LFC.USER_NAME.value}は必須です。"
+    def user_password(self) -> ValidatonModel | Literal[True]:
+        return self.validate_password(
+            self.data.user_password,
+            LFC.USER_PASSWORD.value
         )
-
-    def validate_password(self) -> ValidatonModel | Literal[True]:
-        if len(self.data.user_password) == 0:
-            return ValidationError.generater(
-                LFC.USER_PASSWORD.value,
-                f"{LFC.USER_PASSWORD.value}は必須です。"
-            )
-        elif re.match(REGEX_PASSWORD, self.data.user_password) is None:
-            return ValidationError.generater(
-                LFC.USER_PASSWORD.value,
-                f"{LFC.USER_PASSWORD.value}は8文字以上24文字以下、"
-                f"大文字、記号(ビックリマーク(!)、ピリオド(.)、スラッシュ(/)、"
-                f"クエスチョンマーク(?)、ハイフン(-))を含めてください"
-            )
-        return True
 
 
 class ReadUsersMeValidation(AbstractValidation[ReadUsersMeRequest]):
@@ -118,19 +71,16 @@ class ReadUsersMeValidation(AbstractValidation[ReadUsersMeRequest]):
     ##############################
     def result(self) -> List[ValidatonModel]:
         return ValidationError.valid_result([
-            self.validate_str(),
+            self.access_token(),
         ])
 
-    ########################################
-    # オーバーライドメソッド（バリデーション処理）#
-    ########################################
-
-    def validate_str(self) -> ValidatonModel | Literal[True]:
-        if len(self.data.access_token) > 0:
-            return True
-        return ValidationError.generater(
-            LFC.ACCESS_TOKEN.value,
-            f"{LFC.ACCESS_TOKEN.value}は必須です。"
+    #######################
+    # バリデーション呼び出し #
+    #######################
+    def access_token(self) -> ValidatonModel | Literal[True]:
+        return self.validate_str(
+            self.data.access_token,
+            LFC.ACCESS_TOKEN.value
         )
 
 
@@ -142,17 +92,14 @@ class UserIdValidation(AbstractValidation[UserIdRequest]):
     ##############################
     def result(self) -> List[ValidatonModel]:
         return ValidationError.valid_result([
-            self.validate_int(),
+            self.user_id(),
         ])
 
-    ########################################
-    # オーバーライドメソッド（バリデーション処理）#
-    ########################################
-
-    def validate_int(self) -> ValidatonModel | Literal[True]:
-        if isinstance(self.data.user_id, int):
-            return True
-        return ValidationError.generater(
-            LFC.USER_ID.value,
-            f"{LFC.USER_ID.value}は必須です。"
+    #######################
+    # バリデーション呼び出し #
+    #######################
+    def user_id(self) -> ValidatonModel | Literal[True]:
+        return self.validate_int(
+            self.data.user_id,
+            LFC.USER_ID.value
         )
