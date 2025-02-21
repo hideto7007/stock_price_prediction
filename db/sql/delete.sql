@@ -1,2 +1,4 @@
-DELETE FROM brand_info WHERE brand_code_id = 4;
--- DELETE FROM prediction_result WHERE brand_code = 2801;
+-- 不要なデータ削除の際に使用
+-- DELETE FROM brand_info WHERE brand_code_id = 4;
+-- DELETE FROM user WHERE user_id = 2;
+-- DROP TABLE IF EXISTS user;
