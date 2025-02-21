@@ -71,7 +71,10 @@ class Logger:
         log_data = {
             "request_id": req.state.request_id,
             "method": req.method,
-            "header": dict(req.headers),
+            "header": {
+                "authorization": req.headers.get("authorization"),
+                "cookie": req.headers.get("cookie"),
+            },
             "params": dict(req.query_params),
             "request_body": request_body,
             "url": str(req.url),
@@ -96,7 +99,10 @@ class Logger:
         log_data = {
             "request_id": req.state.request_id,
             "method": req.method,
-            "header": dict(req.headers),
+            "header": {
+                "authorization": req.headers.get("authorization"),
+                "cookie": req.headers.get("cookie"),
+            },
             "params": dict(req.query_params),
             "request_body": request_body,
             "url": str(req.url),
@@ -117,7 +123,10 @@ class Logger:
         log_data = {
             "request_id": req.state.request_id,
             "method": req.method,
-            "header": dict(req.headers),
+            "header": {
+                "authorization": req.headers.get("authorization"),
+                "cookie": req.headers.get("cookie"),
+            },
             "params": dict(req.query_params),
             "request_body": request_body,
             "url": str(req.url),
