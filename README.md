@@ -1,5 +1,16 @@
 #### Stock Price Prediction
 
+###　株価予測 API の事前準備
+
+- コマンドは以下のコマンドを参照
+
+1.  docker コンテナ作成
+2.  python 環境構築(env で作成)
+3.  /money_management/stock_price_prediction の直下にいること
+4.  ライブラリーインストール (pip install -r requirements.txt)
+5.  データベース作成 (./init_database.sh 実行)
+6.  fastapi 実行
+
 #### docker
 
 ```bash
