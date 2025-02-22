@@ -22,7 +22,7 @@ from const.const import HttpStatusCode
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, Request
 
-from api.databases.databases import get_db
+from api.databases.databases import DataBase
 from api.schemas.response import Content
 from api.schemas.login import (
     LoginUserRequest,
@@ -53,7 +53,7 @@ router = APIRouter()
 async def register_user(
     request: Request,
     user: CreateUserRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         ログイン情報登録API
@@ -123,7 +123,7 @@ async def register_user(
 async def login_user(
     request: Request,
     data: LoginUserRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         ログイン情報取得API
@@ -209,7 +209,7 @@ async def login_user(
 async def read_users_me(
     request: Request,
     token: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         ユーザー情報取得API
@@ -284,7 +284,7 @@ async def read_users_me(
 async def user_info(
     request: Request,
     user_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         ユーザー情報取得API
@@ -348,7 +348,7 @@ async def update_user(
     request: Request,
     user_id: int,
     data: UpdateUserRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         ユーザー情報更新API
@@ -402,7 +402,7 @@ async def update_user(
 async def delete_user(
     request: Request,
     user_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         ユーザー情報削除API

@@ -1,10 +1,12 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from datetime import datetime
 
-from api.databases.databases import Base
+from sqlalchemy.ext.declarative import declarative_base
+
+BASE = declarative_base()
 
 
-class BrandModel(Base):
+class BrandModel(BASE):
     __tablename__ = 'brand'
 
     brand_id = Column(Integer, primary_key=True,
@@ -19,7 +21,7 @@ class BrandModel(Base):
     is_valid = Column(Boolean, default=True, nullable=False)
 
 
-class BrandInfoModel(Base):
+class BrandInfoModel(BASE):
     __tablename__ = 'brand_info'
 
     brand_info_id = Column(Integer, primary_key=True,
@@ -36,7 +38,7 @@ class BrandInfoModel(Base):
     is_valid = Column(Boolean, default=True, nullable=False)
 
 
-class PredictionResultModel(Base):
+class PredictionResultModel(BASE):
     __tablename__ = 'prediction_result'
 
     prediction_result_id = Column(
@@ -53,7 +55,7 @@ class PredictionResultModel(Base):
     is_valid = Column(Boolean, default=True, nullable=False)
 
 
-class UserModel(Base):
+class UserModel(BASE):
     __tablename__ = 'user'
 
     user_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -69,4 +71,4 @@ class UserModel(Base):
 
 
 # # データベースとモデルを同期（既存のテーブルがある場合は実行しません）
-# Base.metadata.create_all(bind=engine)
+# BASE.metadata.create_all(bind=engine)

@@ -9,7 +9,7 @@ from api.common.response import ValidationResponse
 from api.schemas.response import Content
 from api.schemas.validation import ValidatonModel
 from api.usercase.stock_price import StockPriceBase, StockPriceService
-from api.databases.databases import get_db
+from api.databases.databases import DataBase
 from api.schemas.stock_price import (
     BrandInfoListValidationModel,
     BrandInfoResponse,
@@ -53,7 +53,7 @@ async def get_prediction_data(
     request: Request,
     user_id: int,
     brand_code: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         予測データ取得API
@@ -145,7 +145,7 @@ async def get_prediction_data(
 async def brand_info_list(
     request: Request,
     user_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         対象ユーザーの学習ずみ銘柄情報取得API
@@ -218,7 +218,7 @@ async def brand_info_list(
 )
 async def brand(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         全ての銘柄取得API
@@ -266,7 +266,7 @@ async def brand(
 async def create_stock_price(
     request: Request,
     data: CreateBrandInfoRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         予測データ登録API
@@ -317,7 +317,7 @@ async def upadte_stock_price(
     request: Request,
     user_id: int,
     data: UpdateBrandInfoRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         予測データ更新API
@@ -371,7 +371,7 @@ async def delete_stock_price(
     request: Request,
     user_id: int,
     brand_code: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(DataBase.get_db())
 ):
     """
         予測データ削除API

@@ -3,6 +3,7 @@
 import os
 from typing import Any, Optional
 
+from dotenv import load_dotenv
 from pydantic import BaseModel
 
 
@@ -17,6 +18,7 @@ class BaseEnvModel(BaseModel):
     database_path: str
     test_database_path: str
     test_create_path: str
+    test_insert_path: str
     test_delete_path: str
 
 
@@ -36,6 +38,7 @@ class Env:
 
     def _initialize(self):
         """環境変数の値を取得"""
+        load_dotenv()
         object.__setattr__(self, "SECRET_KEY", os.getenv("SECRET_KEY"))
         object.__setattr__(self, "ALGORITHM", os.getenv("ALGORITHM"))
         object.__setattr__(
@@ -48,6 +51,8 @@ class Env:
                            os.getenv("TEST_DATABASE_PATH"))
         object.__setattr__(self, "TEST_CREATE_PATH",
                            os.getenv("TEST_CREATE_PATH"))
+        object.__setattr__(self, "TEST_INSERT_PATH",
+                           os.getenv("TEST_INSERT_PATH"))
         object.__setattr__(self, "TEST_DELETE_PATH",
                            os.getenv("TEST_DELETE_PATH"))
 
@@ -89,6 +94,11 @@ class Env:
     def test_create_path(self) -> Optional[str]:
         # テストddl作成パス
         return getattr(self, "TEST_CREATE_PATH")
+
+    @property
+    def test_insert_path(self) -> Optional[str]:
+        # テスト用のinsertデータ作成パス
+        return getattr(self, "TEST_INSERT_PATH")
 
     @property
     def test_delete_path(self) -> Optional[str]:

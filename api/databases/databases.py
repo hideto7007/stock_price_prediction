@@ -1,26 +1,61 @@
 import os
-from dotenv import load_dotenv # type: ignore
-from sqlalchemy import create_engine # type: ignore
-from sqlalchemy.ext.declarative import declarative_base # type: ignore
-from sqlalchemy.orm import sessionmaker # type: ignore
+from typing import Any, Callable, Generator
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 
-load_dotenv()
-
-DATABASE_PATH = os.getenv("DATABASE_PATH")
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, DATABASE_PATH)}"
-
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
+from api.common.env import Env
 
 
-# データベースセッションの取得
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+class DataBase:
+    """
+        データベースエンジン
+    """
+    __instance = None
+
+    def __new__(cls):
+        if cls.__instance is None:
+            cls.__instance = super().__new__(cls)
+            cls.__instance._initialize()
+        return cls.__instance
+
+    def _initialize(self) -> None:
+        """
+        コンストラクタ（初回の1回のみ実行）
+        """
+        env = Env.get_instance()
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.database_url = f"sqlite:///{os.path.join(
+            self.base_dir,
+            env.database_path
+        )}"
+        self.engine = create_engine(
+            self.database_url,
+            connect_args={"check_same_thread": False}
+        )
+        self.session_local = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=self.engine
+        )
+
+    @classmethod
+    def get_db(cls) -> Callable[[], Generator[Session, Any, None]]:
+        """
+            内部でジェネレーターを返す
+        """
+        return cls()._get_db
+
+    @staticmethod
+    def _get_db():
+        """
+            テスト用のデータベースセッションの取得
+            - データベースのセッション取得からクローズまで管理
+
+            ジェネレーター
+            - セッション情報を返す
+        """
+        db = DataBase().session_local()
+        try:
+            yield db
+        finally:
+            db.close()

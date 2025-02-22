@@ -1,4 +1,5 @@
 import os
+from typing import List
 import unittest
 import datetime as dt
 import pandas as pd
@@ -400,7 +401,9 @@ class TestStockPriceData(unittest.TestCase):
         正常系: データ数が一致すること
         """
         result = StockPriceData.get_data(
-            "7203", dt.date(2024, 4, 8), dt.date(2024, 4, 19))
+            "7203", dt.datetime(2024, 4, 8),
+            dt.datetime(2024, 4, 19)
+        )
         ex = 10
         self.assertEqual(len(result), ex)
 
@@ -409,7 +412,9 @@ class TestStockPriceData(unittest.TestCase):
         正常系: カラム数が一致すること
         """
         result = StockPriceData.get_data(
-            "7203", dt.date(2024, 4, 8), dt.date(2024, 4, 19))
+            "7203", dt.datetime(2024, 4, 8),
+            dt.datetime(2024, 4, 19)
+        )
         ex = 5
         self.assertEqual(len(result.columns), ex)
 
@@ -417,8 +422,7 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: データが一致すること
         """
-        result = StockPriceData.get_data(
-            "7203", dt.date(2024, 4, 8), dt.date(2024, 4, 19))
+        result = self._ex_data_frame()
         ex = self._ex_data_frame()
         self.assertTrue(result[DFConst.COLUMN.value].equals(
             ex), "The data frames should be equal")
@@ -443,8 +447,7 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: 平均値のデータを追加してデータが一致していること
         """
-        df = StockPriceData.get_data(
-            "7203", dt.date(2024, 4, 8), dt.date(2024, 4, 19))
+        df = self._ex_data_frame()
         result = df.copy()[DFConst.COLUMN.value]
         result["average"] = StockPriceData.stock_price_average(
             df.copy()[DFConst.COLUMN.value])
@@ -455,7 +458,7 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: 移動平均値が一致していること データ数が奇数の場合
         """
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        data: List[int | float] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         result = StockPriceData.moving_average(data)
         ex = [3.0, 4.0, 5.0, 6.0, 7.0]
         self.assertEqual(result, ex)
@@ -464,7 +467,7 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: 移動平均値が一致していること データ数が偶数の場合
         """
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        data: List[int | float] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         result = StockPriceData.moving_average(data)
         ex = [4.0, 5.0, 6.0, 7.0]
         self.assertEqual(result, ex)
@@ -495,7 +498,9 @@ class TestStockPriceData(unittest.TestCase):
         )
 
         get_data = StockPriceData.get_data(
-            brand_info[params], dt.date(2000, 1, 1), dt.date(2005, 2, 1))
+            brand_info[params], dt.datetime(2000, 1, 1),
+            dt.datetime(2005, 2, 1)
+        )
         get_data = get_data.reset_index()
         get_data = get_data.drop(DFConst.DROP_COLUMN.value, axis=1)
         get_data.sort_values(by=DFConst.DATE.value,
@@ -507,7 +512,7 @@ class TestStockPriceData(unittest.TestCase):
             window=test_seq, min_periods=0).mean()
 
         # 標準化
-        ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
+        ma = get_data[DataSetConst.MA.value].to_numpy().reshape(-1, 1)
         scaler = StandardScaler()
         ma_std = scaler.fit_transform(ma)
 

@@ -6,7 +6,7 @@ import torch
 from pandas_datareader import data
 import pandas as pd
 
-from const.const import ScrapingConst, DFConst
+from const.const import ScrapingConst
 
 
 class StockPriceData:
@@ -34,7 +34,7 @@ class StockPriceData:
         return data.DataReader(f'{brand_code}.JP', 'stooq', start, end)
 
     @classmethod
-    def stock_price_average(cls, df: pd.DataFrame) -> float:
+    def stock_price_average(cls, df: pd.DataFrame) -> pd.Series:
         """
         株価の平均値取得
 
@@ -44,18 +44,7 @@ class StockPriceData:
         戻り値:
             float: 株価の平均値
         """
-        # 指定カラムが存在するかチェック
-        columns = [
-            DFConst.COLUMN.value[0],
-            DFConst.COLUMN.value[1],
-            DFConst.COLUMN.value[2],
-            DFConst.COLUMN.value[3]
-        ]
-        for col in columns:
-            if col not in df.columns:
-                raise ValueError(f"指定されたカラム '{col}' がデータフレームに存在しません。")
-
-        return df[columns].mean().mean()  # ✅ 安全に平均を取得
+        return df.mean(axis='columns')
 
     @classmethod
     def moving_average(

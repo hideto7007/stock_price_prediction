@@ -13,6 +13,7 @@ from const.const import (
     PredictionResultConst, BrandInfoModelConst
 )
 from tests.api.database.test_database import get_test_db, init_db, drop_db
+from tests.api.endpoints.test_case import TestBase, TestBaseAPI
 from utils.utils import Utils
 
 # モック
@@ -42,86 +43,6 @@ def raise_db_error(*args, **kwargs):
     raise Exception("Database connection error")
 
 
-class TestBase(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        """テスト用データベースの初期化"""
-        init_db()
-
-    @classmethod
-    def tearDownClass(cls):
-        """テスト用データベースの削除"""
-        drop_db()
-
-    def setUp(self):
-        """セットアップ"""
-        self.client = TestClient(app)
-        self.db = next(get_test_db())
-        app.dependency_overrides[get_db] = get_test_db
-
-    def tearDown(self):
-        """テスト終了時処理z"""
-        self.db.rollback()
-        self.db.close()
-
-    def params_error_check(
-        self,
-        code,
-        msg,
-        params_list,
-        input_data_list,
-        res_data
-    ):
-        """
-        パラメータのエラーチェック
-
-        例: res = [
-            {
-                "code": ErrorCode.INT_VAILD.value,
-                "detail": f"{loc[1]} パラメータは整数値のみです。",
-                "input": input_msg
-            }
-        ]
-        """
-        self.assertEqual(len(res_data), len(params_list))
-        for res, param, input_data in zip(
-            res_data,
-            params_list,
-            input_data_list
-        ):
-            self.assertEqual(res.get("code"), code)
-            self.assertEqual(res.get("detail"), f"{param} {msg}")
-            self.assertEqual(res.get("input"), input_data)
-
-    def request_body_error_check(self, code, msg, res_data):
-        """
-        リクエストボディーのエラーチェック
-
-        例: res = {
-            "detail": [
-                {
-                    "code": 10,
-                    "message": "既に登録されています"
-                }
-            ]
-        }
-        """
-        detail = res_data.get("detail")
-        self.assertEqual(detail[0].get("code"), code)
-        self.assertEqual(detail[0].get("message"), msg)
-
-    def delete_client(self, url, data):
-        """削除クライアント"""
-        response = self.client.request(
-            method="DELETE",
-            url=url,
-            headers={"Content-Type": "application/json"},
-            content=json.dumps(data)
-        )
-        return response
-
-
 class TestStockPriceService(TestBase):
 
     @patch(REQUEST)
@@ -146,7 +67,7 @@ class TestStockPriceService(TestBase):
         self.assertEqual(save_path, "test.pth")
 
 
-class TestGetStockPrice(TestBase):
+class TestGetStockPrice(TestBaseAPI):
 
     def test_get_stock_price_success_01(self):
         """正常系: 予測データ取得API 取得データを返す"""
@@ -559,7 +480,7 @@ class TestCreateStockPrice(TestBase):
         response = self.client.post(CREATE_STOCK_PRICE_PATH, json=data)
 
         self.assertEqual(response.status_code, HttpStatusCode.CONFLICT.value)
-        self.request_body_error_check(
+        self.response_body_error_check(
             ErrorCode.CHECK_EXIST.value,
             "銘柄情報は既に登録済みです。",
             response.json()
@@ -637,7 +558,7 @@ class TestCreateStockPrice(TestBase):
         response = self.client.post(CREATE_STOCK_PRICE_PATH, json=data)
 
         self.assertEqual(response.status_code, HttpStatusCode.CONFLICT.value)
-        self.request_body_error_check(
+        self.response_body_error_check(
             ErrorCode.CHECK_EXIST.value,
             "予測結果データは既に登録済みです。",
             response.json()
@@ -660,7 +581,7 @@ class TestCreateStockPrice(TestBase):
         response = self.client.post(CREATE_STOCK_PRICE_PATH, json=data)
 
         self.assertEqual(response.status_code, HttpStatusCode.BADREQUEST.value)
-        self.request_body_error_check(
+        self.response_body_error_check(
             ErrorCode.CHECK_EXIST.value,
             "'対象の銘柄は存在しません'",
             response.json()
@@ -885,7 +806,7 @@ class TestUpdateStockPrice(TestBase):
             # brand_codeが存在しないかつis_vaild = True
             self.assertEqual(response.status_code,
                              HttpStatusCode.NOT_FOUND.value)
-            self.request_body_error_check(
+            self.response_body_error_check(
                 ErrorCode.NOT_DATA.value,
                 "更新対象の銘柄データが存在しません。",
                 response.json()
@@ -1003,7 +924,7 @@ class TestUpdateStockPrice(TestBase):
 
             self.assertEqual(response.status_code,
                              HttpStatusCode.NOT_FOUND.value)
-            self.request_body_error_check(
+            self.response_body_error_check(
                 ErrorCode.NOT_DATA.value,
                 "更新対象の予測結果データが存在しません。",
                 response.json()
@@ -1205,7 +1126,7 @@ class TestDeleteStockPrice(TestBase):
 
             self.assertEqual(response.status_code,
                              HttpStatusCode.NOT_FOUND.value)
-            self.request_body_error_check(
+            self.response_body_error_check(
                 ErrorCode.NOT_DATA.value,
                 "削除対象の銘柄情報が見つかりません。",
                 response.json()
@@ -1303,7 +1224,7 @@ class TestDeleteStockPrice(TestBase):
 
             self.assertEqual(response.status_code,
                              HttpStatusCode.NOT_FOUND.value)
-            self.request_body_error_check(
+            self.response_body_error_check(
                 ErrorCode.NOT_DATA.value,
                 "削除対象の予測結果データが見つかりません。",
                 response.json()
