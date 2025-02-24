@@ -151,17 +151,18 @@ class StockPriceService:
         return self.db.query(BrandInfoModel).filter(
             BrandInfoModel.user_id == user_id,
             BrandInfoModel.is_valid == 1
-        ).all()
+        ).order_by(BrandInfoModel.brand_code).all()
 
     def get_brand_all_list(
         self
     ) -> List[BrandModel]:
         """
         全ての銘柄取得
+        - 取得件数0件の場合は予めdbにデータ投入しておく
 
         引数:
         戻り値:
-            List[BrandModel]: 銘柄dbモデル (データが0件の場合、空リスト)
+            List[BrandModel]: 銘柄dbモデル
         """
 
         return self.db.query(BrandModel).all()
@@ -302,8 +303,7 @@ class StockPriceService:
 
         exist_check = self.db.query(BrandInfoModel).filter(
             BrandInfoModel.brand_code == data.brand_code,
-            BrandInfoModel.user_id == user_id,
-            BrandInfoModel.is_valid == 1
+            BrandInfoModel.user_id == user_id
         ).first()
         return exist_check
 
@@ -328,7 +328,6 @@ class StockPriceService:
         exist_check = self.db.query(PredictionResultModel).filter(
             PredictionResultModel.brand_code == data.brand_code,
             PredictionResultModel.user_id == user_id,
-            PredictionResultModel.is_valid
         ).first()
         return exist_check
 
@@ -336,7 +335,7 @@ class StockPriceService:
         self,
         user_id: int,
         brand_code: int
-    ) -> None:
+    ) -> BrandInfoModel | None:
         """
         銘柄テーブルのデータ削除
 
@@ -345,18 +344,24 @@ class StockPriceService:
             brand_code (int): 銘柄コード
 
         戻り値:
-            None
+            BrandInfoModel | None:
+            - 削除データが存在する場合、`BrandInfoModel`を返す
+            - 存在しない場合、例外
         """
-        brand_info = self.db.query(BrandInfoModel).filter(
+        rand_info = self.db.query(BrandInfoModel).filter(
             BrandInfoModel.brand_code == brand_code,
             BrandInfoModel.user_id == user_id,
             BrandInfoModel.is_valid
         ).first()
-        if brand_info is None:
+        if rand_info is None:
             raise NotFoundException("削除対象の銘柄情報が見つかりません。")
-        self._delete(brand_info)
+        return rand_info
 
-    def delete_prediction_result(self, user_id, brand_code):
+    def delete_prediction_result(
+        self,
+        user_id: int,
+        brand_code: int
+    ) -> PredictionResultModel | None:
         """
         予測結果テーブルのデータ削除
 
@@ -365,7 +370,9 @@ class StockPriceService:
             brand_code (int): 銘柄コード
 
         戻り値:
-            None
+            PredictionResultModel | None:
+            - 削除データが存在する場合、`PredictionResultModel`を返す
+            - 存在しない場合、例外
         """
         prediction_result = self.db.query(PredictionResultModel).filter(
             PredictionResultModel.brand_code == brand_code,
@@ -374,7 +381,7 @@ class StockPriceService:
         ).first()
         if prediction_result is None:
             raise NotFoundException("削除対象の予測結果データが見つかりません。")
-        self._delete(prediction_result)
+        return prediction_result
 
     def _create(
         self,
@@ -394,6 +401,9 @@ class StockPriceService:
         if self._exist_brand_info_check(None, create_data) is not None:
             raise ConflictException("銘柄情報は既に登録済みです。")
 
+        if self._exist_prediction_result_check(None, create_data) is not None:
+            raise ConflictException("予測結果データは既に登録済みです。")
+
         future_predictions, days_list, save_path = StockPriceBase.prediction(
             req,
             create_data.brand_name,
@@ -402,15 +412,11 @@ class StockPriceService:
         )
 
         db_brand_info = self._brand_info_model(create_data, save_path)
-
-        # 銘柄情報登録
-        self._save(db_brand_info, True)
         db_pred = self._prediction_result_model(
             future_predictions, days_list, create_data)
 
-        if self._exist_prediction_result_check(None, create_data) is not None:
-            raise ConflictException("予測結果データは既に登録済みです。")
-
+        # 銘柄情報登録
+        self._save(db_brand_info, True)
         # 予測結果登録
         self._save(db_pred, True)
 
@@ -434,10 +440,14 @@ class StockPriceService:
             None
         """
         db_brand_info = self._exist_brand_info_check(user_id, update_data)
+        db_pred = self._exist_prediction_result_check(user_id, update_data)
         today = Utils.today()
 
         if db_brand_info is None:
             raise KeyError("更新対象の銘柄データが存在しません。")
+
+        if db_pred is None:
+            raise KeyError("更新対象の予測結果データが存在しません。")
 
         future_predictions, days_list, save_path = StockPriceBase.prediction(
             req,
@@ -446,24 +456,21 @@ class StockPriceService:
             user_id
         )
 
-        db_pred = self._exist_prediction_result_check(user_id, update_data)
-
+        # データ詰め直し
         db_brand_info.update_by = Utils.column_str(update_data.update_by)
         db_brand_info.learned_model_name = Utils.column_str(save_path)
         db_brand_info.update_at = Utils.column_datetime(today)
-
-        # 銘柄情報更新
-        self._save(db_brand_info, False)
-
-        if db_pred is None:
-            raise KeyError("更新対象の予測結果データが存在しません。")
+        db_brand_info.is_valid = Utils.column_bool(True)
 
         db_pred.future_predictions = Utils.column_str(future_predictions)
         db_pred.days_list = Utils.column_str(days_list)
         db_pred.update_by = Utils.column_str(update_data.update_by)
         db_pred.update_at = Utils.column_datetime(today)
+        db_pred.is_valid = Utils.column_bool(True)
 
         # 予測結果更新
+        self._save(db_brand_info, False)
+        # 銘柄情報更新
         self._save(db_brand_info, False)
 
         return None
@@ -483,7 +490,10 @@ class StockPriceService:
         戻り値:
             None
         """
-        self.delete_brand_info(user_id, brand_code)
-        self.delete_prediction_result(user_id, brand_code)
+        brand_info = self.delete_brand_info(user_id, brand_code)
+        prediction_result = self.delete_prediction_result(user_id, brand_code)
 
+        # 削除
+        self._delete(brand_info)
+        self._delete(prediction_result)
         return None

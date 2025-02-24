@@ -13,6 +13,9 @@
     "editor.formatOnSave": true,           // 保存時に自動フォーマット
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit"
+    },
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportOptionalMemberAccess": false,
     }
   },
 }
