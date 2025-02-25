@@ -9,7 +9,7 @@ from api.schemas.stock_price import (
 )
 from api.schemas.test import RequestId, TestRequest
 from api.usercase.stock_price import StockPriceService
-from tests.api.endpoints.test_case import TestBase, TestBaseAPI
+from tests.test_case import TestBase, TestBaseAPI
 
 # モック
 REQUEST = 'fastapi.Request'

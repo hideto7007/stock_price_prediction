@@ -45,6 +45,12 @@ router = APIRouter()
             "brand_code": 1234,
             "user_id": 1
         },
+        400: [
+            {
+                "field": "validation",
+                "message": "validationの結果メッセージ"
+            }
+        ],
         404: "登録されてない予測データです。",
         500: "予期せぬエラーが発生しました"
     })
@@ -138,6 +144,12 @@ async def get_prediction_data(
                 "create_at": "2024-07-15T13:19:41",
                 "update_at": "2024-07-15T13:19:41"
             },
+        ],
+        400: [
+            {
+                "field": "validation",
+                "message": "validationの結果メッセージ"
+            }
         ],
         500: "予期せぬエラーが発生しました"
     })
@@ -259,6 +271,12 @@ async def brand(
     tags=["株価予測"],
     responses=Swagger.swagger_responses({
         200: "予測データの登録成功",
+        400: [
+            {
+                "field": "validation",
+                "message": "validationの結果メッセージ"
+            }
+        ],
         409: "銘柄情報は既に登録済みです。又は、予測結果データは既に登録済みです。",
         500: "予期せぬエラーが発生しました"
     })
@@ -309,6 +327,12 @@ async def create_stock_price(
     tags=["株価予測"],
     responses=Swagger.swagger_responses({
         200: "予測データの更新成功",
+        400: [
+            {
+                "field": "validation",
+                "message": "validationの結果メッセージ"
+            }
+        ],
         409: "銘柄情報は既に登録済みです。又は、予測結果データは既に登録済みです。",
         500: "予期せぬエラーが発生しました"
     })
@@ -365,7 +389,18 @@ async def upadte_stock_price(
 
 @router.delete(
     "/delete_stock_price/{user_id}/{brand_code}",
-    tags=["株価予測"]
+    tags=["株価予測"],
+    responses=Swagger.swagger_responses({
+        200: "予測データの削除成功",
+        400: [
+            {
+                "field": "validation",
+                "message": "validationの結果メッセージ"
+            }
+        ],
+        404: "削除対象の銘柄情報が見つかりません。又は、削除対象の予測結果データが見つかりません。",
+        500: "予期せぬエラーが発生しました"
+    })
 )
 async def delete_stock_price(
     request: Request,

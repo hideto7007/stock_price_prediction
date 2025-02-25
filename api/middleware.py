@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from starlette.types import ASGIApp
 from fastapi.responses import JSONResponse, StreamingResponse
 import asyncio
-from typing import Any
+from typing import Any, Coroutine
 
 from api.common.exceptions import (
     ExpiredSignatureException,
@@ -26,7 +26,6 @@ class OAuth2Middleware(BaseHTTPMiddleware):
         app: ASGIApp,
     ):
         super().__init__(app)
-        self.oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
         self.exempt_paths = [
             "/docs",
             "/redoc",
@@ -43,7 +42,7 @@ class OAuth2Middleware(BaseHTTPMiddleware):
                 return await call_next(request)
 
         try:
-            token = await self.oauth2_scheme(request)
+            token = await self.get_oauth2_scheme(request)
             if token is None:
                 raise TokenRequiredException("認証トークンが必要です。")
             if self.is_valid_token(token) is None:
@@ -59,6 +58,13 @@ class OAuth2Middleware(BaseHTTPMiddleware):
 
     def is_valid_token(self, token: str) -> dict[str, Any] | None:
         return Login.get_payload(token)
+
+    def get_oauth2_scheme(
+        self,
+        request: Request
+    ) -> Coroutine[Any, Any, str | None]:
+        oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+        return oauth2_scheme(request)
 
 
 class TimeoutMiddleware(BaseHTTPMiddleware):
