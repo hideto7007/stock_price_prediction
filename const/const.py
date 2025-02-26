@@ -102,3 +102,10 @@ class StockPriceFieldConst(Enum):
     CREATE_BY = "create_by"
     UPDATE_BY = "update_by"
     IS_VALID = "is_valid"
+
+
+class LoggerConst(Enum):
+    MAIN_FILE_NAME = './logger.log'
+    LOGIN_FILE_NAME = './login_logger.log'
+    STOCK_PRICE_FILE_NAME = './stock_price_logger.log'
+    TEST_FILE_NAME = './test_logger.log'

@@ -14,10 +14,11 @@ from api.common.exceptions import (
     HttpExceptionHandler,
     TokenRequiredException
 )
-from api.usercase.login import Login
+from api.usercase.login import LoginService
 from common.logger import Logger
 from const.const import HttpStatusCode
 from api.schemas.response import Content
+from utils.utils import Utils
 
 
 class OAuth2Middleware(BaseHTTPMiddleware):
@@ -57,7 +58,7 @@ class OAuth2Middleware(BaseHTTPMiddleware):
         return await call_next(request)
 
     def is_valid_token(self, token: str) -> dict[str, Any] | None:
-        return Login.get_payload(token)
+        return LoginService.get_payload(token)
 
     def get_oauth2_scheme(
         self,
@@ -110,10 +111,14 @@ class RequestWritingLoggerMiddleware(BaseHTTPMiddleware):
         request_body_dump = json.dumps(request_body, ensure_ascii=False)
         content_decode = content.decode("utf-8")
 
+        file_name = Utils.get_logger_file_name(request.url)
+
+        logger = Logger(file_name)
+
         if response.status_code == HttpStatusCode.SUCCESS.value:
-            Logger.info(request, request_body_dump, content_decode)
+            logger.info(request, request_body_dump, content_decode)
         else:
-            Logger.error(request, request_body_dump, content_decode)
+            logger.error(request, request_body_dump, content_decode)
 
         new_response = StreamingResponse(
             iter([content]),

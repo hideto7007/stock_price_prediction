@@ -3,10 +3,12 @@ from typing import Any
 from jose import ExpiredSignatureError
 from api.schemas.response import Content
 from fastapi import FastAPI, Request, HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from common.logger import Logger
 from const.const import HttpStatusCode
+from utils.utils import Utils
 
 
 class BaseHttpException(HTTPException):
@@ -35,6 +37,10 @@ class TokenRequiredException(Exception):
     pass
 
 
+class SqlException(SQLAlchemyError):
+    pass
+
+
 class HttpExceptionHandler(BaseException):
 
     @staticmethod
@@ -52,6 +58,7 @@ class HttpExceptionHandler(BaseException):
             Exception: HttpExceptionHandler.exception_handler,
             TypeError: HttpExceptionHandler.type_error_handler,
             KeyError: HttpExceptionHandler.key_error_handler,
+            SqlException: HttpExceptionHandler.sql_error_handler,
             ConflictException: HttpExceptionHandler.conflict_error_handler,
             NotFoundException: HttpExceptionHandler.not_found_error_handler,
             AttributeError: HttpExceptionHandler.attribute_error_handler,
@@ -72,7 +79,8 @@ class HttpExceptionHandler(BaseException):
         戻り値:
             JSONResponse: カスタムエラーレスポンス
         """
-        Logger.error(req, {}, exc)
+        file_name = Utils.get_logger_file_name(req.url)
+        Logger(file_name).error(req, {}, exc)
         if isinstance(exc, HTTPException):
             return await HttpExceptionHandler.server_error_handler(req, exc)
         if isinstance(exc, RequestValidationError):
@@ -81,6 +89,8 @@ class HttpExceptionHandler(BaseException):
             return await HttpExceptionHandler.type_error_handler(req, exc)
         if isinstance(exc, KeyError):
             return await HttpExceptionHandler.key_error_handler(req, exc)
+        if isinstance(exc, SqlException):
+            return await HttpExceptionHandler.sql_error_handler(req, exc)
         if isinstance(exc, ConflictException):
             return await HttpExceptionHandler.conflict_error_handler(req, exc)
         if isinstance(exc, NotFoundException):
@@ -180,6 +190,29 @@ class HttpExceptionHandler(BaseException):
         )
         return JSONResponse(
             status_code=HttpStatusCode.BADREQUEST.value,
+            content=context.model_dump(),
+        )
+
+    @staticmethod
+    async def sql_error_handler(
+        req: Request,
+        e: SqlException
+    ) -> JSONResponse:
+        """
+        SqlException のカスタムエラーハンドリング
+
+        引数:
+            request (Request): 受け取ったリクエスト
+            exc (SqlException): 発生した 例外
+
+        戻り値:
+            JSONResponse: カスタムエラーレスポンス
+        """
+        context = Content[str](
+            result=str(e)
+        )
+        return JSONResponse(
+            status_code=HttpStatusCode.SERVER_ERROR.value,
             content=context.model_dump(),
         )
 

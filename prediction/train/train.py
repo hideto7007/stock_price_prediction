@@ -14,6 +14,7 @@ from prediction.model.model import LSTM
 from prediction.dataset.dataset import TimeSeriesDataset
 from const.const import (
     DFConst,
+    LoggerConst,
     TrainConst,
     DataSetConst as DSC
 )
@@ -57,6 +58,7 @@ class PredictionTrain:
         self.user_id = user_id
         self.brand_code = self.brand_info[self.brand_name]
         self.model_path = f'./save/{self.user_id}/'
+        self.logger = Logger(LoggerConst.MAIN_FILE_NAME.value)
         self.device = torch.device(
             TrainConst.CUDA.value
             if torch.cuda.is_available()
@@ -119,8 +121,8 @@ class PredictionTrain:
         ma = get_data[DSC.MA.value].to_numpy().reshape(-1, 1)
         scaler = StandardScaler()
         ma_std = scaler.fit_transform(ma)
-        Logger.info(self.req, {}, "ma: {}".format(ma))
-        Logger.info(self.req, {}, "ma_std: {}".format(ma_std))
+        self.logger.info(self.req, {}, "ma: {}".format(ma))
+        self.logger.info(self.req, {}, "ma_std: {}".format(ma_std))
 
         return ma_std, scaler
 
@@ -223,8 +225,8 @@ class PredictionTrain:
         # ndarrayに変換
         data = np.array(data)
         label = np.array(label)
-        Logger.info(self.req, {}, "data size: {}".format(data.shape))
-        Logger.info(self.req, {}, "label size: {}".format(label.shape))
+        self.logger.info(self.req, {}, "data size: {}".format(data.shape))
+        self.logger.info(self.req, {}, "label size: {}".format(label.shape))
 
         return data, label
 
@@ -245,7 +247,7 @@ class PredictionTrain:
                 - train_loss_list (List[float]): エポックごとの訓練損失
                 - val_loss_list (List[float]): エポックごとの検証損失
         """
-        Logger.info(self.req, {}, "learning start")
+        self.logger.info(self.req, {}, "learning start")
         model = LSTM().to(self.device)
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters())
@@ -301,14 +303,14 @@ class PredictionTrain:
                 best_epoch = epoch + 1
                 self.model_save(model)
 
-            Logger.info(
+            self.logger.info(
                 self.req,
                 {},
                 f'Epoch: {epoch + 1} ({(((epoch + 1) / epochs) * 100):.0f}%)'
                 f'Train_Loss: {batch_train_loss:.2E} Val_Loss: {batch_val_loss:.2E}'  # noqa
             )
 
-        Logger.info(
+        self.logger.info(
             self.req,
             {},
             f'Best Epoch: {best_epoch} Best validation loss: {best_val_loss}'
@@ -332,7 +334,7 @@ class PredictionTrain:
             f"brand_code_{self.brand_code}_"
             f"seq_len_{DSC.SEQ_LENGTH.value}.pth"
         )
-        Logger.info(
+        self.logger.info(
             self.req,
             {}, "model save"
         )
@@ -368,7 +370,7 @@ class PredictionTrain:
             # 学習
             train_loss_list, val_loss_list = self.train(
                 train_loader, val_loader)
-            Logger.info(
+            self.logger.info(
                 self.req,
                 {},
                 "train finish!!"

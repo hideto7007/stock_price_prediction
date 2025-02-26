@@ -13,12 +13,14 @@ from torch.utils.data import DataLoader
 
 from prediction.model.model import LSTM
 from prediction.dataset.dataset import TimeSeriesDataset
-from const.const import DFConst, DataSetConst, LSTMConst, FormatConst
+from const.const import (
+    DFConst, DataSetConst,
+    LSTMConst, FormatConst,
+    LoggerConst
+)
 from prediction.train.train import PredictionTrain
 from common.common import StockPriceData
 from common.logger import Logger
-
-logger = Logger()
 
 
 class PredictionTest(PredictionTrain):
@@ -41,6 +43,7 @@ class PredictionTest(PredictionTrain):
             PredictionTrain クラスのコンストラクタ継承
         """
         super().__init__(req, brand_name, brand_info, user_id)
+        self.logger = Logger(LoggerConst.MAIN_FILE_NAME.value)
 
     def get_model_path(self) -> None:
         """
@@ -84,7 +87,7 @@ class PredictionTest(PredictionTrain):
                 - pred_ma (List[float]): 予測された移動平均値
                 - true_ma (List[float]): 実際の移動平均値（正解ラベル）
         """
-        Logger.info(self.req, {}, "test learning start")
+        self.logger.info(self.req, {}, "test learning start")
         model.eval()
         with torch.no_grad():
             # 初期化
@@ -97,7 +100,7 @@ class PredictionTest(PredictionTrain):
                 pred_ma.append(y_pred.view(-1).tolist())
                 true_ma.append(label.view(-1).tolist())
 
-        Logger.info(self.req, {}, "test learning end")
+        self.logger.info(self.req, {}, "test learning end")
         return pred_ma, true_ma
 
     def predict_future(
@@ -119,7 +122,7 @@ class PredictionTest(PredictionTrain):
         戻り値:
             np.ndarray: 予測された株価（スケール変換後）
         """
-        Logger.info(self.req, {}, "predict future start")
+        self.logger.info(self.req, {}, "predict future start")
         model.eval()
         future_predictions = []
 
@@ -151,7 +154,7 @@ class PredictionTest(PredictionTrain):
         predicted_prices = scaler.inverse_transform(
             np.array(future_predictions).reshape(-1, 1))
 
-        Logger.info(self.req, {}, "predict future end")
+        self.logger.info(self.req, {}, "predict future end")
         return predicted_prices
 
     def get_plot_data(
@@ -206,7 +209,7 @@ class PredictionTest(PredictionTrain):
         true_ma = scaler.inverse_transform(true_ma)
 
         mae = mean_absolute_error(true_ma, pred_ma)
-        Logger.info(self.req, {}, "MAE: {:.3f}".format(mae))
+        self.logger.info(self.req, {}, "MAE: {:.3f}".format(mae))
 
         return pred_ma, true_ma
 
@@ -305,7 +308,7 @@ class PredictionTest(PredictionTrain):
                  linestyle='--', label='feature_prediction')
         plt.legend()  # 凡例
         plt.xticks(rotation=30)
-        Logger.info(self.req, {}, "save plot")
+        self.logger.info(self.req, {}, "save plot")
         plt.savefig("./ping/feature_predicted.png")
         plt.show()
 
@@ -327,7 +330,7 @@ class PredictionTest(PredictionTrain):
         try:
             # モデルのロード
             self.get_model_path()
-            Logger.info(
+            self.logger.info(
                 self.req,
                 {},
                 f"Loading model from path: {self.model_path}"

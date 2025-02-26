@@ -19,15 +19,14 @@ class ISOTimeFormatter(logging.Formatter):
 
 class LoggerInitialize:
     _instance = None
-    __file_name = './logger.log'
 
-    def __new__(cls):
+    def __new__(cls, file_name):
         if cls._instance is None:
             cls._instance = super(LoggerInitialize, cls).__new__(cls)
-            cls._instance._initialize()
+            cls._instance._initialize(file_name)
         return cls._instance
 
-    def _initialize(self):
+    def _initialize(self, file_name):
         """ロガーの初期化処理"""
         self.logger = logging.getLogger("app_logger")
         self.logger.setLevel(logging.DEBUG)
@@ -38,11 +37,11 @@ class LoggerInitialize:
             self.logger.handlers.clear()
 
         # ログファイル存在チェック
-        if not os.path.isfile(LoggerInitialize.__file_name):
-            with open(LoggerInitialize.__file_name, "w"):
+        if not os.path.isfile(file_name):
+            with open(file_name, "w"):
                 pass
         file_handler = logging.FileHandler(
-            LoggerInitialize.__file_name, mode='a', encoding='utf-8')
+            file_name, mode='a', encoding='utf-8')
         file_handler.setLevel(logging.DEBUG)
         fmt = ISOTimeFormatter(
             '%(asctime)s - %(levelname)s - %(message)s',
@@ -57,15 +56,18 @@ class LoggerInitialize:
 
 class Logger:
     """ロギングヘルパークラス"""
-    @staticmethod
+
+    def __init__(self, file_name):
+        self.file_name = file_name
+        self.logger = LoggerInitialize(file_name).get_logger()
+
     def error(
+        self,
         req: Request,
         request_body: Any | str,
         result: Any
     ):
         """ERROR レベルのログを出力"""
-        logger = LoggerInitialize().get_logger()
-
         error_traceback = traceback.format_exc()
 
         log_data = {
@@ -85,16 +87,15 @@ class Logger:
             log_data["traceback"] = error_traceback
             print(error_traceback)
 
-        logger.error(json.dumps(log_data, ensure_ascii=False))
+        self.logger.error(json.dumps(log_data, ensure_ascii=False))
 
-    @staticmethod
     def info(
+        self,
         req: Request,
         request_body: Any | str,
         result: Any
     ):
         """INFO レベルのログを出力"""
-        logger = LoggerInitialize().get_logger()
 
         log_data = {
             "request_id": req.state.request_id,
@@ -109,16 +110,15 @@ class Logger:
             "result": result
         }
 
-        logger.info(json.dumps(log_data, ensure_ascii=False))
+        self.logger.info(json.dumps(log_data, ensure_ascii=False))
 
-    @staticmethod
     def debug(
+        self,
         req: Request,
         request_body: Any | str,
         result: Any
     ):
         """DEBUG レベルのログを出力"""
-        logger = LoggerInitialize().get_logger()
 
         log_data = {
             "request_id": req.state.request_id,
@@ -133,4 +133,4 @@ class Logger:
             "result": result
         }
 
-        logger.debug(json.dumps(log_data, ensure_ascii=False))
+        self.logger.debug(json.dumps(log_data, ensure_ascii=False))
