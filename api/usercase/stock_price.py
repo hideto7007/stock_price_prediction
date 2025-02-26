@@ -3,7 +3,9 @@ from fastapi import Request
 from sqlalchemy.orm import Session
 import re
 
-from api.common.exceptions import ConflictException, NotFoundException
+from api.common.exceptions import (
+    ConflictException, NotFoundException, SqlException
+)
 from prediction.train.train import PredictionTrain
 from prediction.test.test import PredictionTest
 from api.models.models import BrandInfoModel, BrandModel, PredictionResultModel
@@ -259,13 +261,14 @@ class StockPriceService:
         戻り値:
             None
         """
-        if flag:
-            self.db.add(db_data)
+        try:
+            if flag:
+                self.db.add(db_data)
             self.db.commit()
             self.db.refresh(db_data)
-        else:
-            self.db.commit()
-            self.db.refresh(db_data)
+        except SqlException as e:
+            self.db.rollback()
+            raise e
 
     def _delete(
         self,

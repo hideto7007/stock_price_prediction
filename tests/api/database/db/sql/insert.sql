@@ -63,6 +63,7 @@ INSERT INTO brand (
     ('スズキ', 7269, datetime('now', 'localtime', '+9 hours'), 'MASTER', datetime('now', 'localtime', '+9 hours'), 'MASTER', 1);
 
 
-INSERT INTO user (user_name, user_email, user_password, create_by, update_by)
+INSERT INTO user (user_name, user_email, user_password, create_by, update_by, is_valid)
 VALUES
-    ('山田 太郎', 'taro.yamada@example.com', 'hashed_password_123', 'admin', 'admin');
+    ('テスト', 'test@example.com', 'hashed_password_123', 'admin', 'admin', 1),
+    ('テスト1', 'test1@example.com', 'hashed_password_456', 'admin', 'admin', 0);

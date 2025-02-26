@@ -1,10 +1,13 @@
 import datetime
 from typing import Any, cast
+from starlette.datastructures import URL
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 import pytz
 from sqlalchemy import Column
+
+from const.const import LoggerConst
 
 
 class Utils:
@@ -72,6 +75,25 @@ class Utils:
     @staticmethod
     def datetime(val: Column[datetime.datetime]) -> datetime.datetime:
         return cast(datetime.datetime, val)
+
+    @staticmethod
+    def get_logger_file_name(url: URL) -> Any:
+        str_url = str(url).split("/")
+        domain = str_url[2]
+        service_name = str_url[4]
+
+        # 単体テスト時はテスト用のlogファイルに記載
+        if domain == "testserver":
+            logger_file_name = LoggerConst.TEST_FILE_NAME.value
+        else:
+            if service_name == "login":
+                logger_file_name = LoggerConst.LOGIN_FILE_NAME.value
+            elif service_name == "stock_price":
+                logger_file_name = LoggerConst.STOCK_PRICE_FILE_NAME.value
+            else:
+                logger_file_name = LoggerConst.MAIN_FILE_NAME.value
+
+        return logger_file_name
 
 
 class Swagger:

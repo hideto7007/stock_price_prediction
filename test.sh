@@ -12,9 +12,9 @@ if [ ! -e $TEST_PATH_STR ]; then
     chmod 666 $TEST_PATH
 fi
 
-pipenv run coverage run -m unittest discover
-pipenv run coverage report
-pipenv run coverage html
+coverage run -m unittest discover
+coverage report
+coverage html
 
 if [ -e $TEST_PATH_STR ]; then
     rm -r $TEST_PATH

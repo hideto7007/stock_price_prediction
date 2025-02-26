@@ -1,4 +1,3 @@
-import asyncio
 from typing import List
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
@@ -452,11 +451,11 @@ async def delete_stock_price(
         return await HttpExceptionHandler.main_handler(request, e)
 
 
-@router.get(
-    "/slow",
-    tags=["テスト"]
-)
-async def slow_endpoint():
-    """Timeout検証用のAPI(テストでしか使わない)"""
-    await asyncio.sleep(5)
-    return {"result": "This should timeout"}
+# @router.get(
+#     "/slow",
+#     tags=["テスト"]
+# )
+# async def slow_endpoint():
+#     """Timeout検証用のAPI(テストでしか使わない)"""
+#     await asyncio.sleep(5)
+#     return {"result": "This should timeout"}

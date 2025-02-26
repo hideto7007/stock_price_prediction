@@ -17,7 +17,7 @@ from api.schemas.login import (
     LoginUserModel, UpdateUserRequest, UserIdRequest
 )
 from api.schemas.validation import ValidatonModel
-from api.usercase.login import Login
+from api.usercase.login import LoginService
 from const.const import HttpStatusCode
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, Request
@@ -77,7 +77,7 @@ async def register_user(
                 ).model_dump()
             )
 
-        login = Login()
+        login = LoginService()
         db_user = login.get_user_info(db, user.user_name)
         if db_user:
             return JSONResponse(
@@ -147,7 +147,7 @@ async def login_user(
                 ).model_dump()
             )
 
-        login = Login()
+        login = LoginService()
         user = login.authenticate_user(db, data.user_name, data.user_password)
         if not user:
             content = Content[str](
@@ -237,7 +237,7 @@ async def read_users_me(
                 ).model_dump()
             )
 
-        login = Login()
+        login = LoginService()
         user_name = login.get_valid_user_name(token)
         if user_name is None:
             return JSONResponse(
@@ -312,7 +312,7 @@ async def user_info(
                 ).model_dump()
             )
 
-        login = Login()
+        login = LoginService()
         user = login.get_user_info(db, None, user_id)
         if user is None:
             return JSONResponse(
@@ -378,7 +378,7 @@ async def update_user(
                 ).model_dump()
             )
 
-        login = Login()
+        login = LoginService()
         login.update_user(db, user_id, data)
         return JSONResponse(
             status_code=HttpStatusCode.SUCCESS.value,
@@ -430,7 +430,7 @@ async def delete_user(
                 ).model_dump()
             )
 
-        login = Login()
+        login = LoginService()
         login.delete_user(db, user_id)
         return JSONResponse(
             status_code=HttpStatusCode.SUCCESS.value,

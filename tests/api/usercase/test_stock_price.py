@@ -1,8 +1,10 @@
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-from api.common.exceptions import ConflictException, NotFoundException
-from api.models.models import BrandInfoModel
+from api.common.exceptions import (
+    ConflictException, NotFoundException, SqlException
+)
+from api.models.models import BrandInfoModel, PredictionResultModel
 from api.endpoints.stock_price import StockPriceBase
 from api.schemas.stock_price import (
     CreateBrandInfoRequest, UpdateBrandInfoRequest
@@ -72,7 +74,10 @@ class TestStockPriceBase(TestBase):
         }
 
         # KeyError が発生することを確認
-        with self.assertRaises(KeyError):
+        with self.assertRaisesRegex(
+            KeyError,
+            "住友電気工業"
+        ):
             StockPriceBase.prediction(
                 _request, brand_name, brand_info, brand_code
             )
@@ -105,6 +110,7 @@ class TestStockPriceService(TestBaseAPI):
     def setUp(self):
         """テストごとにデータベースを初期化"""
         super().setUp()
+        self.mock_db = MagicMock()
         self.db.begin()  # トランザクション開始
 
     def tearDown(self):
@@ -349,6 +355,21 @@ class TestStockPriceService(TestBaseAPI):
         self.assertFalse(
             get_brand.create_at == get_brand.update_at
         )
+
+    def test_save_error_01(self):
+        """
+        異常系： 登録・更新時に予期せぬエラーが発生すること
+        """
+        self.mock_db.commit.side_effect = SqlException("予期せぬエラー")
+        with self.assertRaisesRegex(
+            SqlException,
+            "予期せぬエラー"
+        ):
+            StockPriceService(self.mock_db)._save(
+                PredictionResultModel(),
+                False
+            )
+        self.mock_db.rollback.assert_called_once()
 
     def test_brand_info_and_prediction_result_delete_error_01(self):
         """

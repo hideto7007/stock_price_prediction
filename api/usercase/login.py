@@ -5,11 +5,12 @@ from api.common.authentication import Authentication
 from typing import Any, Optional
 from api.common.env import Env
 from api.common.exceptions import (
-    ConflictException, ExpiredSignatureException, NotFoundException
+    ConflictException, ExpiredSignatureException,
+    NotFoundException, SqlException
 )
 from api.models.models import UserModel
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import and_, or_, false
 from jose import jwt
 
 from api.schemas.login import (
@@ -21,9 +22,9 @@ from utils.utils import Utils
 env = Env.get_instance()
 
 
-class Login:
+class LoginService:
     """
-    ログインクラス
+    ログインサービスクラス
     """
 
     @staticmethod
@@ -65,17 +66,19 @@ class Login:
                 user_id (Optional[int]): ユーザーid デフォルト None
 
             戻り値:
-                str: userモデル
+                UserModel | None: userモデル (存在しない場合`None`で返す)
         """
+        filters = []
+        if user_name:
+            filters.append(UserModel.user_name == user_name)
+        if user_id:
+            filters.append(UserModel.user_id == user_id)
 
         return db.query(UserModel).filter(
-            or_(
-                *(filter for filter in [
-                    UserModel.user_name == user_name if user_name else None,
-                    UserModel.user_id == user_id if user_id else None
-                ] if filter is not None),
-            ),
-            UserModel.is_valid == 1
+            and_(
+                or_(*filters) if filters else false(),
+                UserModel.is_valid == 1
+            )
         ).first()
 
     def get_delete_user(
@@ -91,7 +94,7 @@ class Login:
                 user_name (str): ユーザー名
 
             戻り値:
-                str: userモデル
+                UserModel | None: userモデル (存在しない場合`None`で返す)
         """
 
         return db.query(UserModel).filter(
@@ -129,7 +132,7 @@ class Login:
             )
         raise NotFoundException("存在しないパスワードです。")
 
-    def _delete_make_recode(
+    def delete_make_recode(
         self,
         val: str,
     ) -> str:
@@ -143,7 +146,7 @@ class Login:
                 Column[str]: 削除レコード
         """
 
-        return f'{val}_delete'
+        return f'{val}_deleted'
 
     def save_user(
         self,
@@ -163,7 +166,7 @@ class Login:
         # 削除ずみのユーザー存在チェック
         user = self.get_delete_user(
             db,
-            self._delete_make_recode(data.user_name)
+            self.delete_make_recode(data.user_name)
         )
 
         if user:
@@ -214,9 +217,11 @@ class Login:
             db.refresh(db_user)
             return db_user
         except IntegrityError:
-            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
-        finally:
             db.rollback()
+            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
+        except SqlException as e:
+            db.rollback()
+            raise e
 
     def restore_user(
         self,
@@ -248,12 +253,7 @@ class Login:
             db.commit()
             db.refresh(user)
             return user
-        except NotFoundException as e:
-            raise e
-        except IntegrityError:
-            db.rollback()
-            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
-        except Exception as e:
+        except SqlException as e:
             db.rollback()
             raise e
 
@@ -264,7 +264,7 @@ class Login:
         update_data: UpdateUserRequest
     ) -> None:
         """
-            ユーザー情報登録
+            ユーザー情報更新
 
             引数:
                 db (Session): dbインスタンス
@@ -299,12 +299,7 @@ class Login:
             db.commit()
             db.refresh(user)
             return None
-        except NotFoundException as e:
-            raise e
-        except IntegrityError:
-            db.rollback()
-            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
-        except Exception as e:
+        except SqlException as e:
             db.rollback()
             raise e
 
@@ -314,7 +309,7 @@ class Login:
         user_id: int,
     ) -> None:
         """
-            ユーザー情報登録
+            ユーザー情報論理削除
 
             引数:
                 db (Session): dbインスタンス
@@ -328,8 +323,8 @@ class Login:
             if user is None:
                 raise NotFoundException("存在しないユーザーです。")
 
-            user_name = self._delete_make_recode(str(user.user_name))
-            user_email = self._delete_make_recode(
+            user_name = self.delete_make_recode(str(user.user_name))
+            user_email = self.delete_make_recode(
                 str(user.user_email))
 
             user.user_name = Utils.column_str(user_name)
@@ -341,12 +336,7 @@ class Login:
             db.commit()
             db.refresh(user)
             return None
-        except NotFoundException as e:
-            raise e
-        except IntegrityError:
-            db.rollback()
-            raise ConflictException("ユーザー名かメールアドレスが既に存在しています。")
-        except Exception as e:
+        except SqlException as e:
             db.rollback()
             raise e
 
@@ -365,7 +355,7 @@ class Login:
                 user_password (str): ユーザーパスワード
 
             戻り値:
-                UserCreate: ユーザーモデル
+                Optional[UserModel] | None: ユーザーモデル (存在しない場合は`None`で返す)
         """
         user = self.get_user_info(db, user_name)
         if not user:
@@ -387,11 +377,10 @@ class Login:
 
             引数:
                 data (dict): ユーザー名が含まれた辞書
-                user_name (str): ユーザー名
                 expires_delta (Optional[timedelta]): 有効期限
 
             戻り値:
-                UserCreate: ユーザーモデル
+                str: 認証トークン
         """
         to_encode = data.copy()
         if expires_delta:
@@ -416,7 +405,7 @@ class Login:
             引数:
                 token (str): トークン
             戻り値:
-                UserCreate: ユーザーモデル
+                str | None: ユーザー名 (存在しない場合は、`None`で返す)
         """
         payload = self.get_payload(token)
         if payload is None:
