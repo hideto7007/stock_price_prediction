@@ -534,7 +534,7 @@ class TestCreateStockPrice(TestEndpointBase):
     @patch.object(StockPriceService, "_create")
     def test_create_stock_price_success_01(self, _create):
         """
-        異常系: 登録成功
+        正常系: 登録成功
         """
         # データセット
         data = {
@@ -681,7 +681,7 @@ class TestUpdateStockPrice(TestEndpointBase):
     @patch.object(StockPriceService, "_update")
     def test_upadte_stock_price_success_01(self, _update):
         """
-        異常系: 更新成功
+        正常系: 更新成功
         """
         # データセット
         data = {
@@ -829,7 +829,7 @@ class TestDeleteStockPrice(TestEndpointBase):
         _biaprd
     ):
         """
-        異常系: 削除成功
+        正常系: 削除成功
         """
         _biaprd.return_value = None
         # API実行

@@ -371,6 +371,20 @@ class TestStockPriceService(TestBaseAPI):
             )
         self.mock_db.rollback.assert_called_once()
 
+    def test_delete_error_01(self):
+        """
+        異常系： 削除時に予期せぬエラーが発生すること
+        """
+        self.mock_db.commit.side_effect = SqlException("予期せぬエラー")
+        with self.assertRaisesRegex(
+            SqlException,
+            "予期せぬエラー"
+        ):
+            StockPriceService(self.mock_db)._delete(
+                PredictionResultModel()
+            )
+        self.mock_db.rollback.assert_called_once()
+
     def test_brand_info_and_prediction_result_delete_error_01(self):
         """
         異常系： 削除対象の銘柄情報が存在していないこと

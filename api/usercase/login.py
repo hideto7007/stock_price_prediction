@@ -257,7 +257,7 @@ class LoginService:
             db.rollback()
             raise e
 
-    def update_user(
+    def update(
         self,
         db: Session,
         user_id: int,
@@ -303,7 +303,7 @@ class LoginService:
             db.rollback()
             raise e
 
-    def delete_user(
+    def delete(
         self,
         db: Session,
         user_id: int,

@@ -2,7 +2,7 @@
 
 from typing import List, Literal
 from api.schemas.login import (
-    ReadUsersMeRequest, CreateUserRequest, LoginUserRequest, UserIdRequest
+    CreateUserRequest, LoginUserRequest, UserIdRequest
 )
 from api.schemas.validation import ValidatonModel
 from api.validation.validation import AbstractValidation, ValidationError
@@ -62,26 +62,26 @@ class LoginUserValidation(AbstractValidation[LoginUserRequest]):
             LFC.USER_PASSWORD.value
         )
 
+# TODO:未使用
+# class ReadUsersMeValidation(AbstractValidation[ReadUsersMeRequest]):
+#     """ユーザー情報取得バリデーション"""
 
-class ReadUsersMeValidation(AbstractValidation[ReadUsersMeRequest]):
-    """ユーザー情報取得バリデーション"""
+#     ##############################
+#     # プライベートメソッド（内部処理）#
+#     ##############################
+#     def result(self) -> List[ValidatonModel]:
+#         return ValidationError.valid_result([
+#             self.access_token(),
+#         ])
 
-    ##############################
-    # プライベートメソッド（内部処理）#
-    ##############################
-    def result(self) -> List[ValidatonModel]:
-        return ValidationError.valid_result([
-            self.access_token(),
-        ])
-
-    #######################
-    # バリデーション呼び出し #
-    #######################
-    def access_token(self) -> ValidatonModel | Literal[True]:
-        return self.validate_str(
-            self.data.access_token,
-            LFC.ACCESS_TOKEN.value
-        )
+#     #######################
+#     # バリデーション呼び出し #
+#     #######################
+#     def access_token(self) -> ValidatonModel | Literal[True]:
+#         return self.validate_str(
+#             self.data.access_token,
+#             LFC.ACCESS_TOKEN.value
+#         )
 
 
 class UserIdValidation(AbstractValidation[UserIdRequest]):

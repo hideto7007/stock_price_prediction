@@ -283,8 +283,12 @@ class StockPriceService:
         戻り値:
             None
         """
-        self.db.delete(db_data)
-        self.db.commit()
+        try:
+            self.db.delete(db_data)
+            self.db.commit()
+        except SqlException as e:
+            self.db.rollback()
+            raise e
 
     def _exist_brand_info_check(
         self,

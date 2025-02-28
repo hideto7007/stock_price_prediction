@@ -42,9 +42,9 @@ class LoginUserRequest(BaseModel):
     user_name: str
     user_password: str
 
-
-class ReadUsersMeRequest(BaseModel):
-    access_token: str
+# TODO:未使用
+# class ReadUsersMeRequest(BaseModel):
+#     access_token: str
 
 
 class UserIdRequest(BaseModel):

@@ -261,11 +261,11 @@ class TestLoginService(TestBaseAPI):
             Utils.str(create_user.user_name),
         )
 
-        delete_user = login.delete_user(
+        delete = login.delete(
             self.db,
             Utils.int(get_user_info.user_id)
         )
-        self.assertIsNone(delete_user)
+        self.assertIsNone(delete)
 
         # 論理削除済みデータが存在するか確認
         get_delete_user = login.get_delete_user(
@@ -276,15 +276,15 @@ class TestLoginService(TestBaseAPI):
         self.assertEqual(get_delete_user.is_valid, 0)
 
         # 削除済みデータ復活検証
-        update_user = login.save_user(
+        update = login.save_user(
             self.db,
             data
         )
-        self.assertEqual(update_user.user_name, "test2")
-        self.assertEqual(update_user.is_valid, 1)
+        self.assertEqual(update.user_name, "test2")
+        self.assertEqual(update.is_valid, 1)
 
         # 最後に登録したデータ削除
-        self._delete_user_by_id(Utils.int(update_user.user_id))
+        self._delete_user_by_id(Utils.int(update.user_id))
 
     def test_create_user_error_01(self):
         """
@@ -367,7 +367,7 @@ class TestLoginService(TestBaseAPI):
             NotFoundException,
             "存在しないユーザーです。"
         ):
-            login.update_user(
+            login.update(
                 self.db,
                 2,
                 UpdateUserRequest()
@@ -395,7 +395,7 @@ class TestLoginService(TestBaseAPI):
             SqlException,
             "予期せぬエラー"
         ):
-            login.update_user(
+            login.update(
                 self.mock_db,
                 1,
                 data
@@ -408,7 +408,7 @@ class TestLoginService(TestBaseAPI):
         _user_password_update
     ):
         """
-        異常系： ユーザー情報更新
+        正常系： ユーザー情報更新
         """
         login = LoginService()
         # データセット
@@ -448,12 +448,12 @@ class TestLoginService(TestBaseAPI):
             # before を deepcopy してオブジェクトの状態を固定
             before = copy.deepcopy(login.get_user_info(self.db, None, user_id))
 
-            update_user = login.update_user(
+            update = login.update(
                 self.db,
                 user_id,
                 data
             )
-            self.assertIsNone(update_user)
+            self.assertIsNone(update)
 
             # 更新データ取得し確認
             after = login.get_user_info(self.db, None, user_id)
@@ -483,7 +483,7 @@ class TestLoginService(TestBaseAPI):
             NotFoundException,
             "存在しないユーザーです。"
         ):
-            login.delete_user(
+            login.delete(
                 self.db,
                 999
             )
@@ -498,7 +498,7 @@ class TestLoginService(TestBaseAPI):
             SqlException,
             "予期せぬエラー"
         ):
-            login.delete_user(
+            login.delete(
                 self.mock_db,
                 1
             )

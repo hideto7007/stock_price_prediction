@@ -134,6 +134,33 @@ class TestBaseAPI(TestBase):
         """
         return f'/api/login/{endpoint}'
 
+    def get(
+        self,
+        url: str,
+        params: Optional[dict] = None,
+        headers: dict = {"Content-Type": "application/json"}
+    ) -> Response:
+        """
+            GETリクエストを送信するクライアントメソッド
+
+            - API に対して GET リクエストを送信し、レスポンスを取得する
+            - データの取得やリソースの作成に使用
+
+            引数:
+                url (str): リクエストを送信するエンドポイントのURL
+                params (Optional[dict]): クエリーパラメータ デフォルトは None
+                headers (dict, optional): リクエストヘッダ
+                （デフォルト: "Content-Type: application/json"）
+
+            戻り値:
+                Response: FastAPIのレスポンスオブジェクト
+        """
+        return self.client.get(
+            url,
+            params=params,
+            headers=headers
+        )
+
     def post(
         self,
         url: str,
@@ -171,7 +198,7 @@ class TestBaseAPI(TestBase):
             PUTリクエストを送信するクライアントメソッド
 
             - API に対して PUT リクエストを送信し、レスポンスを取得する
-            - 新規データの登録やリソースの作成に使用
+            - データの更新やリソースの作成に使用
 
             引数:
                 url (str): リクエストを送信するエンドポイントのURL
@@ -198,7 +225,7 @@ class TestBaseAPI(TestBase):
             DELETEリクエストを送信するクライアントメソッド
 
             - API に対して DELETE リクエストを送信し、レスポンスを取得する
-            - 新規データの登録やリソースの作成に使用
+            - データの削除やリソースの作成に使用
 
             引数:
                 url (str): リクエストを送信するエンドポイントのURL

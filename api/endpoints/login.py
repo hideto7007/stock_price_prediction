@@ -9,11 +9,11 @@ from api.common.exceptions import (
 )
 from api.common.response import ValidationResponse
 from api.validation.login import (
-    LoginUserValidation, ReadUsersMeValidation,
+    LoginUserValidation,
     RegisterUserValidation, UserIdValidation
 )
 from api.schemas.login import (
-    ReadUsersMeRequest, CreateUserRequest,
+    CreateUserRequest,
     LoginUserModel, UpdateUserRequest, UserIdRequest
 )
 from api.schemas.validation import ValidatonModel
@@ -224,18 +224,8 @@ async def read_users_me(
     """
     try:
         # バリデーションチェック
-        valid = ReadUsersMeValidation(
-            ReadUsersMeRequest(
-                access_token=token
-            )
-        )
-
-        if len(valid) > 0:
-            return ValidationResponse(
-                content=Content[list[ValidatonModel]](
-                    result=valid
-                ).model_dump()
-            )
+        # TODO:パラメータにトークンが含まれてないと404になるので
+        # バリデーションエラーは発生しない
 
         login = LoginService()
         user_name = login.get_valid_user_name(token)
@@ -364,7 +354,7 @@ async def update_user(
     try:
         # バリデーションチェック
         # リクエストボディ内のデータは更新対象毎に
-        # 異なるのでここではバリデーションチェックを行わない
+        # 異なるのでここではuser_idのみバリデーションチェックを行う
         valid = UserIdValidation(
             UserIdRequest(
                 user_id=user_id
@@ -379,7 +369,7 @@ async def update_user(
             )
 
         login = LoginService()
-        login.update_user(db, user_id, data)
+        login.update(db, user_id, data)
         return JSONResponse(
             status_code=HttpStatusCode.SUCCESS.value,
             content=Content[str](
@@ -431,7 +421,7 @@ async def delete_user(
             )
 
         login = LoginService()
-        login.delete_user(db, user_id)
+        login.delete(db, user_id)
         return JSONResponse(
             status_code=HttpStatusCode.SUCCESS.value,
             content=Content[str](
