@@ -5,8 +5,7 @@ from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from starlette.types import ASGIApp
-from fastapi.responses import JSONResponse, StreamingResponse
-import asyncio
+from fastapi.responses import StreamingResponse
 from typing import Any, Coroutine
 
 from api.common.exceptions import (
@@ -17,7 +16,6 @@ from api.common.exceptions import (
 from api.usercase.login import LoginService
 from common.logger import Logger
 from const.const import HttpStatusCode
-from api.schemas.response import Content
 from utils.utils import Utils
 
 
@@ -67,26 +65,29 @@ class OAuth2Middleware(BaseHTTPMiddleware):
         oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
         return oauth2_scheme(request)
 
+# TODO:未使用
+# class TimeoutMiddleware(BaseHTTPMiddleware):
+#     def __init__(self, app: ASGIApp, timeout: int = 30):
+#         super().__init__(app)
+#         self.timeout = timeout
 
-class TimeoutMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app: ASGIApp, timeout: int = 30):
-        super().__init__(app)
-        self.timeout = timeout
-
-    async def dispatch(self, request: Request, call_next):
-        timeout = self.timeout
-        # 特定のパスでタイムアウトを変更
-        if (request.url.path.startswith("/create") or
-                request.url.path.startswith("/update")):
-            timeout = 1800  # 30分
-        try:
-            return await asyncio.wait_for(call_next(request), timeout=timeout)
-        except asyncio.TimeoutError:
-            error_msg = Content[str](result="read time out.")
-            return JSONResponse(
-                status_code=HttpStatusCode.TIMEOUT.value,
-                content=error_msg.model_dump()
-            )
+#     async def dispatch(self, request: Request, call_next):
+#         timeout = self.timeout
+#         # 特定のパスでタイムアウトを変更
+#         if (request.url.path.startswith("/create") or
+#                 request.url.path.startswith("/update")):
+#             timeout = 1800  # 30分
+#         try:
+#             return await asyncio.wait_for(
+#                 call_next(request),
+#                 timeout=timeout
+#             )
+#         except asyncio.TimeoutError:
+#             error_msg = Content[str](result="read time out.")
+#             return JSONResponse(
+#                 status_code=HttpStatusCode.TIMEOUT.value,
+#                 content=error_msg.model_dump()
+#             )
 
 
 class RequestWritingLoggerMiddleware(BaseHTTPMiddleware):

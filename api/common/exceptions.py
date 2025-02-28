@@ -166,7 +166,7 @@ class HttpExceptionHandler(BaseException):
             result=str(e)
         )
         return JSONResponse(
-            status_code=HttpStatusCode.BADREQUEST.value,
+            status_code=HttpStatusCode.SERVER_ERROR.value,
             content=context.model_dump(),
         )
 
@@ -189,7 +189,7 @@ class HttpExceptionHandler(BaseException):
             result=str(e)
         )
         return JSONResponse(
-            status_code=HttpStatusCode.BADREQUEST.value,
+            status_code=HttpStatusCode.SERVER_ERROR.value,
             content=context.model_dump(),
         )
 
@@ -281,7 +281,7 @@ class HttpExceptionHandler(BaseException):
             result=str(e)
         )
         return JSONResponse(
-            status_code=HttpStatusCode.BADREQUEST.value,
+            status_code=HttpStatusCode.SERVER_ERROR.value,
             content=context.model_dump(),
         )
 
