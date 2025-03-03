@@ -1,3 +1,4 @@
+import datetime
 from typing import Literal
 from pydantic import BaseModel, Field
 
@@ -15,3 +16,13 @@ class TestRequest(BaseModel):
     headers: dict = Field(default_factory=dict, description="リクエストヘッダー")
     params: dict = Field(default_factory=dict, description="リクエストパラメータ")
     url: str = Field(default="http://test", description="リクエストURL")
+
+
+class TestValidationNodel(BaseModel):
+    v1: int
+    v2: float
+    v3: str
+    v4: datetime.datetime
+    v5: datetime.date
+    v6: datetime.time
+    v7: bool

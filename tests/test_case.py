@@ -14,43 +14,43 @@ class TestBase(unittest.TestCase):
     unittestを継承したテストクラス
     """
 
-    def params_error_check(
-        self,
-        code: str,
-        msg: str,
-        params_list: List[str],
-        input_data_list: List[str],
-        res_data: dict
-    ) -> None:
-        """
-            パラメータのエラーチェック
+    # def params_error_check(
+    #     self,
+    #     code: str,
+    #     msg: str,
+    #     params_list: List[str],
+    #     input_data_list: List[str],
+    #     res_data: dict
+    # ) -> None:
+    #     """
+    #         パラメータのエラーチェック
 
-            引数:
-                code (str): Httpステータスコード
-                msg (str): エラーメッセージ
-                params_list (List[str]): クエリーパラメータのリスト
-                input_data_list (List[str]): リクエストデータのリスト
-                res_data (dict): レスポンスデータ
-            戻り値:
-                なし、アサートでテスト検証
+    #         引数:
+    #             code (str): Httpステータスコード
+    #             msg (str): エラーメッセージ
+    #             params_list (List[str]): クエリーパラメータのリスト
+    #             input_data_list (List[str]): リクエストデータのリスト
+    #             res_data (dict): レスポンスデータ
+    #         戻り値:
+    #             なし、アサートでテスト検証
 
-            例: res = [
-                {
-                    "code": ErrorCode.INT_VAILD.value,
-                    "detail": f"{loc[1]} パラメータは整数値のみです。",
-                    "input": input_msg
-                }
-            ]
-        """
-        self.assertEqual(len(res_data), len(params_list))
-        for res, param, input_data in zip(
-            res_data,
-            params_list,
-            input_data_list
-        ):
-            self.assertEqual(res.get("code"), code)
-            self.assertEqual(res.get("detail"), f"{param} {msg}")
-            self.assertEqual(res.get("input"), input_data)
+    #         例: res = [
+    #             {
+    #                 "code": ErrorCode.INT_VAILD.value,
+    #                 "detail": f"{loc[1]} パラメータは整数値のみです。",
+    #                 "input": input_msg
+    #             }
+    #         ]
+    #     """
+    #     self.assertEqual(len(res_data), len(params_list))
+    #     for res, param, input_data in zip(
+    #         res_data,
+    #         params_list,
+    #         input_data_list
+    #     ):
+    #         self.assertEqual(res.get("code"), code)
+    #         self.assertEqual(res.get("detail"), f"{param} {msg}")
+    #         self.assertEqual(res.get("input"), input_data)
 
     def response_body_check(
         self,
