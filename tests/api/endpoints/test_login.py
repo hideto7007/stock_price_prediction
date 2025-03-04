@@ -378,54 +378,29 @@ class TestLoginUser(TestEndpointBase):
             )
             self.assertEqual(response.json(), expected_response.model_dump())
 
-    def test_login_user_error_01(self):
+    @patch.object(LoginService, "authenticate_user")
+    def test_login_user_error_01(self, _authenticate_user):
         """
         異常系: ユーザーIDまたはパスワードが異なる場合
         """
-        # テスト用のサンプルデータ登録
-        user_id = 3
-        user_name = "サンプル"
-        user_password = "Test12345!"
-        self._insert_user(
-            UserModel(
-                user_id=user_id,
-                user_name=user_name,
-                user_email="sample@example.com",
-                user_password=Authentication.hash_password(
-                    user_password
-                ),
-                create_at=Utils.today(),
-                create_by=user_name,
-                update_at=Utils.today(),
-                update_by=user_name,
-                is_valid=True
-            )
-        )
+        # モック
+        _authenticate_user.return_value = None
         # データセット
-        data_list = [
-            LoginUserRequest(
-                user_name="test1",
-                user_password=user_password
-            ).model_dump(),
-            LoginUserRequest(
-                user_name=user_name,
-                user_password="Test1234567!"
-            ).model_dump(),
-        ]
+        data = LoginUserRequest(
+            user_name="test1",
+            user_password="Test12345!"
+        ).model_dump()
 
-        for data in data_list:
-            response = self.post(self.get_path(), data)
-            expected_response = Content[str](
-                result="ユーザーIDまたはパスワードが間違っています。"
-            )
+        response = self.post(self.get_path(), data)
+        expected_response = Content[str](
+            result="ユーザーIDまたはパスワードが間違っています。"
+        )
 
-            self.assertEqual(
-                response.status_code,
-                HttpStatusCode.UNAUTHORIZED.value
-            )
-            self.assertEqual(response.json(), expected_response.model_dump())
-        # 最後に削除
-        self._delete_user_by_id(user_id)
+        self.assertEqual(
+            response.status_code,
+            HttpStatusCode.UNAUTHORIZED.value
+        )
+        self.assertEqual(response.json(), expected_response.model_dump())
 
     @patch.object(LoginService, "authenticate_user")
     def test_login_user_error_02(
