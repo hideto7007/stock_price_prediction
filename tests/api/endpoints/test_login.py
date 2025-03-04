@@ -203,10 +203,13 @@ class TestRegisterUser(TestEndpointBase):
             )
             self.assertEqual(response.json(), expected_response.model_dump())
 
-    def test_register_user_error_01(self):
+    @patch.object(LoginService, "get_user_info")
+    def test_register_user_error_01(self, _get_user_info):
         """
         異常系: 既に登録済みのユーザー
         """
+        # モック
+        _get_user_info.return_value = UserModel()
         # データセット
         data = CreateUserRequest(
             user_name="test",
