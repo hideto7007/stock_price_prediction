@@ -634,10 +634,13 @@ class TestUserInfoMe(TestEndpointBase):
         self.response_body_check(
             response.json(), expected_response.model_dump())
 
-    def test_user_info_error_01(self):
+    @patch.object(LoginService, "get_user_info")
+    def test_user_info_error_01(self, _get_user_info):
         """
-        異常系: 認証情報の有効期限が切れている
+        異常系: 対象のユーザー情報が存在しない
         """
+        # モック
+        _get_user_info.return_value = None
         # API実行
         response = self.get(self.get_path(999999))
 
