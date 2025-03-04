@@ -3,7 +3,7 @@ from typing import Any, Callable, Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from api.common.env import Env
+from common.env import Env
 
 
 class DataBase:

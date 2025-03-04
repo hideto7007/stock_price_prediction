@@ -3,7 +3,7 @@ from typing import Any, Generator
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 
-from api.common.env import Env
+from common.env import Env
 
 env = Env.get_instance()
 

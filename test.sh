@@ -21,4 +21,6 @@ if [ -e $TEST_PATH_STR ]; then
     echo "delete test databse"
 fi
 
+rm -r "./test_logger.log"
+
 echo "test end"

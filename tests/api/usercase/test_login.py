@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from jose import jwt
 
 from api.common.authentication import Authentication
-from api.common.env import Env
+from common.env import Env
 from api.common.exceptions import (
     ConflictException, ExpiredSignatureException,
     NotFoundException, SqlException

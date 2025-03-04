@@ -79,6 +79,8 @@ class Utils:
     @staticmethod
     def get_logger_file_name(url: URL) -> Any:
         str_url = str(url).split("/")
+        if len(str_url) < 5:
+            return LoggerConst.MAIN_FILE_NAME.value
         domain = str_url[2]
         service_name = str_url[4]
 

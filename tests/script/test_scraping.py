@@ -281,8 +281,7 @@ class TestBrandCode(unittest.TestCase):
 
         url = 'http://example.com'
         with self.assertRaises(Exception) as context:
-            bsObj = BrandCode.get_html_info(url)
-            self.assertEqual(bsObj.status_code, HttpStatusCode.NOT_FOUND.value)
+            BrandCode.get_html_info(url)
 
         self.assertEqual(str(context.exception),
                          ErrorMessage.NOT_FOUND_MSG.value)
@@ -301,8 +300,7 @@ class TestBrandCode(unittest.TestCase):
 
         url = 'http://example.com'
         with self.assertRaises(Exception) as context:
-            bsObj = BrandCode.get_html_info(url)
-            self.assertEqual(bsObj.status_code, HttpStatusCode.TIMEOUT.value)
+            BrandCode.get_html_info(url)
 
         self.assertEqual(
             str(context.exception),

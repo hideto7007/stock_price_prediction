@@ -121,6 +121,10 @@ class RequestWritingLoggerMiddleware(BaseHTTPMiddleware):
         else:
             logger.error(request, request_body_dump, content_decode)
 
+        # テスト用
+        if "test_logger" in file_name:
+            logger.debug(request, request_body_dump, content_decode)
+
         new_response = StreamingResponse(
             iter([content]),
             status_code=response.status_code,

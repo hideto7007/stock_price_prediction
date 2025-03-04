@@ -30,11 +30,6 @@ class LoggerInitialize:
         """ロガーの初期化処理"""
         self.logger = logging.getLogger("app_logger")
         self.logger.setLevel(logging.DEBUG)
-        if self.logger.hasHandlers():
-            return
-
-        if self.logger.hasHandlers():
-            self.logger.handlers.clear()
 
         # ログファイル存在チェック
         if not os.path.isfile(file_name):

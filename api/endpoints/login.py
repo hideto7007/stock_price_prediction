@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from fastapi.responses import JSONResponse
 
-from api.common.env import Env
+from common.env import Env
 from api.common.exceptions import (
     HttpExceptionHandler
 )

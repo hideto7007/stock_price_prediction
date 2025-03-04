@@ -16,6 +16,7 @@
     },
     "python.analysis.diagnosticSeverityOverrides": {
         "reportOptionalMemberAccess": false,
+        "reportAttributeAccessIssue": false
     }
   },
 }

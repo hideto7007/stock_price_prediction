@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.exc import IntegrityError
 from api.common.authentication import Authentication
 from typing import Any, Optional
-from api.common.env import Env
+from common.env import Env
 from api.common.exceptions import (
     ConflictException, ExpiredSignatureException,
     NotFoundException, SqlException

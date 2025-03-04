@@ -10,6 +10,82 @@ from api.validation.validation import AbstractValidation, ValidationError
 from tests.test_case import TestBase
 
 
+class TestValidationError(TestBase):
+
+    def _expected_result(self):
+        """
+        期待結果
+        """
+        return [
+            ValidatonModel(
+                field="test1",
+                message="test1必須"
+            ),
+            ValidatonModel(
+                field="test2",
+                message="test2必須"
+            ),
+            ValidatonModel(
+                field="test3",
+                message="test3必須"
+            )
+        ]
+
+    def test_valid_result_success_01(self):
+        """
+        正常系: バリデーション結果01
+        """
+
+        data = [
+            ValidatonModel(
+                field="test1",
+                message="test1必須"
+            ),
+            ValidatonModel(
+                field="test2",
+                message="test2必須"
+            ),
+            True,
+            ValidatonModel(
+                field="test3",
+                message="test3必須"
+            ),
+        ]
+
+        self.assertEqual(
+            ValidationError.valid_result(data),
+            self._expected_result()
+        )
+
+    def test_valid_result_success_02(self):
+        """
+        正常系: バリデーション結果02
+        """
+
+        data = [
+            [
+                ValidatonModel(
+                    field="test1",
+                    message="test1必須"
+                ),
+                ValidatonModel(
+                    field="test2",
+                    message="test2必須"
+                )
+            ],
+            True,
+            ValidatonModel(
+                field="test3",
+                message="test3必須"
+            ),
+        ]
+
+        self.assertEqual(
+            ValidationError.valid_result(data),
+            self._expected_result()
+        )
+
+
 class TestValidation(
     AbstractValidation[TestValidationNodel]
 ):
