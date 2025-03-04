@@ -25,12 +25,13 @@ jobs:
             echo "ALGORITHM=${{ vars.ALGORITHM }}" >> .env && \
             echo "DATABASE_PATH=${{ vars.DATABASE_PATH }}" >> .env && \
             echo "TEST_CREATE_PATH=${{ vars.TEST_CREATE_PATH }}" >> .env && \
+            echo "TEST_INSERT_PATH=${{ vars.TEST_INSERT_PATH }}" >> .env && \
             echo "TEST_DELETE_PATH=${{ vars.TEST_DELETE_PATH }}" >> .env && \
             echo "TEST_DATABASE_PATH=${{ vars.TEST_DATABASE_PATH }}" >> .env && \
             echo '.env content:' && cat .env && \
             pip install pipenv && \
-            pipenv install -r requirements.txt && \
+            pip install -r requirements.txt && \
             touch ./tests/api/database/db/test_database.db && \
             chmod 666 ./tests/api/database/db/test_database.db && \
-            pipenv run coverage run -m unittest discover && \
-            pipenv run coverage report"
+            coverage run -m unittest discover && \
+            coverage report"

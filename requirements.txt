@@ -19,3 +19,4 @@ flake8
 jpholiday
 bcrypt==3.2.2
 deepdiff
+setuptools
