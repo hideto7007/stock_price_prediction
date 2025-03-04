@@ -86,10 +86,12 @@ class TestDataBase:
         cls.execute_sql_file(cls().create_path)
         cls.execute_sql_file(cls().insert_path)
 
-    @classmethod
-    def drop_db(cls):
-        """
-            テスト用のテーブル削除
-            - テストクラスのユニットテスト終了時に実行される
-        """
-        cls.execute_sql_file(cls().delete_path)
+    # TODO:CI実行時になぜか先に実行されてテーブルが削除されてしまう
+    # そもそも、テスト終了時にデータベースごと削除するので必要ない気がする
+    # @classmethod
+    # def drop_db(cls):
+    #     """
+    #         テスト用のテーブル削除
+    #         - テストクラスのユニットテスト終了時に実行される
+    #     """
+    #     cls.execute_sql_file(cls().delete_path)
