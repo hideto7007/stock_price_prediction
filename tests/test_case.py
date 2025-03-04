@@ -94,12 +94,13 @@ class TestBaseAPI(TestBase):
     @classmethod
     def setUpClass(cls):
         """テスト用データベースの初期化"""
+        super().setUpClass()
         TestDataBase.init_db()
 
-    # @classmethod
-    # def tearDownClass(cls):
-    #     """テスト用データベースの削除"""
-    #     TestDataBase.drop_db()
+    @classmethod
+    def tearDownClass(cls):
+        """テスト用データベースの削除"""
+        TestDataBase.drop_db()
 
     def setUp(self):
         """セットアップ"""
