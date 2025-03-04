@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class ScrapingConst(Enum):
-    URL = "https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_PageID=WPLETmgR001Mdtl20&_DataStoreID=DSWPLETmgR001Control&_ActionID=DefaultAID&getFlg=on&burl=search_market&cat1=market&cat2=none&dir=info&file=market_meigara_225.html"
+    URL = "https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETmgR001Control&_PageID=WPLETmgR001Mdtl20&_DataStoreID=DSWPLETmgR001Control&_ActionID=DefaultAID&getFlg=on&burl=search_market&cat1=market&cat2=none&dir=info&file=market_meigara_225.html"  # noqa: E501
     SEARCH = "exchange_code=TKY"
     TAG = "a"
     FILE_NAME = "scraping.json"
@@ -12,9 +12,22 @@ class ScrapingConst(Enum):
 class HttpStatusCode(Enum):
     SUCCESS = 200
     NOT_FOUND = 404
+    VALIDATION = 422
     TIMEOUT = 504
-    BADREQEST = 400
-    INTERSEVERERROR = 500
+    BADREQUEST = 400
+    UNAUTHORIZED = 401
+    CONFLICT = 409
+    SERVER_ERROR = 500
+
+
+class ErrorCode(Enum):
+    CHECK_EXIST = 10
+    INT_VAILD = 11
+    NOT_DATA = 12
+    TIME_OUT = 13
+    UNAUTHORIZED = 14
+    LOST_CREDENTIALS = 15
+    SERVER_ERROR = 50
 
 
 class ErrorMessage(Enum):
@@ -51,3 +64,48 @@ class LSTMConst(Enum):
     HIDDEN_LAYER_SIZE = 200
     OUTPUT_SIZE = 1
     DAYS = 7
+
+
+class FormatConst(Enum):
+    DATE = '%Y-%m-%d'
+
+
+class PredictionResultConst(Enum):
+    FUTURE_PREDICTIONS = "future_predictions"
+    DAYS_LIST = "days_list"
+    BRAND_CODE = "brand_code"
+    USER_ID = "user_id"
+
+
+class BrandInfoModelConst(Enum):
+    BRAND_NAME = "brand_name"
+    BRAND_CODE = "brand_code"
+    LEARNED_MODEL_NAME = "learned_model_name"
+    USER_ID = "user_id"
+
+
+class LoginConst(Enum):
+    HEADERS = {"WWW-Authenticate": "Bearer"}
+
+
+class LoginFieldConst(Enum):
+    USER_ID = "user_id"
+    USER_NAME = "user_name"
+    USER_EMAIL = "user_email"
+    USER_PASSWORD = "user_password"
+    ACCESS_TOKEN = "access_token"
+
+
+class StockPriceFieldConst(Enum):
+    BRAND_CODE = "brand_code"
+    BRAND_NAME = "brand_name"
+    CREATE_BY = "create_by"
+    UPDATE_BY = "update_by"
+    IS_VALID = "is_valid"
+
+
+class LoggerConst(Enum):
+    MAIN_FILE_NAME = './logger.log'
+    LOGIN_FILE_NAME = './login_logger.log'
+    STOCK_PRICE_FILE_NAME = './stock_price_logger.log'
+    TEST_FILE_NAME = './test_logger.log'

@@ -14,12 +14,25 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t unittest .
+          docker build --no-cache -t unittest .
 
       - name: Run tests inside Docker container and Unittest
         run: |
           docker run --rm -v ${{ github.workspace }}:/stock_price_prediction --name unittest unittest /bin/bash -c "\
             cd /stock_price_prediction && \
-            pip3 install -r requirements.txt && \
+            echo "SECRET_KEY=${{ vars.SECRET_KEY }}" >> .env && \
+            echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ vars.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> .env && \
+            echo "ALGORITHM=${{ vars.ALGORITHM }}" >> .env && \
+            echo "DATABASE_PATH=${{ vars.DATABASE_PATH }}" >> .env && \
+            echo "TEST_CREATE_PATH=${{ vars.TEST_CREATE_PATH }}" >> .env && \
+            echo "TEST_INSERT_PATH=${{ vars.TEST_INSERT_PATH }}" >> .env && \
+            echo "TEST_DELETE_PATH=${{ vars.TEST_DELETE_PATH }}" >> .env && \
+            echo "TEST_DATABASE_PATH=${{ vars.TEST_DATABASE_PATH }}" >> .env && \
+            echo '.env content:' && cat .env && \
+            python3 -m venv env && \
+            source env/bin/activate && \
+            pip install -r requirements.txt && \
+            touch ./tests/api/database/db/test_database.db && \
+            chmod 666 ./tests/api/database/db/test_database.db && \
             coverage run -m unittest discover && \
             coverage report"

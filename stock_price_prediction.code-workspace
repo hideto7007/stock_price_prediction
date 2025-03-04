@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.provider": "black",  // フォーマットにはBlackを使用
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "editor.formatOnSave": true,           // 保存時に自動フォーマット
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit"
+    },
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportOptionalMemberAccess": false,
+        "reportAttributeAccessIssue": false
+    }
+  },
+}

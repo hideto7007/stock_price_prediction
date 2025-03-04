@@ -1,12 +1,16 @@
+import os
+from typing import List
 import unittest
 import datetime as dt
 import pandas as pd
-import numpy as np # type: ignore
-import torch # type: ignore
-from sklearn.preprocessing import StandardScaler # type: ignore
+import numpy as np
+import torch
+from sklearn.preprocessing import StandardScaler
 from common.common import StockPriceData
 
 from const.const import DFConst, DataSetConst, ScrapingConst
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 class TestStockPriceData(unittest.TestCase):
@@ -243,11 +247,66 @@ class TestStockPriceData(unittest.TestCase):
     def _ex_data_frame(self):
 
         data = {
-            'Date': ['2024-04-19', '2024-04-18', '2024-04-17', '2024-04-16', '2024-04-15', '2024-04-12', '2024-04-11', '2024-04-10', '2024-04-09', '2024-04-08'],
-            'Open': [3550, 3567, 3686, 3742, 3721, 3813, 3722, 3750, 3740, 3665],
-            'High': [3569, 3634, 3691, 3753, 3767, 3815, 3795, 3760, 3776, 3700],
-            'Low': [3453, 3559, 3570, 3630, 3685, 3755, 3721, 3722, 3716, 3642],
-            'Close': [3522, 3602, 3597, 3649, 3767, 3767, 3781, 3740, 3776, 3698],
+            'Date': [
+                '2024-04-19',
+                '2024-04-18',
+                '2024-04-17',
+                '2024-04-16',
+                '2024-04-15',
+                '2024-04-12',
+                '2024-04-11',
+                '2024-04-10',
+                '2024-04-09',
+                '2024-04-08'
+            ],
+            'Open': [
+                3550,
+                3567,
+                3686,
+                3742,
+                3721,
+                3813,
+                3722,
+                3750,
+                3740,
+                3665
+            ],
+            'High': [
+                3569,
+                3634,
+                3691,
+                3753,
+                3767,
+                3815,
+                3795,
+                3760,
+                3776,
+                3700
+            ],
+            'Low': [
+                3453,
+                3559,
+                3570,
+                3630,
+                3685,
+                3755,
+                3721,
+                3722,
+                3716,
+                3642
+            ],
+            'Close': [
+                3522,
+                3602,
+                3597,
+                3649,
+                3767,
+                3767,
+                3781,
+                3740,
+                3776,
+                3698
+            ],
         }
         df = pd.DataFrame(data)
         df['Date'] = pd.to_datetime(df['Date'])
@@ -258,12 +317,78 @@ class TestStockPriceData(unittest.TestCase):
     def _add_avg_ex_data_frame(self):
 
         data = {
-            'Date': ['2024-04-19', '2024-04-18', '2024-04-17', '2024-04-16', '2024-04-15', '2024-04-12', '2024-04-11', '2024-04-10', '2024-04-09', '2024-04-08'],
-            'Open': [3550, 3567, 3686, 3742, 3721, 3813, 3722, 3750, 3740, 3665],
-            'High': [3569, 3634, 3691, 3753, 3767, 3815, 3795, 3760, 3776, 3700],
-            'Low': [3453, 3559, 3570, 3630, 3685, 3755, 3721, 3722, 3716, 3642],
-            'Close': [3522, 3602, 3597, 3649, 3767, 3767, 3781, 3740, 3776, 3698],
-            'average': [3523.50, 3590.50, 3636.00, 3693.50, 3735.00, 3787.50, 3754.75, 3743.00, 3752.00, 3676.25],
+            'Date': [
+                '2024-04-19',
+                '2024-04-18',
+                '2024-04-17',
+                '2024-04-16',
+                '2024-04-15',
+                '2024-04-12',
+                '2024-04-11',
+                '2024-04-10',
+                '2024-04-09',
+                '2024-04-08'
+            ],
+            'Open': [
+                3550,
+                3567,
+                3686,
+                3742,
+                3721,
+                3813,
+                3722,
+                3750,
+                3740,
+                3665
+            ],
+            'High': [
+                3569,
+                3634,
+                3691,
+                3753,
+                3767,
+                3815,
+                3795,
+                3760,
+                3776,
+                3700
+            ],
+            'Low': [
+                3453,
+                3559,
+                3570,
+                3630,
+                3685,
+                3755,
+                3721,
+                3722,
+                3716,
+                3642
+            ],
+            'Close': [
+                3522,
+                3602,
+                3597,
+                3649,
+                3767,
+                3767,
+                3781,
+                3740,
+                3776,
+                3698
+            ],
+            'average': [
+                3523.50,
+                3590.50,
+                3636.00,
+                3693.50,
+                3735.00,
+                3787.50,
+                3754.75,
+                3743.00,
+                3752.00,
+                3676.25
+            ],
         }
         df = pd.DataFrame(data)
         df['Date'] = pd.to_datetime(df['Date'])
@@ -275,7 +400,10 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: データ数が一致すること
         """
-        result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        result = StockPriceData.get_data(
+            "7203", dt.datetime(2024, 4, 8),
+            dt.datetime(2024, 4, 19)
+        )
         ex = 10
         self.assertEqual(len(result), ex)
 
@@ -283,7 +411,10 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: カラム数が一致すること
         """
-        result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        result = StockPriceData.get_data(
+            "7203", dt.datetime(2024, 4, 8),
+            dt.datetime(2024, 4, 19)
+        )
         ex = 5
         self.assertEqual(len(result.columns), ex)
 
@@ -291,9 +422,10 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: データが一致すること
         """
-        result = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        result = self._ex_data_frame()
         ex = self._ex_data_frame()
-        self.assertTrue(result[DFConst.COLUMN.value].equals(ex), "The data frames should be equal")
+        self.assertTrue(result[DFConst.COLUMN.value].equals(
+            ex), "The data frames should be equal")
 
     def test_get_data_success_04(self):
         """
@@ -315,9 +447,10 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: 平均値のデータを追加してデータが一致していること
         """
-        df = StockPriceData.get_data("7203", dt.date(2024,4,8), dt.date(2024,4,19))
+        df = self._ex_data_frame()
         result = df.copy()[DFConst.COLUMN.value]
-        result["average"] = StockPriceData.stock_price_average(df.copy()[DFConst.COLUMN.value])
+        result["average"] = StockPriceData.stock_price_average(
+            df.copy()[DFConst.COLUMN.value])
         ex = self._add_avg_ex_data_frame()
         self.assertTrue(result.equals(ex), "The data frames should be equal")
 
@@ -325,7 +458,7 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: 移動平均値が一致していること データ数が奇数の場合
         """
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        data: List[int | float] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         result = StockPriceData.moving_average(data)
         ex = [3.0, 4.0, 5.0, 6.0, 7.0]
         self.assertEqual(result, ex)
@@ -334,7 +467,7 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: 移動平均値が一致していること データ数が偶数の場合
         """
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        data: List[int | float] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         result = StockPriceData.moving_average(data)
         ex = [4.0, 5.0, 6.0, 7.0]
         self.assertEqual(result, ex)
@@ -343,7 +476,8 @@ class TestStockPriceData(unittest.TestCase):
         """
         正常系: 境界値チェック
         """
-        data = [[], [1, 2, 3], [1, 2, 3, 4], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6, 7, 8]]
+        data = [[], [1, 2, 3], [1, 2, 3, 4], [1, 2, 3, 4, 5, 6],
+                [1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6, 7, 8]]
         result = StockPriceData.moving_average(data)
         ex_list = [[], [], [], [], [3.0], [4.0, 5.0]]
         for x, ex in zip(data, ex_list):
@@ -358,17 +492,27 @@ class TestStockPriceData(unittest.TestCase):
         test_seq = 25
         test_len = 252
 
-        brand_info = StockPriceData.get_text_data("./" + ScrapingConst.DIR.value + "/" + ScrapingConst.FILE_NAME.value)
+        brand_info = StockPriceData.get_text_data(
+            "./" + ScrapingConst.DIR.value +
+            "/" + ScrapingConst.FILE_NAME.value
+        )
 
-        get_data = StockPriceData.get_data(brand_info[params], dt.date(2000,1,1), dt.date(2005,2,1))
+        get_data = StockPriceData.get_data(
+            brand_info[params], dt.datetime(2000, 1, 1),
+            dt.datetime(2005, 2, 1)
+        )
         get_data = get_data.reset_index()
         get_data = get_data.drop(DFConst.DROP_COLUMN.value, axis=1)
-        get_data.sort_values(by=DFConst.DATE.value, ascending=True, inplace=True)
+        get_data.sort_values(by=DFConst.DATE.value,
+                             ascending=True, inplace=True)
 
-        get_data[DataSetConst.MA.value] = get_data[DFConst.CLOSE.value].rolling(window=test_seq, min_periods=0).mean()
+        get_data[DataSetConst.MA.value] = get_data[
+            DFConst.CLOSE.value
+        ].rolling(
+            window=test_seq, min_periods=0).mean()
 
         # 標準化
-        ma = get_data[DataSetConst.MA.value].values.reshape(-1, 1)
+        ma = get_data[DataSetConst.MA.value].to_numpy().reshape(-1, 1)
         scaler = StandardScaler()
         ma_std = scaler.fit_transform(ma)
 
@@ -387,7 +531,8 @@ class TestStockPriceData(unittest.TestCase):
         test_x_ex = torch.Size([252, 25, 1])
         test_y_ex = torch.Size([252, 1])
 
-        train_x, train_y, test_x, test_y = StockPriceData.data_split(data, label, test_len)
+        train_x, train_y, test_x, test_y = StockPriceData.data_split(
+            data, label, test_len)
 
         self.assertEqual(train_x.shape, train_x_ex)
         self.assertEqual(train_y.shape, train_y_ex)

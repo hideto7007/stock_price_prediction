@@ -3,3 +3,7 @@
 /shell
 /save
 /ping
+.env
+/env
+*.log
+/db/database.db

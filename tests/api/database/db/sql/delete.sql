@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS brand_info;
+DROP TABLE IF EXISTS prediction_result;
+DROP TABLE IF EXISTS brand;
+DROP TABLE IF EXISTS user;
